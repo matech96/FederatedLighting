@@ -5,4 +5,8 @@
     <orderEntry type="jdk" jdkName="Remote Python 3.6.9 Docker (matech96/federated-learning:latest)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PyDocumentationSettings">
+    <option name="format" value="EPYTEXT" />
+    <option name="myDocStringFormat" value="Epytext" />
+  </component>
 </module>
