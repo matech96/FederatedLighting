@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-import collections
-
 import tensorflow as tf
 import tensorflow_federated as tff
 from comet_ml.exceptions import InterruptedExperiment
@@ -12,14 +10,25 @@ from comet_ml.exceptions import InterruptedExperiment
 from comet_ml import Experiment
 
 
+def factory(c, **kwarg):
+    return staticmethod(lambda: c(**kwarg))
+
+
+class FederatedLearnerConfig:
+    CLIENT_OPT_FN = factory(tf.keras.optimizers.SGD, learning_rate=0.02)
+    SERVER_OPT_FN = factory(tf.keras.optimizers.SGD, learning_rate=1.0)
+    N_ROUNDS = 20
+
+
 class FederatedLearner(ABC):
-    def __init__(self, experiment: Experiment) -> None:
+    def __init__(self, experiment: Experiment, config: FederatedLearnerConfig) -> None:
         """
         Initialises the training.
         :param experiment: Comet.ml experiment object for online logging.
         """
         super().__init__()
         self.experiment = experiment
+        self.config = config
 
     @abstractmethod
     def load_data(self) -> List:  # BatchDataset
@@ -45,7 +54,7 @@ class FederatedLearner(ABC):
         """
         pass
 
-    def train(self, n_rounds: int, client_sample_percent: float) -> None:
+    def train(self) -> None:
         """
         Runs the federated training, reports to comet.ml and runs an evaluation at the end.
         @param n_rounds: The number of round for training (analogous for number of epochs).
@@ -64,16 +73,21 @@ class FederatedLearner(ABC):
 
         iterative_process = tff.learning.build_federated_averaging_process(
             model_fn,
-            client_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=0.02),
-            server_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=1.0),
+            client_optimizer_fn=self.config.CLIENT_OPT_FN,
+            server_optimizer_fn=self.config.SERVER_OPT_FN,
         )
 
         state = iterative_process.initialize()
         try:
-            for round_num in range(n_rounds):
-                print(f"Round: {round_num}")
+            for round_num in range(self.config.N_ROUNDS):
                 state, metrics = iterative_process.next(state, federated_train_data)
-                for value, name in zip(metrics, dir(metrics)):
+                print(metrics)
+                for name in dir(metrics):
+                    value = getattr(metrics, name)
                     self.experiment.log_metric(name, value, step=round_num)
+                
+                evaluation = tff.learning.build_federated_evaluation(model_fn)
+                train_metrics = evaluation(state.model, federated_train_data)
+                print(train_metrics)
         except InterruptedExperiment:
             pass

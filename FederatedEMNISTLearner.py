@@ -9,7 +9,10 @@ from FederatedLearner import FederatedLearner
 
 class FederatedMNISTLearner(FederatedLearner):
     def load_data(self) -> List:  # [BatchDataset]
-        emnist_train, emnist_test = tff.simulation.datasets.emnist.load_data()  # TODO use test dataset
+        (
+            emnist_train,
+            emnist_test,
+        ) = tff.simulation.datasets.emnist.load_data()  # TODO use test dataset
         # TODO dynamicly set these
         NUM_CLIENTS = 10
         NUM_EPOCHS = 10
@@ -35,44 +38,34 @@ class FederatedMNISTLearner(FederatedLearner):
         sample_clients = emnist_train.client_ids[
             0:NUM_CLIENTS
         ]  # TODO dynamic client selection
-        return [
+        federated_train_data = [
             preprocess(emnist_train.create_tf_dataset_for_client(x))
             for x in sample_clients
         ]
 
+        self.plot_data_first_batch(federated_train_data)
+
+        return federated_train_data
+
     def build_model(self) -> tf.keras.Model:
-        # print("build_model")
-        # model = tf.keras.models.Sequential(
-        #     [
-        #         tf.keras.layers.Dense(
-        #             10,
-        #             activation=tf.nn.softmax,
-        #             kernel_initializer="zeros",
-        #             input_shape=(784,),
-        #         )
-        #     ]
-        # )
-        # print("model")
+        model = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Input(shape=(784,)),
+                tf.keras.layers.Dense(10, kernel_initializer="zeros"),
+                tf.keras.layers.Softmax(),
+            ]
+        )
 
-        # model.compile(
-        #     loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-        #     optimizer=tf.keras.optimizers.SGD(learning_rate=0.02),
-        #     metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
-        # )
-        # print("compiled")
-        
-        model = tf.keras.models.Sequential([
-            tf.keras.layers.Input(shape=(784,)),
-            tf.keras.layers.Dense(10, kernel_initializer='zeros'),
-            tf.keras.layers.Softmax(),
-        ])
-
-        # model.compile(
-        #     loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-        #     optimizer=tf.keras.optimizers.SGD(learning_rate=0.02),
-        #     metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
-        # )
         return model
 
     def get_loss(self) -> tf.keras.losses.Loss:
         return tf.keras.losses.SparseCategoricalCrossentropy()
+
+    def plot_data_first_batch(self, federated_train_data):
+        sample_batch = tf.nest.map_structure(
+            lambda x: x.numpy(), next(iter(federated_train_data[0]))
+        )
+        for i in range(sample_batch["y"].shape[0]):
+            self.experiment.log_image(
+                sample_batch["x"][i,].reshape((28, 28)), name=sample_batch["y"][i]
+            )
