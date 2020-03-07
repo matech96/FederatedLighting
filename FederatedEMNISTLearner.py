@@ -35,17 +35,17 @@ class FederatedMNISTLearner(FederatedLearner):
                 .batch(BATCH_SIZE)
             )
 
-        sample_clients = emnist_train.client_ids[
-            0:NUM_CLIENTS
-        ]  # TODO dynamic client selection
-        federated_train_data = [
-            preprocess(emnist_train.create_tf_dataset_for_client(x))
-            for x in sample_clients
-        ]
+        def get_federated_data(dataset):
+            return [
+                preprocess(dataset.create_tf_dataset_for_client(x))
+                for x in emnist_train.client_ids
+            ]
 
+        federated_train_data = get_federated_data(emnist_train)
         self.plot_data_first_batch(federated_train_data)
+        federated_test_data = get_federated_data(emnist_test)
 
-        return federated_train_data
+        return federated_train_data, federated_test_data
 
     def build_model(self) -> tf.keras.Model:
         model = tf.keras.models.Sequential(

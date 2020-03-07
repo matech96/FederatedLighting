@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List
+from dataclasses import dataclass
+from typing import List, Tuple, Callable
 
 import tensorflow as tf
 import tensorflow_federated as tff
@@ -14,10 +15,11 @@ def factory(c, **kwarg):
     return staticmethod(lambda: c(**kwarg))
 
 
+@dataclass
 class FederatedLearnerConfig:
-    CLIENT_OPT_FN = factory(tf.keras.optimizers.SGD, learning_rate=0.02)
-    SERVER_OPT_FN = factory(tf.keras.optimizers.SGD, learning_rate=1.0)
-    N_ROUNDS = 20
+    CLIENT_OPT_FN: Callable = factory(tf.keras.optimizers.SGD, learning_rate=0.02)
+    SERVER_OPT_FN: Callable = factory(tf.keras.optimizers.SGD, learning_rate=1.0)
+    N_ROUNDS: int = 20
 
 
 class FederatedLearner(ABC):
@@ -31,7 +33,7 @@ class FederatedLearner(ABC):
         self.config = config
 
     @abstractmethod
-    def load_data(self) -> List:  # BatchDataset
+    def load_data(self) -> Tuple[List, List]:  # BatchDataset
         """
         Loads the data to BatchDataset. The BatchDataset should contain and OrderedDict([(x, tf.Tensor(
         dtype=tf.float32)), (y, tf.Tensor(tf.int32))]) @return: BatchDataset
@@ -85,7 +87,7 @@ class FederatedLearner(ABC):
                 for name in dir(metrics):
                     value = getattr(metrics, name)
                     self.experiment.log_metric(name, value, step=round_num)
-                
+
                 evaluation = tff.learning.build_federated_evaluation(model_fn)
                 train_metrics = evaluation(state.model, federated_train_data)
                 print(train_metrics)
