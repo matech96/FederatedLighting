@@ -1,23 +1,34 @@
 import collections
-from typing import List
+from typing import List, Tuple
+from dataclasses import dataclass
 
 import tensorflow_federated as tff
 import tensorflow as tf
 
-from FederatedLearner import FederatedLearner
+from FederatedLearner import FederatedLearner, FederatedLearnerConfig
+from comet_ml import Experiment
 
 
-class FederatedMNISTLearner(FederatedLearner):
-    def load_data(self) -> List:  # [BatchDataset]
-        (
-            emnist_train,
-            emnist_test,
-        ) = tff.simulation.datasets.emnist.load_data()  # TODO use test dataset
-        # TODO dynamicly set these
-        NUM_CLIENTS = 10
-        NUM_EPOCHS = 10
-        BATCH_SIZE = 20
-        SHUFFLE_BUFFER = 500
+@dataclass
+class FederatedEMNISTLearnerConfig(FederatedLearnerConfig):
+    BATCH_SIZE: int = 20
+    SHUFFLE_BUFFER: int = 500
+    IS_PLOT_DATA: bool = False
+
+
+class FederatedEMNISTLearner(FederatedLearner):
+    def __init__(
+        self, experiment: Experiment, config: FederatedEMNISTLearnerConfig
+    ) -> None:
+        """
+        Initialises the training.
+        :param experiment: Comet.ml experiment object for online logging.
+        """
+        super().__init__(experiment, config)
+        self.config = config  # Purly to help intellisense
+
+    def load_data(self) -> Tuple[List, List]:  # [BatchDataset]
+        (emnist_train, emnist_test,) = tff.simulation.datasets.emnist.load_data()
 
         def preprocess(dataset):
             def element_fn(element):
@@ -29,21 +40,22 @@ class FederatedMNISTLearner(FederatedLearner):
                 )
 
             return (
-                dataset.repeat(NUM_EPOCHS)
+                dataset.repeat(self.config.N_ROUNDS)
                 .map(element_fn)
-                .shuffle(SHUFFLE_BUFFER)
-                .batch(BATCH_SIZE)
+                .shuffle(self.config.SHUFFLE_BUFFER)
+                .batch(self.config.BATCH_SIZE)
             )
 
         def get_federated_data(dataset):
             return [
                 preprocess(dataset.create_tf_dataset_for_client(x))
-                for x in emnist_train.client_ids
+                for x in emnist_train.client_ids[: self.config.N_CLIENTS]
             ]
 
         federated_train_data = get_federated_data(emnist_train)
-        self.plot_data_first_batch(federated_train_data)
         federated_test_data = get_federated_data(emnist_test)
+        if self.config.IS_PLOT_DATA:
+            self.plot_data_first_batch(federated_train_data)
 
         return federated_train_data, federated_test_data
 
@@ -67,5 +79,5 @@ class FederatedMNISTLearner(FederatedLearner):
         )
         for i in range(sample_batch["y"].shape[0]):
             self.experiment.log_image(
-                sample_batch["x"][i,].reshape((28, 28)), name=sample_batch["y"][i]
+                sample_batch["x"][i, ].reshape((28, 28)), name=sample_batch["y"][i]
             )

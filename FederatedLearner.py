@@ -6,8 +6,6 @@ import tensorflow as tf
 import tensorflow_federated as tff
 from comet_ml.exceptions import InterruptedExperiment
 
-# from tensorflow.python.data.ops.dataset_ops import BatchDataset
-
 from comet_ml import Experiment
 
 
@@ -19,7 +17,9 @@ def factory(c, **kwarg):
 class FederatedLearnerConfig:
     CLIENT_OPT_FN: Callable = factory(tf.keras.optimizers.SGD, learning_rate=0.02)
     SERVER_OPT_FN: Callable = factory(tf.keras.optimizers.SGD, learning_rate=1.0)
-    N_ROUNDS: int = 20
+    N_ROUNDS: int = 20  # The number of round for training (analogous for number of epochs).
+    N_CLIENTS: int = 10  # The number of clients to participate in a round.
+    TEST_AFTER: int = 10  # Evaluate on the test set after every TEST_AFTER epoch.
 
 
 class FederatedLearner(ABC):
@@ -59,11 +59,9 @@ class FederatedLearner(ABC):
     def train(self) -> None:
         """
         Runs the federated training, reports to comet.ml and runs an evaluation at the end.
-        @param n_rounds: The number of round for training (analogous for number of epochs).
-        @param client_sample_percent: The percentage of clients to participate in a round. Muss be between 0 and 1.
         """
 
-        federated_train_data = self.load_data()
+        federated_train_data, federated_test_data = self.load_data()
         sample_batch = tf.nest.map_structure(
             lambda x: x.numpy(), next(iter(federated_train_data[0]))
         )
@@ -83,13 +81,15 @@ class FederatedLearner(ABC):
         try:
             for round_num in range(self.config.N_ROUNDS):
                 state, metrics = iterative_process.next(state, federated_train_data)
-                print(metrics)
-                for name in dir(metrics):
-                    value = getattr(metrics, name)
-                    self.experiment.log_metric(name, value, step=round_num)
+                self.log_mterics_in_round(metrics, round_num, "train")
 
-                evaluation = tff.learning.build_federated_evaluation(model_fn)
-                train_metrics = evaluation(state.model, federated_train_data)
-                print(train_metrics)
+                if round_num % self.config.TEST_AFTER == 0:
+                    evaluation = tff.learning.build_federated_evaluation(model_fn)
+                    test_metrics = evaluation(state.model, federated_test_data)
+                    self.log_mterics_in_round(test_metrics, round_num, "test")
         except InterruptedExperiment:
             pass
+
+    def log_mterics_in_round(self, metrics, round_num, prefix):
+        for name, value in metrics._asdict().items():
+            self.experiment.log_metric(f"{prefix}_{name}", value, step=round_num)
