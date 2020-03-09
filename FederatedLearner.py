@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Tuple, Callable
+import logging
 
 import tensorflow as tf
 import tensorflow_federated as tff
@@ -31,7 +32,7 @@ class FederatedLearner(ABC):
         super().__init__()
         self.experiment = experiment
         self.config = config
-        self.experiment.log_parameters(self.config.__dict__.items())
+        self.experiment.log_parameters(self.config.__dict__)
 
     @abstractmethod
     def load_data(self) -> Tuple[List, List]:  # BatchDataset
@@ -72,6 +73,7 @@ class FederatedLearner(ABC):
             loss = self.get_loss()
             return tff.learning.from_keras_model(keras_model, sample_batch, loss)
 
+        logging.info("Initialization ...")
         iterative_process = tff.learning.build_federated_averaging_process(
             model_fn,
             client_optimizer_fn=self.config.CLIENT_OPT_FN,
@@ -79,6 +81,7 @@ class FederatedLearner(ABC):
         )
 
         state = iterative_process.initialize()
+        logging.info("Initialized")
         try:
             for round_num in range(self.config.N_ROUNDS):
                 state, metrics = iterative_process.next(state, federated_train_data)
