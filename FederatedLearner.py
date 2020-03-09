@@ -31,6 +31,7 @@ class FederatedLearner(ABC):
         super().__init__()
         self.experiment = experiment
         self.config = config
+        self.experiment.log_parameters(self.config.__dict__.items())
 
     @abstractmethod
     def load_data(self) -> Tuple[List, List]:  # BatchDataset

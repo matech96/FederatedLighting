@@ -47,10 +47,11 @@ class FederatedEMNISTLearner(FederatedLearner):
             )
 
         def get_federated_data(dataset):
-            return [
-                preprocess(dataset.create_tf_dataset_for_client(x))
-                for x in emnist_train.client_ids[: self.config.N_CLIENTS]
-            ]
+            federated_data = [list() for _ in range(config.N_CLIENTS)]
+            for i, client_id in enumerate(dataset.client_ids):
+                client_data = preprocess(dataset.create_tf_dataset_for_client(client_id))
+                federated_data[i % config.N_CLIENTS].append(client_data)
+            return [functools.reduce(lambda a, b: a.concatenate(b), fd) for fd in federated_data]
 
         federated_train_data = get_federated_data(emnist_train)
         federated_test_data = get_federated_data(emnist_test)
