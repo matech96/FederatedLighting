@@ -3,7 +3,7 @@ from comet_ml import Experiment
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Dict
 import logging
 
 import syft as sy
@@ -20,6 +20,7 @@ class SyftFederatedLearnerConfig:
     TEST_AFTER: int = 1  # Evaluate on the test set after every TEST_AFTER rounds.
     N_CLIENTS: int = 10  # The number of clients to participate in a round.
     N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before
+    BATCH_SIZE: int = 64  # Batch size
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
@@ -36,10 +37,12 @@ class SyftFederatedLearner:
             config {SyftFederatedLearnerConfig} -- Training configuration description.
         """
         super().__init__()
+        self.device = th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
         self.hook = sy.TorchHook(th)
+        self.clients = [sy.VirtualWorker(self.hook) for _ in range(self.config.N_CLIENTS)]
 
     @abstractmethod
     def load_data(self) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:
@@ -60,7 +63,7 @@ class SyftFederatedLearner:
         pass
 
     def train(self) -> None:
-        """Runs the federated training, reports to comet.ml and runs an evaluation at the end.
+        """Runs the federated training, reports to comet.ml and runs an evaluations.
 
         Returns:
             None -- No return value.
@@ -97,7 +100,7 @@ class SyftFederatedLearner:
 
             self.log_client_step(loss.item(), data.location.id, batch_num)
 
-    def test(self, model, test_loader):
+    def test(self, model: nn.Module, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         model.eval()
         test_loss = 0
         correct = 0
