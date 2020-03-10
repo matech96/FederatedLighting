@@ -43,7 +43,7 @@ class SyftFederatedLearner:
         self.experiment.log_parameters(self.config.__dict__)
         self.hook = sy.TorchHook(th)
         self.clients = [
-            sy.VirtualWorker(self.hook) for _ in range(self.config.N_CLIENTS)
+            sy.VirtualWorker(self.hook, f"{i}") for i in range(self.config.N_CLIENTS)
         ]
 
     @abstractmethod
