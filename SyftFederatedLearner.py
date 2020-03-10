@@ -16,10 +16,10 @@ from torchvision import datasets, transforms
 
 @dataclass
 class SyftFederatedLearnerConfig:
-    N_ROUNDS: int = 20  # The number of round for training (analogous for number of epochs).
+    N_ROUNDS: int = 10  # The number of round for training (analogous for number of epochs).
     TEST_AFTER: int = 1  # Evaluate on the test set after every TEST_AFTER rounds.
-    N_CLIENTS: int = 10  # The number of clients to participate in a round.
-    N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before
+    N_CLIENTS: int = 2  # The number of clients to participate in a round.
+    # N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before
     BATCH_SIZE: int = 64  # Batch size
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
@@ -42,7 +42,9 @@ class SyftFederatedLearner:
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
         self.hook = sy.TorchHook(th)
-        self.clients = [sy.VirtualWorker(self.hook) for _ in range(self.config.N_CLIENTS)]
+        self.clients = [
+            sy.VirtualWorker(self.hook) for _ in range(self.config.N_CLIENTS)
+        ]
 
     @abstractmethod
     def load_data(self) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:
@@ -77,13 +79,13 @@ class SyftFederatedLearner:
         )  # TODO momentum is not supported at the moment
 
         for round in range(self.config.N_ROUNDS):
-            self.__train_one_round(model, federated_train_loader, optimizer, round)
+            self.__train_one_round(model, federated_train_loader, optimizer, round, n_train_batches)
             metrics = self.test(model, test_loader)
             self.log_test_metric(metrics, round, n_train_batches)
 
         # th.save(model.state_dict(), "mnist_cnn.pt")
 
-    def __train_one_round(self, model, federated_train_loader, optimizer, round):
+    def __train_one_round(self, model, federated_train_loader, optimizer, round, n_batches):
         model.train()
         for batch_num, (data, target) in enumerate(federated_train_loader):
             model.send(data.location)
@@ -98,9 +100,13 @@ class SyftFederatedLearner:
             model.get()
             loss = loss.get()
 
-            self.log_client_step(loss.item(), data.location.id, batch_num)
+            self.log_client_step(
+                loss.item(), data.location.id, (round * n_batches) + batch_num
+            )
 
-    def test(self, model: nn.Module, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
+    def test(
+        self, model: nn.Module, test_loader: th.utils.data.DataLoader
+    ) -> Dict[str, float]:
         model.eval()
         test_loss = 0
         correct = 0
