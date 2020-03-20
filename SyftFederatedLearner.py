@@ -21,7 +21,7 @@ class SyftFederatedLearnerConfig:
     N_ROUNDS: int = 10  # The number of round for training (analogous for number of epochs).
     TEST_AFTER: int = 1  # Evaluate on the test set after every TEST_AFTER rounds.
     N_CLIENTS: int = 2  # The number of clients to participate in a round.
-    # N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before
+    N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before sync.
     BATCH_SIZE: int = 64  # Batch size
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
@@ -48,6 +48,9 @@ class SyftFederatedLearner:
             sy.VirtualWorker(self.hook, f"{i}") for i in range(self.config.N_CLIENTS)
         ]
 
+        self.federated_train_loader, self.test_loader = self.load_data()
+        self.n_train_batches = len(self.federated_train_loader)
+
     @abstractmethod
     def load_data(self) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:
         """Loads the data.
@@ -72,31 +75,30 @@ class SyftFederatedLearner:
         Returns:
             None -- No return value.
         """
-        federated_train_loader, test_loader = self.load_data()
-        n_train_batches = len(federated_train_loader)
 
         model = self.build_model().to(self.device)
         for round in range(self.config.N_ROUNDS):
-            model = self.__train_one_round(
-                model, federated_train_loader, round, n_train_batches,
+            model = self.__train_one_round(model, round)
+            metrics = self.test(model, self.test_loader)
+            self.log_test_metric(
+                metrics, round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches
             )
-            metrics = self.test(model, test_loader)
-            self.log_test_metric(metrics, round, n_train_batches)
 
         # th.save(model.state_dict(), "mnist_cnn.pt")
 
-    def __train_one_round(self, model, federated_train_loader, round, n_batches):
+    def __train_one_round(self, model, round):
         model.train()
 
-        model_ptrs = {client.id: model.copy().send(client) for client in self.clients}
-        optimizer_ptrs = {
-            client.id: optim.SGD(
-                model_ptrs[client.id].parameters(), lr=self.config.LEARNING_RATE
-            )
-            for client in self.clients
-        }  # TODO momentum is not supported at the moment            
+        optimizer_ptrs, model_ptrs = self.__send_model_to_clients(model)
 
-        for batch_num, (data, target) in enumerate(federated_train_loader):
+        for epoch_num in range(self.config.N_EPOCH_PER_CLIENT):
+            model = self.__train_one_epoch(optimizer_ptrs, model_ptrs, round, epoch_num)
+
+        model = self.__collect_avg_model(model_ptrs)
+        return model
+
+    def __train_one_epoch(self, optimizer_ptrs, model_ptrs, round, epoch_num):
+        for batch_num, (data, target) in enumerate(self.federated_train_loader):
             client_id = data.location.id
             optimizer = optimizer_ptrs[client_id]
             model = model_ptrs[client_id]
@@ -110,12 +112,28 @@ class SyftFederatedLearner:
 
             loss = loss.get()
 
+            client_epoch = (round * self.config.N_EPOCH_PER_CLIENT) + epoch_num
             self.log_client_step(
-                loss.item(), data.location.id, (round * n_batches) + batch_num
+                loss.item(),
+                data.location.id,
+                (client_epoch * self.n_train_batches) + batch_num,
             )
+        return model
 
+    def __send_model_to_clients(self, model):
+        model_ptrs = {client.id: model.copy().send(client) for client in self.clients}
+        optimizer_ptrs = {
+            client.id: optim.SGD(
+                model_ptrs[client.id].parameters(), lr=self.config.LEARNING_RATE
+            )
+            for client in self.clients
+        }  # TODO momentum is not supported at the moment
+        return optimizer_ptrs, model_ptrs
+
+    def __collect_avg_model(self, model_ptrs):
         collected_models = [model.get() for model in model_ptrs.values()]
-        return avg_models(collected_models)
+        model = avg_models(collected_models)
+        return model
 
     def test(
         self, model: nn.Module, test_loader: th.utils.data.DataLoader
@@ -142,6 +160,6 @@ class SyftFederatedLearner:
     def log_client_step(self, loss, client_id, batch_num):
         self.experiment.log_metric(f"{client_id}_train_loss", loss, step=batch_num)
 
-    def log_test_metric(self, metrics, round, n_train_batches):
+    def log_test_metric(self, metrics, batch_num):
         for name, value in metrics.items():
-            self.experiment.log_metric(name, value, step=round * n_train_batches)
+            self.experiment.log_metric(name, value, step=batch_num)
