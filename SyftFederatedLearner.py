@@ -13,6 +13,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 
+from syftutils.multipointer import avg_models
+
 
 @dataclass
 class SyftFederatedLearnerConfig:
@@ -74,21 +76,30 @@ class SyftFederatedLearner:
         n_train_batches = len(federated_train_loader)
 
         model = self.build_model().to(self.device)
-        optimizer = optim.SGD(
-            model.parameters(), lr=self.config.LEARNING_RATE
-        )  # TODO momentum is not supported at the moment
-
         for round in range(self.config.N_ROUNDS):
-            self.__train_one_round(model, federated_train_loader, optimizer, round, n_train_batches)
+            model = self.__train_one_round(
+                model, federated_train_loader, round, n_train_batches,
+            )
             metrics = self.test(model, test_loader)
             self.log_test_metric(metrics, round, n_train_batches)
 
         # th.save(model.state_dict(), "mnist_cnn.pt")
 
-    def __train_one_round(self, model, federated_train_loader, optimizer, round, n_batches):
+    def __train_one_round(self, model, federated_train_loader, round, n_batches):
         model.train()
+
+        model_ptrs = {client.id: model.copy().send(client) for client in self.clients}
+        optimizer_ptrs = {
+            client.id: optim.SGD(
+                model_ptrs[client.id].parameters(), lr=self.config.LEARNING_RATE
+            )
+            for client in self.clients
+        }  # TODO momentum is not supported at the moment            
+
         for batch_num, (data, target) in enumerate(federated_train_loader):
-            model.send(data.location)
+            client_id = data.location.id
+            optimizer = optimizer_ptrs[client_id]
+            model = model_ptrs[client_id]
 
             data, target = data.to(self.device), target.to(self.device)
             optimizer.zero_grad()
@@ -97,12 +108,14 @@ class SyftFederatedLearner:
             loss.backward()
             optimizer.step()
 
-            model.get()
             loss = loss.get()
 
             self.log_client_step(
                 loss.item(), data.location.id, (round * n_batches) + batch_num
             )
+
+        collected_models = [model.get() for model in model_ptrs.values()]
+        return avg_models(collected_models)
 
     def test(
         self, model: nn.Module, test_loader: th.utils.data.DataLoader

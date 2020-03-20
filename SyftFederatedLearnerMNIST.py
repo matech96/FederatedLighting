@@ -1,4 +1,5 @@
 from typing import List, Tuple, Callable, Dict
+import logging
 
 import syft as sy
 import torch as th
@@ -12,6 +13,7 @@ from SyftFederatedLearner import SyftFederatedLearner
 
 class SyftFederatedLearnerMNIST(SyftFederatedLearner):
     def load_data(self) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:
+        logging.info('Train MNIST data loading ...')
         federated_train_loader = sy.FederatedDataLoader(
             datasets.MNIST(
                 "../data",
@@ -23,10 +25,12 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             ).federate(self.clients),
             batch_size=self.config.BATCH_SIZE,
             shuffle=True,
-            num_workers=4,
+            num_workers=self.config.DL_N_WORKER,
             pin_memory=True,
         )
+        logging.info('Train MNIST data loaded.')
 
+        logging.info('Test MNIST data loading ...')
         test_loader = th.utils.data.DataLoader(
             datasets.MNIST(
                 "../data",
@@ -37,9 +41,10 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             ),
             batch_size=self.config.BATCH_SIZE,
             shuffle=True,
-            num_workers=4,
+            num_workers=self.config.DL_N_WORKER,
             pin_memory=True,
         )
+        logging.info('Test MNIST data loaded.')
 
         return federated_train_loader, test_loader
 
