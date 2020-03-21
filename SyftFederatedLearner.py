@@ -1,10 +1,12 @@
 from comet_ml.exceptions import InterruptedExperiment
 from comet_ml import Experiment
 
+import random
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import List, Tuple, Callable, Dict
 import logging
+
+from pydantic import BaseModel, validator
 
 import syft as sy
 import torch as th
@@ -16,16 +18,26 @@ from torchvision import datasets, transforms
 from syftutils.multipointer import avg_models
 
 
-@dataclass
-class SyftFederatedLearnerConfig:
+class SyftFederatedLearnerConfig(BaseModel):
+    class Config:
+        validate_assignment = True
+
     N_ROUNDS: int = 10  # The number of round for training (analogous for number of epochs).
     TEST_AFTER: int = 1  # Evaluate on the test set after every TEST_AFTER rounds.
     N_CLIENTS: int = 2  # The number of clients to participate in a round.
+    CLIENT_FRACTION: float = 1.0  # The fration of clients to participate in 1 round. Muss be between 0 and 1. 0 means selecting 1 client.
     N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before sync.
     BATCH_SIZE: int = 64  # Batch size
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
+
+    @validator("CLIENT_FRACTION", check_fields=False)  # class method
+    def CLIENT_FRACTION_muss_be_procentage(cls, value: float) -> None:
+        if (0.0 > value) or (value > 1.0):
+            raise ValueError("CLIENT_FRACTION muss be between 0 and 1.")
+        else:
+            return value
 
 
 class SyftFederatedLearner(ABC):
@@ -93,13 +105,21 @@ class SyftFederatedLearner(ABC):
     def __train_one_round(self, model: nn.Module, round: int):
         model.train()
 
-        optimizer_ptrs, model_ptrs = self.__send_model_to_clients(model)
+        client_sample = self.__select_clients()
+        optimizer_ptrs, model_ptrs = self.__send_model_to_clients(model, client_sample)
 
         for epoch_num in range(self.config.N_EPOCH_PER_CLIENT):
             model = self.__train_one_epoch(optimizer_ptrs, model_ptrs, round, epoch_num)
 
         model = self.__collect_avg_model(model_ptrs)
         return model
+
+    def __select_clients(self):
+        client_sample = random.sample(
+            self.clients, max(1, int(len(self.clients) * self.config.CLIENT_FRACTION))
+        )
+        logging.info(f"Selected {len(client_sample)} clients in this round.")
+        return client_sample
 
     def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
         for curr_batch, (data, target) in enumerate(self.federated_train_loader):
@@ -121,13 +141,15 @@ class SyftFederatedLearner(ABC):
             )
         return model
 
-    def __send_model_to_clients(self, model: nn.Module) -> Tuple[Dict, Dict]:
-        model_ptrs = {client.id: model.copy().send(client) for client in self.clients}
+    def __send_model_to_clients(
+        self, model: nn.Module, client_sample
+    ) -> Tuple[Dict, Dict]:
+        model_ptrs = {client.id: model.copy().send(client) for client in client_sample}
         optimizer_ptrs = {
             client.id: optim.SGD(
                 model_ptrs[client.id].parameters(), lr=self.config.LEARNING_RATE
             )
-            for client in self.clients
+            for client in client_sample
         }  # TODO momentum is not supported at the moment
         return optimizer_ptrs, model_ptrs
 

@@ -5,12 +5,14 @@ from SyftFederatedLearnerMNIST import SyftFederatedLearnerMNIST
 
 logging.basicConfig(level=logging.INFO)
 
-for n_epochs in [1, 2, 3, 4, 5]:
-    name = f"Number of epochs: {n_epochs}"
+for client_fraction in [0.0, 0.1, 0.2, 0.5, 1.0]:
+    name = f"Client fraction: {client_fraction}"
     logging.info(name)
-    experiment = Experiment(workspace="federated-learning", project_name="increased_computation")
+    experiment = Experiment(
+        workspace="federated-learning", project_name="client_fraction"
+    )
     experiment.set_name(name)
-    config = SyftFederatedLearnerConfig(N_CLIENTS=5, N_EPOCH_PER_CLIENT=n_epochs)
+    config = SyftFederatedLearnerConfig(N_CLIENTS=100, CLIENT_FRACTION=client_fraction)
     learner = SyftFederatedLearnerMNIST(experiment, config)
     learner.train()
 
