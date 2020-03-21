@@ -1,18 +1,20 @@
 from comet_ml import Experiment
 import logging
-from SyftFederatedLearner import SyftFederatedLearnerConfig
-from SyftFederatedLearnerMNIST import SyftFederatedLearnerMNIST
+from SyftFederatedLearnerMNIST import SyftFederatedLearnerMNIST, SyftFederatedLearnerMNISTConfig
 
 logging.basicConfig(level=logging.INFO)
 
-for client_fraction in [0.0]:
-    name = f"Client fraction: {client_fraction}"
+for is_iid in [True, False]:
+    if is_iid:
+        name = "IID"
+    else:
+        name = "non IID"
     logging.info(name)
     experiment = Experiment(
-        workspace="federated-learning", project_name="client_fraction"
+        workspace="federated-learning", project_name="data_distribution"
     )
     experiment.set_name(name)
-    config = SyftFederatedLearnerConfig(N_CLIENTS=100, CLIENT_FRACTION=client_fraction, N_ROUNDS=1)
+    config = SyftFederatedLearnerMNISTConfig(N_CLIENTS=100, CLIENT_FRACTION=0.1, N_ROUNDS=10, IS_IID_DATA=is_iid)
     learner = SyftFederatedLearnerMNIST(experiment, config)
     learner.train()
 

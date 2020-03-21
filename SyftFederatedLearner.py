@@ -28,7 +28,7 @@ class SyftFederatedLearnerConfig(BaseModel):
     CLIENT_FRACTION: float = 1.0  # The fration of clients to participate in 1 round. Muss be between 0 and 1. 0 means selecting 1 client.
     N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before sync.
     BATCH_SIZE: int = 64  # Batch size
-    LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
+    LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer    
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
