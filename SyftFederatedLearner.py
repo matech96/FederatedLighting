@@ -50,6 +50,7 @@ class SyftFederatedLearner:
 
         self.federated_train_loader, self.test_loader = self.load_data()
         self.n_train_batches = len(self.federated_train_loader)
+        logging.info(f"Number of training batches: {self.n_train_batches}")
 
     @abstractmethod
     def load_data(self) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:
@@ -97,8 +98,8 @@ class SyftFederatedLearner:
         model = self.__collect_avg_model(model_ptrs)
         return model
 
-    def __train_one_epoch(self, optimizer_ptrs, model_ptrs, round, epoch_num):
-        for batch_num, (data, target) in enumerate(self.federated_train_loader):
+    def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
+        for curr_batch, (data, target) in enumerate(self.federated_train_loader):
             client_id = data.location.id
             optimizer = optimizer_ptrs[client_id]
             model = model_ptrs[client_id]
@@ -112,11 +113,8 @@ class SyftFederatedLearner:
 
             loss = loss.get()
 
-            client_epoch = (round * self.config.N_EPOCH_PER_CLIENT) + epoch_num
             self.log_client_step(
-                loss.item(),
-                data.location.id,
-                (client_epoch * self.n_train_batches) + batch_num,
+                loss.item(), data.location.id, curr_round, curr_epoch, curr_batch
             )
         return model
 
@@ -157,8 +155,17 @@ class SyftFederatedLearner:
         test_acc = 100.0 * correct / len(test_loader.dataset)
         return {"test_loss": test_loss, "test_acc": test_acc}
 
-    def log_client_step(self, loss, client_id, batch_num):
-        self.experiment.log_metric(f"{client_id}_train_loss", loss, step=batch_num)
+    def log_client_step(self, loss, client_id, curr_round, curr_epoch, curr_batch):
+        if (curr_batch % 10) != 0:
+            return
+
+        step = (
+            (curr_round * self.config.N_EPOCH_PER_CLIENT) + curr_epoch
+        ) * self.n_train_batches + curr_batch
+        logging.info(
+            f"R: {curr_round:4} E: {curr_epoch:4} B: {curr_batch:4} (S: {step}) Training loss: {loss}"
+        )
+        self.experiment.log_metric(f"{client_id}_train_loss", loss, step=step)
 
     def log_test_metric(self, metrics, batch_num):
         for name, value in metrics.items():
