@@ -11,6 +11,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 
+from syftutils.datasets import get_dataset_items_at
+
 from SyftFederatedLearner import SyftFederatedLearner, SyftFederatedLearnerConfig
 
 
@@ -47,13 +49,11 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
                 digit_sort_idx[i : i + 2,].flatten()
                 for i in range(0, 2 * self.config.N_CLIENTS, 2)
             ]
-            dss = [
-                sy.BaseDataset(
-                    minist_train_ds.data[idx].view(-1, 1, 28, 28).send(c),
-                    minist_train_ds.targets[idx].send(c),
-                )
-                for idx, c in zip(indices, self.clients)
-            ]
+            dss = []
+            for idx, c in zip(indices, self.clients):
+                data, target = get_dataset_items_at(minist_train_ds, idx)
+                dss.append(sy.BaseDataset(data.send(c), target.send(c)))
+
             federated_train_dataset = sy.FederatedDataset(dss)
 
         federated_train_loader = sy.FederatedDataLoader(
