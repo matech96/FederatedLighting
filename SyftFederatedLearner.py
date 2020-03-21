@@ -28,7 +28,7 @@ class SyftFederatedLearnerConfig:
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
 
-class SyftFederatedLearner:
+class SyftFederatedLearner(ABC):
     def __init__(
         self, experiment: Experiment, config: SyftFederatedLearnerConfig
     ) -> None:
@@ -76,18 +76,21 @@ class SyftFederatedLearner:
         Returns:
             None -- No return value.
         """
-
-        model = self.build_model().to(self.device)
-        for round in range(self.config.N_ROUNDS):
-            model = self.__train_one_round(model, round)
-            metrics = self.test(model, self.test_loader)
-            self.log_test_metric(
-                metrics, round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches
-            )
+        try:
+            model = self.build_model().to(self.device)
+            for round in range(self.config.N_ROUNDS):
+                model = self.__train_one_round(model, round)
+                metrics = self.test(model, self.test_loader)
+                self.log_test_metric(
+                    metrics,
+                    round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
+                )
+        except InterruptedExperiment:
+            pass
 
         # th.save(model.state_dict(), "mnist_cnn.pt")
 
-    def __train_one_round(self, model, round):
+    def __train_one_round(self, model: nn.Module, round: int):
         model.train()
 
         optimizer_ptrs, model_ptrs = self.__send_model_to_clients(model)
@@ -118,7 +121,7 @@ class SyftFederatedLearner:
             )
         return model
 
-    def __send_model_to_clients(self, model):
+    def __send_model_to_clients(self, model: nn.Module) -> Tuple[Dict, Dict]:
         model_ptrs = {client.id: model.copy().send(client) for client in self.clients}
         optimizer_ptrs = {
             client.id: optim.SGD(
@@ -155,7 +158,14 @@ class SyftFederatedLearner:
         test_acc = 100.0 * correct / len(test_loader.dataset)
         return {"test_loss": test_loss, "test_acc": test_acc}
 
-    def log_client_step(self, loss, client_id, curr_round, curr_epoch, curr_batch):
+    def log_client_step(
+        self,
+        loss: float,
+        client_id: str,
+        curr_round: int,
+        curr_epoch: int,
+        curr_batch: int,
+    ):
         if (curr_batch % 10) != 0:
             return
 
@@ -167,6 +177,6 @@ class SyftFederatedLearner:
         )
         self.experiment.log_metric(f"{client_id}_train_loss", loss, step=step)
 
-    def log_test_metric(self, metrics, batch_num):
+    def log_test_metric(self, metrics: Dict, batch_num: int):
         for name, value in metrics.items():
             self.experiment.log_metric(name, value, step=batch_num)
