@@ -51,7 +51,7 @@ class SyftFederatedLearner(ABC):
             config {SyftFederatedLearnerConfig} -- Training configuration description.
         """
         super().__init__()
-        self.device = th.device("cuda" if th.cuda.is_available() else "cpu")
+        self.device = "cpu"  # th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
@@ -61,7 +61,9 @@ class SyftFederatedLearner(ABC):
         ]
 
         self.federated_train_loader, self.test_loader = self.load_data()
-        self.n_train_batches = len(self.federated_train_loader)
+        self.n_train_batches = int(
+            len(self.federated_train_loader) / self.config.N_CLIENTS
+        )
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
     @abstractmethod
@@ -198,7 +200,7 @@ class SyftFederatedLearner(ABC):
             (curr_round * self.config.N_EPOCH_PER_CLIENT) + curr_epoch
         ) * self.n_train_batches + curr_batch
         logging.info(
-            f"R: {curr_round:4} E: {curr_epoch:4} B: {curr_batch:4} (S: {step}) Training loss: {loss}"
+            f"R: {curr_round:4} E: {curr_epoch:4} B: {curr_batch:4} (S: {step} C: {client_id}) Training loss: {loss}"
         )
         self.experiment.log_metric(f"{client_id}_train_loss", loss, step=step)
 
