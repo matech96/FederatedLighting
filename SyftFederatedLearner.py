@@ -63,7 +63,7 @@ class SyftFederatedLearner(ABC):
         self.federated_train_loader, self.test_loader = self.load_data()
         self.n_train_batches = int(
             len(self.federated_train_loader) / self.config.N_CLIENTS
-        )
+        ) # TODO batch per client
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
     @abstractmethod
