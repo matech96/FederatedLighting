@@ -49,7 +49,7 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             ]
             dss = [
                 sy.BaseDataset(
-                    minist_train_ds.data[idx].send(c),
+                    minist_train_ds.data[idx].view(-1, 1, 28, 28).send(c),
                     minist_train_ds.targets[idx].send(c),
                 )
                 for idx, c in zip(indices, self.clients)

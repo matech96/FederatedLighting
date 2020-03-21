@@ -4,7 +4,7 @@ from SyftFederatedLearnerMNIST import SyftFederatedLearnerMNIST, SyftFederatedLe
 
 logging.basicConfig(level=logging.INFO)
 
-for is_iid in [True, False]:
+for is_iid in [False, True]:
     if is_iid:
         name = "IID"
     else:
