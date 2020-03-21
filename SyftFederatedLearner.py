@@ -124,6 +124,9 @@ class SyftFederatedLearner(ABC):
     def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
         for curr_batch, (data, target) in enumerate(self.federated_train_loader):
             client_id = data.location.id
+            if client_id not in model_ptrs.keys():
+                continue
+
             optimizer = optimizer_ptrs[client_id]
             model = model_ptrs[client_id]
 
