@@ -40,9 +40,11 @@ class SyftFederatedLearnerConfig(BaseModel):
             return value
 
     _val_CLIENT_FRACTION = validator("CLIENT_FRACTION", allow_reuse=True)(
-        __percentage_validator
+        __percentage_validator.__func__
     )
-    _val_TARGET_ACC = validator("TARGET_ACC", allow_reuse=True)(__percentage_validator)
+    _val_TARGET_ACC = validator("TARGET_ACC", allow_reuse=True)(
+        __percentage_validator.__func__
+    )
 
 
 class SyftFederatedLearner(ABC):
