@@ -1,6 +1,6 @@
 from collections import defaultdict
 import torch as th
-import suft as sy
+import syft as sy
 
 
 def get_dataset_items_at(ds, idx):
