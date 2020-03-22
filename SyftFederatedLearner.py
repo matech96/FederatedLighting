@@ -21,8 +21,8 @@ class SyftFederatedLearnerConfig(BaseModel):
     class Config:
         validate_assignment = True
 
-    N_ROUNDS: int = 10  # The number of round for training (analogous for number of epochs).
-    TEST_AFTER: int = 1  # Evaluate on the test set after every TEST_AFTER rounds.
+    TARGET_ACC: float = 0.99  # The training stopps when the test accuracy is higher, than this value.
+    MAX_ROUNDS: int = 10  # The maximum number of round for training.
     N_CLIENTS: int = 2  # The number of clients to participate in a round.
     CLIENT_FRACTION: float = 1.0  # The fration of clients to participate in 1 round. Muss be between 0 and 1. 0 means selecting 1 client.
     N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before sync.
@@ -31,8 +31,15 @@ class SyftFederatedLearnerConfig(BaseModel):
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
-    @validator("CLIENT_FRACTION", check_fields=False)  # class method
-    def CLIENT_FRACTION_muss_be_procentage(cls, value: float) -> None:
+    _val_CLIENT_FRACTION = validator("CLIENT_FRACTION", allow_reuse=True)(
+        SyftFederatedLearnerConfig.__percentage_validator
+    )
+    _val_TARGET_ACC = validator("TARGET_ACC", allow_reuse=True)(
+        SyftFederatedLearnerConfig.__percentage_validator
+    )
+
+    @staticmethod
+    def __percentage_validator(value: float) -> None:
         if (0.0 > value) or (value > 1.0):
             raise ValueError("CLIENT_FRACTION muss be between 0 and 1.")
         else:
@@ -91,13 +98,17 @@ class SyftFederatedLearner(ABC):
         """
         try:
             model = self.build_model().to(self.device)
-            for round in range(self.config.N_ROUNDS):
+            for round in range(self.config.MAX_ROUNDS):
                 model = self.__train_one_round(model, round)
                 metrics = self.test(model, self.test_loader)
                 self.log_test_metric(
                     metrics,
                     round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
                 )
+
+                if metrics["test_acc"] > self.config.TARGET_ACC:
+                    self.experiment.log_parameter("Round2train", round)
+                    break
         except InterruptedExperiment:
             pass
 
