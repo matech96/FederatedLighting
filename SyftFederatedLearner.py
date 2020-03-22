@@ -193,7 +193,7 @@ class SyftFederatedLearner(ABC):
                 correct += pred.eq(target.view_as(pred)).sum().item()
 
         test_loss /= len(test_loader.dataset)
-        test_acc = 100.0 * correct / len(test_loader.dataset)
+        test_acc = correct / len(test_loader.dataset)
         return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(
@@ -212,6 +212,7 @@ class SyftFederatedLearner(ABC):
         )
         self.experiment.log_metric(f"{client_id}_train_loss", loss, step=step)
 
-    def log_test_metric(self, metrics: Dict, batch_num: int):
+    def log_test_metric(self, metrics: Dict[str, float], batch_num: int):
         for name, value in metrics.items():
-            self.experiment.log_metric(name, value, step=batch_num)
+            nice_value = 100 * value if name.endswith("_acc") else value
+            self.experiment.log_metric(name, nice_value, step=batch_num)
