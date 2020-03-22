@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 
 for is_iid in [False, True]:
-    for B in [sys.maxsize, 10]:
+    for B in [600, 10]:
         for C in [0.0, 0.1, 0.2, 0.5, 1.0]:
             dist = "IID" if is_iid else "non IID"
             name = f"{dist} - {B} - {C}"
