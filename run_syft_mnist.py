@@ -12,26 +12,27 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-for is_iid in [False, True]:
-    for B in [600, 10]:
-        for C in [0.0, 0.1, 0.2, 0.5, 1.0]:
-            dist = "IID" if is_iid else "non IID"
-            name = f"{dist} - {B} - {C}"
+B = 10  # 600
 
-            logging.info(name)
-            experiment = Experiment(
-                workspace="federated-learning", project_name="Increasing parallelism"
-            )
-            experiment.set_name(name)
-            config = SyftFederatedLearnerMNISTConfig(
-                IS_IID_DATA=is_iid,
-                BATCH_SIZE=B,
-                CLIENT_FRACTION=C,
-                N_CLIENTS=100,
-                N_EPOCH_PER_CLIENT=5,
-                N_ROUNDS=1200,
-            )
-            learner = SyftFederatedLearnerMNIST(experiment, config)
-            learner.train()
+for is_iid in [True, False]:
+    for C in [0.1, 0.2, 0.5, 1.0]:  # 0.0
+        dist = "IID" if is_iid else "non IID"
+        name = f"{dist} - {B} - {C}"
+
+        logging.info(name)
+        experiment = Experiment(
+            workspace="federated-learning", project_name="Increasing parallelism"
+        )
+        experiment.set_name(name)
+        config = SyftFederatedLearnerMNISTConfig(
+            IS_IID_DATA=is_iid,
+            BATCH_SIZE=B,
+            CLIENT_FRACTION=C,
+            N_CLIENTS=100,
+            N_EPOCH_PER_CLIENT=5,
+            N_ROUNDS=300,
+        )
+        learner = SyftFederatedLearnerMNIST(experiment, config)
+        learner.train()
 
 # TODO n workers for data loading is broken
