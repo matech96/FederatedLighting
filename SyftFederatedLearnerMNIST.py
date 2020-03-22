@@ -54,7 +54,7 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
 
         test_loader = th.utils.data.DataLoader(
             mnist_test_ds,
-            batch_size=10000,
+            batch_size=64,
             shuffle=True,
             num_workers=self.config.DL_N_WORKER,
             pin_memory=True,
