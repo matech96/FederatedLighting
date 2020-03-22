@@ -14,7 +14,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from syftutils.multipointer import avg_models, ClientBatchIter
+from syftutils.multipointer import avg_models
+from syftutils.datasets import ClientBatchIter
 
 
 class SyftFederatedLearnerConfig(BaseModel):
