@@ -32,19 +32,17 @@ class SyftFederatedLearnerConfig(BaseModel):
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
-    _val_CLIENT_FRACTION = validator("CLIENT_FRACTION", allow_reuse=True)(
-        SyftFederatedLearnerConfig.__percentage_validator
-    )
-    _val_TARGET_ACC = validator("TARGET_ACC", allow_reuse=True)(
-        SyftFederatedLearnerConfig.__percentage_validator
-    )
-
     @staticmethod
     def __percentage_validator(value: float) -> None:
         if (0.0 > value) or (value > 1.0):
             raise ValueError("CLIENT_FRACTION muss be between 0 and 1.")
         else:
             return value
+
+    _val_CLIENT_FRACTION = validator("CLIENT_FRACTION", allow_reuse=True)(
+        __percentage_validator
+    )
+    _val_TARGET_ACC = validator("TARGET_ACC", allow_reuse=True)(__percentage_validator)
 
 
 class SyftFederatedLearner(ABC):
