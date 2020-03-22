@@ -100,6 +100,7 @@ class SyftFederatedLearner(ABC):
         try:
             model = self.build_model().to(self.device)
             for round in range(self.config.MAX_ROUNDS):
+                self.experiment.log_parameter("curr_round", round)
                 model = self.__train_one_round(model, round)
                 metrics = self.test(model, self.test_loader)
                 self.log_test_metric(
@@ -108,7 +109,6 @@ class SyftFederatedLearner(ABC):
                 )
 
                 if metrics["test_acc"] > self.config.TARGET_ACC:
-                    self.experiment.log_parameter("Round2train", round)
                     break
         except InterruptedExperiment:
             pass
