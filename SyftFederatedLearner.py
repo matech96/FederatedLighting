@@ -58,7 +58,7 @@ class SyftFederatedLearner(ABC):
             config {SyftFederatedLearnerConfig} -- Training configuration description.
         """
         super().__init__()
-        self.device = "cpu"  # th.device("cuda" if th.cuda.is_available() else "cpu")
+        self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
@@ -98,7 +98,7 @@ class SyftFederatedLearner(ABC):
             None -- No return value.
         """
         try:
-            model = self.build_model().to(self.device)
+            model = self.build_model()
             for round in range(self.config.MAX_ROUNDS):
                 self.experiment.log_parameter("curr_round", round)
                 model = self.__train_one_round(model, round)
@@ -160,7 +160,7 @@ class SyftFederatedLearner(ABC):
     def __send_model_to_clients(
         self, model: nn.Module, client_sample
     ) -> Tuple[Dict, Dict]:
-        model_ptrs = {client.id: model.copy().send(client) for client in client_sample}
+        model_ptrs = {client.id: model.copy().send(client).to(self.device) for client in client_sample}
         optimizer_ptrs = {
             client.id: optim.SGD(
                 model_ptrs[client.id].parameters(), lr=self.config.LEARNING_RATE
