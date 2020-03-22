@@ -3,7 +3,7 @@ from comet_ml import Experiment
 
 import random
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Callable, Dict
+from typing import Tuple, Dict
 import logging
 
 from pydantic import BaseModel, validator
@@ -13,9 +13,8 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torchvision import datasets, transforms
 
-from syftutils.multipointer import avg_models
+from syftutils.multipointer import avg_models, ClientBatchIter
 
 
 class SyftFederatedLearnerConfig(BaseModel):
@@ -27,7 +26,7 @@ class SyftFederatedLearnerConfig(BaseModel):
     N_CLIENTS: int = 2  # The number of clients to participate in a round.
     CLIENT_FRACTION: float = 1.0  # The fration of clients to participate in 1 round. Muss be between 0 and 1. 0 means selecting 1 client.
     N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before sync.
-    BATCH_SIZE: int = 64  # Batch size
+    BATCH_SIZE: int = 64  # Batch size. If set to sys.maxsize, the epoch is processed in a single batch.
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
@@ -124,7 +123,7 @@ class SyftFederatedLearner(ABC):
         return client_sample
 
     def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
-        for curr_batch, (data, target) in enumerate(self.federated_train_loader):
+        for curr_batch, (data, target) in ClientBatchIter(self.federated_train_loader):
             client_id = data.location.id
             if client_id not in model_ptrs.keys():
                 continue
@@ -193,9 +192,6 @@ class SyftFederatedLearner(ABC):
         curr_epoch: int,
         curr_batch: int,
     ):
-        if (curr_batch % 10) != 0:
-            return
-
         step = (
             (curr_round * self.config.N_EPOCH_PER_CLIENT) + curr_epoch
         ) * self.n_train_batches + curr_batch

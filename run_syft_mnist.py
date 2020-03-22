@@ -2,7 +2,10 @@ from comet_ml import Experiment
 import logging
 from SyftFederatedLearnerMNIST import SyftFederatedLearnerMNIST, SyftFederatedLearnerMNISTConfig
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 for is_iid in [False, True]:
     if is_iid:

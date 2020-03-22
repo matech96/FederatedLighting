@@ -1,6 +1,6 @@
 from comet_ml import Experiment
 
-from typing import List, Tuple, Callable, Dict
+from typing import Tuple
 import logging
 
 import numpy as np
@@ -8,7 +8,6 @@ import syft as sy
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 from torchvision import datasets, transforms
 
 from syftutils.datasets import get_dataset_items_at
@@ -34,27 +33,15 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         self.config = config  # Purly to help intellisense
 
     def load_data(self) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:
-        logging.info("Train MNIST data loading ...")
-
+        logging.info("MNIST data loading ...")
         minist_train_ds, mnist_test_ds = self.__get_mnist()
+        logging.info("MNIST data loaded.")
+
+        logging.info("Data distributing ...")
         if self.config.IS_IID_DATA:
             federated_train_dataset = minist_train_ds.federate(self.clients)
         else:
-            digit_sort_idx = np.concatenate(
-                [np.where(minist_train_ds.targets == i)[0] for i in range(10)]
-            )
-            digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
-            np.random.shuffle(digit_sort_idx)
-            indices = [
-                digit_sort_idx[i : i + 2,].flatten()
-                for i in range(0, 2 * self.config.N_CLIENTS, 2)
-            ]
-            dss = []
-            for idx, c in zip(indices, self.clients):
-                data, target = get_dataset_items_at(minist_train_ds, idx)
-                dss.append(sy.BaseDataset(data.send(c), target.send(c)))
-
-            federated_train_dataset = sy.FederatedDataset(dss)
+            federated_train_dataset = self.__distribute_data_non_IID(minist_train_ds)
 
         federated_train_loader = sy.FederatedDataLoader(
             federated_train_dataset,
@@ -63,17 +50,15 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             num_workers=self.config.DL_N_WORKER,
             pin_memory=True,
         )
-        logging.info("Train MNIST data loaded.")
+        logging.info("Data distributed.")
 
-        logging.info("Test MNIST data loading ...")
         test_loader = th.utils.data.DataLoader(
             mnist_test_ds,
-            batch_size=self.config.BATCH_SIZE,
+            batch_size=10000,
             shuffle=True,
             num_workers=self.config.DL_N_WORKER,
             pin_memory=True,
         )
-        logging.info("Test MNIST data loaded.")
 
         return federated_train_loader, test_loader
 
@@ -94,6 +79,24 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             ),
         )
         return minist_train_ds, mnist_test_ds
+
+    def __distribute_data_non_IID(self, minist_train_ds):
+        digit_sort_idx = np.concatenate(
+            [np.where(minist_train_ds.targets == i)[0] for i in range(10)]
+        )
+        digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
+        np.random.shuffle(digit_sort_idx)
+        indices = [
+            digit_sort_idx[i : i + 2, ].flatten()
+            for i in range(0, 2 * self.config.N_CLIENTS, 2)
+        ]
+        dss = []
+        for idx, c in zip(indices, self.clients):
+            data, target = get_dataset_items_at(minist_train_ds, idx)
+            dss.append(sy.BaseDataset(data.send(c), target.send(c)))
+
+        federated_train_dataset = sy.FederatedDataset(dss)
+        return federated_train_dataset
 
     def build_model(self) -> nn.Module:
         return Net()
