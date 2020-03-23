@@ -8,7 +8,6 @@ import logging
 
 from pydantic import BaseModel, validator
 
-import syft as sy
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F

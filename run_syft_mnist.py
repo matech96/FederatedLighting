@@ -1,5 +1,4 @@
 from comet_ml import Experiment
-import sys
 import logging
 from SyftFederatedLearnerMNIST import (
     SyftFederatedLearnerMNIST,

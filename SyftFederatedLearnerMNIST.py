@@ -4,13 +4,10 @@ from typing import Tuple, List, Callable
 import logging
 
 import numpy as np
-import syft as sy
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
-
-from syftutils.datasets import get_dataset_items_at
 
 from SyftFederatedLearner import SyftFederatedLearner, SyftFederatedLearnerConfig
 
