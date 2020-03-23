@@ -37,17 +37,17 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         minist_train_ds, mnist_test_ds = self.__get_mnist()
         logging.info("MNIST data loaded.")
 
-        logging.info("Data distributing ...")
+        logging.info("Data for client is being sampled ...")
+        n_training_samples = len(minist_train_ds)
+        logging.info("Number of training samples: {n_training_samples}")
         if self.config.IS_IID_DATA:
-            federated_train_dataset = minist_train_ds.federate(
-                self.clients
-            )  # TODO HARD get list of index samples instead
+            indices = np.arange(n_training_samples).reshape(self.config.N_CLIENTS, -1)
+            indices = indices.tolist()
         else:
             indices = self.__distribute_data_non_IID(
                 minist_train_ds
-            )  # TODO get list of index samples instead
+            )
 
-        # TODO HARD use list of DataLoader and indices with sampler
         train_loader_list = []
         for idx in indices:
             sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
@@ -58,14 +58,7 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
                 sampler=sampler,
             )
             train_loader_list.append(loader)
-        # federated_train_loader = sy.FederatedDataLoader(
-        #     federated_train_dataset,
-        #     batch_size=self.config.BATCH_SIZE,
-        #     shuffle=True,
-        #     num_workers=self.config.DL_N_WORKER,
-        #     pin_memory=True,
-        # )
-        logging.info("Data distributed.")
+        logging.info("Data for client is sampled.")
 
         test_loader = th.utils.data.DataLoader(
             mnist_test_ds,
@@ -105,14 +98,6 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             for i in range(0, 2 * self.config.N_CLIENTS, 2)
         ]
         return indices
-        # TODO return idices and remove the rest
-        # dss = []
-        # for idx, c in zip(indices, self.clients):
-        #     data, target = get_dataset_items_at(minist_train_ds, idx)
-        #     dss.append(sy.BaseDataset(data.send(c), target.send(c)))
-
-        # federated_train_dataset = sy.FederatedDataset(dss)
-        # return federated_train_dataset
 
     def build_model(self) -> nn.Module:
         return Net()
