@@ -63,8 +63,7 @@ class SyftFederatedLearner(ABC):
         self.experiment = experiment
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
-        self.hook = sy.TorchHook(th)
-        
+
         model_cls = self.get_model_cls()
         self.model = model_cls().to(self.device)
 
@@ -74,7 +73,7 @@ class SyftFederatedLearner(ABC):
         )  # TODO batch per client
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
-        self.clients = [Client(model_cls, loader) for loader in self.train_loader_list]
+        self.clients = [Client(self, model_cls, loader, self.device) for loader in self.train_loader_list]
 
     @abstractmethod
     def load_data(
@@ -195,9 +194,7 @@ class SyftFederatedLearner(ABC):
         final_state_dict = avg_model_state_dicts(collected_model_state_dicts)
         self.model.load_state_dict(final_state_dict)
 
-    def test(
-        self, test_loader: th.utils.data.DataLoader
-    ) -> Dict[str, float]:
+    def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         self.model.eval()
         test_loss = 0
         correct = 0

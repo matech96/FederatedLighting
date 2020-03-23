@@ -1,7 +1,4 @@
-from comet_ml import Experiment
-
 from typing import Callable
-import logging
 
 import torch as th
 import torch.nn.functional as F
@@ -29,6 +26,7 @@ class Client:
         self, model_state_dict, config
     ):  # TODO Doc: you have to call this before train_round!
         self.model.load_state_dict(model_state_dict)
+        self.model.to(self.device)
         self.opt = th.optim.SGD(self.model.parameters(), lr=config.LEARNING_RATE)
 
     def train_round(
@@ -42,8 +40,6 @@ class Client:
                 loss = F.nll_loss(output, target)
                 loss.backward()
                 self.opt.step()
-
-                loss = loss.get()
 
                 self.trainer.log_client_step(
                     loss.item(), self.id, curr_round, curr_epoch, curr_batch
