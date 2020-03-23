@@ -1,6 +1,6 @@
 from comet_ml import Experiment
 
-from typing import Tuple, List
+from typing import Tuple, List, Callable
 import logging
 
 import numpy as np
@@ -32,7 +32,9 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         super().__init__(experiment, config)
         self.config = config  # Purly to help intellisense
 
-    def load_data(self) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
+    def load_data(
+        self,
+    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
         logging.info("MNIST data loading ...")
         minist_train_ds, mnist_test_ds = self.__get_mnist()
         logging.info("MNIST data loaded.")
@@ -44,9 +46,7 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             indices = np.arange(n_training_samples).reshape(self.config.N_CLIENTS, -1)
             indices = indices.tolist()
         else:
-            indices = self.__distribute_data_non_IID(
-                minist_train_ds
-            )
+            indices = self.__distribute_data_non_IID(minist_train_ds)
 
         train_loader_list = []
         for idx in indices:
@@ -99,8 +99,8 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         ]
         return indices
 
-    def build_model(self) -> nn.Module:
-        return Net()
+    def get_model_cls(self) -> Callable[[], nn.Module]:
+        return Net
 
 
 class Net(nn.Module):

@@ -3,7 +3,7 @@ from comet_ml import Experiment
 
 import random
 from abc import ABC, abstractmethod
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List, Callable
 import logging
 
 from pydantic import BaseModel, validator
@@ -14,8 +14,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from syftutils.multipointer import avg_models
+from syftutils.multipointer import avg_model_state_dicts
 from syftutils.datasets import ClientBatchIter
+
+from Client import Client
 
 
 class SyftFederatedLearnerConfig(BaseModel):
@@ -63,30 +65,31 @@ class SyftFederatedLearner(ABC):
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
         self.hook = sy.TorchHook(th)
-        self.clients = [
-            sy.VirtualWorker(self.hook, f"{i}")
-            for i in range(self.config.N_CLIENTS)  # TODO Client class
-        ]
+        
+        model_cls = self.get_model_cls()
+        self.model = model_cls().to(self.device)
 
-        self.federated_train_loader, self.test_loader = self.load_data()
+        self.train_loader_list, self.test_loader = self.load_data()
         self.n_train_batches = int(
-            len(self.federated_train_loader) / self.config.N_CLIENTS
+            len(self.train_loader_list) / self.config.N_CLIENTS
         )  # TODO batch per client
         logging.info(f"Number of training batches: {self.n_train_batches}")
+
+        self.clients = [Client(model_cls, loader) for loader in self.train_loader_list]
 
     @abstractmethod
     def load_data(
         self,
-    ) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:  # TODO List[DataLoaderf]
+    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
         """Loads the data.
 
         Returns:
-            Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader] -- [The first element is the training set, the second is the test set]
+            Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader] -- [The first element is the training set, the second is the test set]
         """
         pass
 
     @abstractmethod
-    def build_model(self) -> nn.Module:
+    def get_model_cls(self) -> Callable[[], nn.Module]:
         """Returns the model to be trained.
 
         Returns:
@@ -101,11 +104,10 @@ class SyftFederatedLearner(ABC):
             None -- No return value.
         """
         try:
-            model = self.build_model().to(self.device)
             for round in range(self.config.MAX_ROUNDS):
                 self.experiment.log_parameter("curr_round", round)
-                model = self.__train_one_round(model, round)
-                metrics = self.test(model, self.test_loader)
+                self.__train_one_round(round)
+                metrics = self.test(self.test_loader)
                 self.log_test_metric(
                     metrics,
                     round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
@@ -118,22 +120,24 @@ class SyftFederatedLearner(ABC):
 
         # th.save(model.state_dict(), "mnist_cnn.pt")
 
-    def __train_one_round(self, model: nn.Module, round: int):
-        model.train()
+    def __train_one_round(self, curr_round: int):
+        self.model.train()
 
         client_sample = self.__select_clients()
-        optimizer_ptrs, model_ptrs = self.__send_model_to_clients(
-            model, client_sample
-        )  # TODO no return value
+        for client in client_sample:
+            client.set_model(self.model.state_dict(), self.config)
+        # optimizer_ptrs, model_ptrs = self.__send_model_to_clients(
+        #     self.model, client_sample
+        # )  # TODO no return value
 
-        # TODO HARD train by client, not by epoch
-        for epoch_num in range(self.config.N_EPOCH_PER_CLIENT):
-            model = self.__train_one_epoch(
-                optimizer_ptrs, model_ptrs, round, epoch_num
-            ) 
+        for client in client_sample:
+            client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
 
-        model = self.__collect_avg_model(model_ptrs)
-        return model
+        # # TODO HARD train by client, not by epoch
+        # for epoch_num in range(self.config.N_EPOCH_PER_CLIENT):
+        #     self.model = self.__train_one_epoch(optimizer_ptrs, model_ptrs, curr_round, epoch_num)
+
+        self.__collect_avg_model(client_sample)
 
     def __select_clients(self):
         client_sample = random.sample(
@@ -142,62 +146,66 @@ class SyftFederatedLearner(ABC):
         logging.info(f"Selected {len(client_sample)} clients in this round.")
         return client_sample
 
-    def __send_model_to_clients(
-        self, model: nn.Module, client_sample
-    ) -> Tuple[Dict, Dict]:
-        model_ptrs = {
-            client.id: model.copy().send(client)
-            for client in client_sample  # TODO use Client class function
-        }  # .to(self.device)
-        optimizer_ptrs = {
-            client.id: optim.SGD(
-                model_ptrs[client.id].parameters(),
-                lr=self.config.LEARNING_RATE,  # TODO use Client class function
-            )
-            for client in client_sample
-        }  # TODO momentum is not supported at the moment
-        return optimizer_ptrs, model_ptrs  # TODO noe return value
+    # def __send_model_to_clients(
+    #     self, client_sample
+    # ) -> Tuple[Dict, Dict]:
+    #     model_ptrs = {
+    #         client.id: self.model.copy().send(client)
+    #         for client in client_sample  # TODO use Client class function
+    #     }  # .to(self.device)
+    #     optimizer_ptrs = {
+    #         client.id: optim.SGD(
+    #             model_ptrs[client.id].parameters(),
+    #             lr=self.config.LEARNING_RATE,  # TODO use Client class function
+    #         )
+    #         for client in client_sample
+    #     }  # TODO momentum is not supported at the moment
+    #     return optimizer_ptrs, model_ptrs  # TODO noe return value
 
-    def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
-        for curr_batch, (data, target) in ClientBatchIter(self.federated_train_loader):
-            client_id = data.location.id
-            if client_id not in model_ptrs.keys():
-                continue
+    # def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
+    #     for curr_batch, (data, target) in ClientBatchIter(
+    #         self.ftrain_loader_listederated_train_loader
+    #     ):
+    #         client_id = data.location.id
+    #         if client_id not in model_ptrs.keys():
+    #             continue
 
-            # TODO HARD move to client class 
-            optimizer = optimizer_ptrs[client_id]
-            model = model_ptrs[client_id]
+    #         # TODO HARD move to client class
+    #         optimizer = optimizer_ptrs[client_id]
+    #         model = model_ptrs[client_id]
 
-            data, target = data.to(self.device), target.to(self.device)
-            optimizer.zero_grad()
-            output = model(data)
-            loss = F.nll_loss(output, target)
-            loss.backward()
-            optimizer.step()
+    #         data, target = data.to(self.device), target.to(self.device)
+    #         optimizer.zero_grad()
+    #         output = model(data)
+    #         loss = F.nll_loss(output, target)
+    #         loss.backward()
+    #         optimizer.step()
 
-            loss = loss.get()
+    #         loss = loss.get()
 
-            self.log_client_step(
-                loss.item(), data.location.id, curr_round, curr_epoch, curr_batch
-            )
-            #############################
-        return model
+    #         self.log_client_step(
+    #             loss.item(), data.location.id, curr_round, curr_epoch, curr_batch
+    #         )
+    #         #############################
+    #     return model
 
-    def __collect_avg_model(self, model_ptrs): # TODO no model_ptrs
-        collected_models = [model.get() for model in model_ptrs.values()] # TODO use Client class
-        model = avg_models(collected_models)
-        return model
+    def __collect_avg_model(self, client_sample):
+        collected_model_state_dicts = [
+            client.get_model_state_dict() for client in client_sample
+        ]
+        final_state_dict = avg_model_state_dicts(collected_model_state_dicts)
+        self.model.load_state_dict(final_state_dict)
 
     def test(
-        self, model: nn.Module, test_loader: th.utils.data.DataLoader
+        self, test_loader: th.utils.data.DataLoader
     ) -> Dict[str, float]:
-        model.eval()
+        self.model.eval()
         test_loss = 0
         correct = 0
         with th.no_grad():
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
-                output = model(data)
+                output = self.model(data)
                 test_loss += F.nll_loss(
                     output, target, reduction="sum"
                 ).item()  # sum up batch loss
