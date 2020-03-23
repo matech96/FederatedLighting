@@ -34,5 +34,3 @@ for is_iid in [True, False]:
         )
         learner = SyftFederatedLearnerMNIST(experiment, config)
         learner.train()
-
-# TODO n workers for data loading is broken

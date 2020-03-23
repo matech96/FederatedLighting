@@ -124,16 +124,9 @@ class SyftFederatedLearner(ABC):
         client_sample = self.__select_clients()
         for client in client_sample:
             client.set_model(self.model.state_dict(), self.config)
-        # optimizer_ptrs, model_ptrs = self.__send_model_to_clients(
-        #     self.model, client_sample
-        # )  # TODO no return value
 
         for client in client_sample:
             client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
-
-        # # TODO HARD train by client, not by epoch
-        # for epoch_num in range(self.config.N_EPOCH_PER_CLIENT):
-        #     self.model = self.__train_one_epoch(optimizer_ptrs, model_ptrs, curr_round, epoch_num)
 
         self.__collect_avg_model(client_sample)
 
@@ -143,49 +136,6 @@ class SyftFederatedLearner(ABC):
         )
         logging.info(f"Selected {len(client_sample)} clients in this round.")
         return client_sample
-
-    # def __send_model_to_clients(
-    #     self, client_sample
-    # ) -> Tuple[Dict, Dict]:
-    #     model_ptrs = {
-    #         client.id: self.model.copy().send(client)
-    #         for client in client_sample  # TODO use Client class function
-    #     }  # .to(self.device)
-    #     optimizer_ptrs = {
-    #         client.id: optim.SGD(
-    #             model_ptrs[client.id].parameters(),
-    #             lr=self.config.LEARNING_RATE,  # TODO use Client class function
-    #         )
-    #         for client in client_sample
-    #     }  # TODO momentum is not supported at the moment
-    #     return optimizer_ptrs, model_ptrs  # TODO noe return value
-
-    # def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
-    #     for curr_batch, (data, target) in ClientBatchIter(
-    #         self.ftrain_loader_listederated_train_loader
-    #     ):
-    #         client_id = data.location.id
-    #         if client_id not in model_ptrs.keys():
-    #             continue
-
-    #         # TODO HARD move to client class
-    #         optimizer = optimizer_ptrs[client_id]
-    #         model = model_ptrs[client_id]
-
-    #         data, target = data.to(self.device), target.to(self.device)
-    #         optimizer.zero_grad()
-    #         output = model(data)
-    #         loss = F.nll_loss(output, target)
-    #         loss.backward()
-    #         optimizer.step()
-
-    #         loss = loss.get()
-
-    #         self.log_client_step(
-    #             loss.item(), data.location.id, curr_round, curr_epoch, curr_batch
-    #         )
-    #         #############################
-    #     return model
 
     def __collect_avg_model(self, client_sample):
         collected_model_state_dicts = [
