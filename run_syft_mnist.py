@@ -24,13 +24,14 @@ for is_iid in [True, False]:
             workspace="federated-learning", project_name="Increasing parallelism"
         )
         experiment.set_name(name)
+        # TODO a paraméterek helytelen nevére nem adott hibát
         config = SyftFederatedLearnerMNISTConfig(
             IS_IID_DATA=is_iid,
             BATCH_SIZE=B,
             CLIENT_FRACTION=C,
             N_CLIENTS=100,
             N_EPOCH_PER_CLIENT=5,
-            N_ROUNDS=300,
+            MAX_ROUNDS=300,
         )
         learner = SyftFederatedLearnerMNIST(experiment, config)
         learner.train()
