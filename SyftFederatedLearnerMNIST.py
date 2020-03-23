@@ -39,10 +39,15 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
 
         logging.info("Data distributing ...")
         if self.config.IS_IID_DATA:
-            federated_train_dataset = minist_train_ds.federate(self.clients)
+            federated_train_dataset = minist_train_ds.federate(
+                self.clients
+            )  # TODO HARD get list of index samples instead
         else:
-            federated_train_dataset = self.__distribute_data_non_IID(minist_train_ds)
+            federated_train_dataset = self.__distribute_data_non_IID(
+                minist_train_ds
+            )  # TODO get list of index samples instead
 
+        # TODO HARD use list of DataLoader and indices with sampler
         federated_train_loader = sy.FederatedDataLoader(
             federated_train_dataset,
             batch_size=self.config.BATCH_SIZE,
@@ -87,9 +92,10 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
         np.random.shuffle(digit_sort_idx)
         indices = [
-            digit_sort_idx[i : i + 2, ].flatten()
+            digit_sort_idx[i : i + 2,].flatten()
             for i in range(0, 2 * self.config.N_CLIENTS, 2)
         ]
+        # TODO return idices and remove the rest
         dss = []
         for idx, c in zip(indices, self.clients):
             data, target = get_dataset_items_at(minist_train_ds, idx)

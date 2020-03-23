@@ -64,7 +64,8 @@ class SyftFederatedLearner(ABC):
         self.experiment.log_parameters(self.config.__dict__)
         self.hook = sy.TorchHook(th)
         self.clients = [
-            sy.VirtualWorker(self.hook, f"{i}") for i in range(self.config.N_CLIENTS)
+            sy.VirtualWorker(self.hook, f"{i}")
+            for i in range(self.config.N_CLIENTS)  # TODO Client class
         ]
 
         self.federated_train_loader, self.test_loader = self.load_data()
@@ -74,7 +75,9 @@ class SyftFederatedLearner(ABC):
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
     @abstractmethod
-    def load_data(self) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:
+    def load_data(
+        self,
+    ) -> Tuple[sy.FederatedDataLoader, th.utils.data.DataLoader]:  # TODO List[DataLoaderf]
         """Loads the data.
 
         Returns:
@@ -119,10 +122,15 @@ class SyftFederatedLearner(ABC):
         model.train()
 
         client_sample = self.__select_clients()
-        optimizer_ptrs, model_ptrs = self.__send_model_to_clients(model, client_sample)
+        optimizer_ptrs, model_ptrs = self.__send_model_to_clients(
+            model, client_sample
+        )  # TODO no return value
 
+        # TODO HARD train by client, not by epoch
         for epoch_num in range(self.config.N_EPOCH_PER_CLIENT):
-            model = self.__train_one_epoch(optimizer_ptrs, model_ptrs, round, epoch_num)
+            model = self.__train_one_epoch(
+                optimizer_ptrs, model_ptrs, round, epoch_num
+            ) 
 
         model = self.__collect_avg_model(model_ptrs)
         return model
@@ -134,12 +142,29 @@ class SyftFederatedLearner(ABC):
         logging.info(f"Selected {len(client_sample)} clients in this round.")
         return client_sample
 
+    def __send_model_to_clients(
+        self, model: nn.Module, client_sample
+    ) -> Tuple[Dict, Dict]:
+        model_ptrs = {
+            client.id: model.copy().send(client)
+            for client in client_sample  # TODO use Client class function
+        }  # .to(self.device)
+        optimizer_ptrs = {
+            client.id: optim.SGD(
+                model_ptrs[client.id].parameters(),
+                lr=self.config.LEARNING_RATE,  # TODO use Client class function
+            )
+            for client in client_sample
+        }  # TODO momentum is not supported at the moment
+        return optimizer_ptrs, model_ptrs  # TODO noe return value
+
     def __train_one_epoch(self, optimizer_ptrs, model_ptrs, curr_round, curr_epoch):
         for curr_batch, (data, target) in ClientBatchIter(self.federated_train_loader):
             client_id = data.location.id
             if client_id not in model_ptrs.keys():
                 continue
 
+            # TODO HARD move to client class 
             optimizer = optimizer_ptrs[client_id]
             model = model_ptrs[client_id]
 
@@ -155,22 +180,11 @@ class SyftFederatedLearner(ABC):
             self.log_client_step(
                 loss.item(), data.location.id, curr_round, curr_epoch, curr_batch
             )
+            #############################
         return model
 
-    def __send_model_to_clients(
-        self, model: nn.Module, client_sample
-    ) -> Tuple[Dict, Dict]:
-        model_ptrs = {client.id: model.copy().send(client) for client in client_sample} # .to(self.device)
-        optimizer_ptrs = {
-            client.id: optim.SGD(
-                model_ptrs[client.id].parameters(), lr=self.config.LEARNING_RATE
-            )
-            for client in client_sample
-        }  # TODO momentum is not supported at the moment
-        return optimizer_ptrs, model_ptrs
-
-    def __collect_avg_model(self, model_ptrs):
-        collected_models = [model.get() for model in model_ptrs.values()]
+    def __collect_avg_model(self, model_ptrs): # TODO no model_ptrs
+        collected_models = [model.get() for model in model_ptrs.values()] # TODO use Client class
         model = avg_models(collected_models)
         return model
 
