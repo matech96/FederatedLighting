@@ -41,9 +41,10 @@ class Client:
                 loss.backward()
                 self.opt.step()
 
-                self.trainer.log_client_step(
-                    loss.item(), self.id, curr_round, curr_epoch, curr_batch
-                )
+                if (curr_batch == 1) or (curr_batch % 10 == 0):
+                    self.trainer.log_client_step(
+                        loss.item(), self.id, curr_round, curr_epoch, curr_batch
+                    )
 
     def get_model_state_dict(self):
         return self.model.state_dict()
