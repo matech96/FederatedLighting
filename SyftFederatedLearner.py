@@ -60,10 +60,10 @@ class SyftFederatedLearner(ABC):
         """
         super().__init__()
         random.seed(config.SEED)
-        np.random.seed(config.SEED)
-        # th.manual_seed(config.SEED)
-        # th.backends.cudnn.deterministic = True
-        # th.backends.cudnn.benchmark = False
+        # np.random.seed(config.SEED)
+        th.manual_seed(config.SEED)
+        th.backends.cudnn.deterministic = True
+        th.backends.cudnn.benchmark = False
 
         self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
