@@ -48,7 +48,8 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
 
         train_loader_list = []
         for idx in indices:
-            sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
+            # sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
+            sampler = th.utils.data.sampler.SequentialSampler(idx)
             loader = th.utils.data.DataLoader(
                 dataset=minist_train_ds,
                 batch_size=self.config.BATCH_SIZE,
@@ -59,10 +60,7 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         logging.info("Data for client is sampled.")
 
         test_loader = th.utils.data.DataLoader(
-            mnist_test_ds,
-            batch_size=64,
-            shuffle=True,
-            num_workers=self.config.DL_N_WORKER,
+            mnist_test_ds, batch_size=64, num_workers=self.config.DL_N_WORKER,
         )
 
         return train_loader_list, test_loader
@@ -92,7 +90,7 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
         np.random.shuffle(digit_sort_idx)
         indices = [
-            digit_sort_idx[i : i + 2, ].flatten()
+            digit_sort_idx[i : i + 2,].flatten()
             for i in range(0, 2 * self.config.N_CLIENTS, 2)
         ]
         return indices
