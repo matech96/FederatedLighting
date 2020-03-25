@@ -25,6 +25,7 @@ for is_iid in [True, False]:
         experiment.set_name(name)
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = SyftFederatedLearnerMNISTConfig(
+            LEARNING_RATE=0.1,
             IS_IID_DATA=is_iid,
             BATCH_SIZE=B,
             CLIENT_FRACTION=C,

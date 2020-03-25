@@ -31,6 +31,7 @@ class SyftFederatedLearnerConfig(BaseModel):
     BATCH_SIZE: int = 64  # Batch size. If set to sys.maxsize, the epoch is processed in a single batch.
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
+    DATA_SEED: int = 0  # The seed used for data shuffeling.
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
     @staticmethod
