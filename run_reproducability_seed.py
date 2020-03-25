@@ -16,7 +16,7 @@ is_iid = True
 C = 0.1
 lr = 0.1
 for i in range(3):
-    name = f"{i}"
+    name = f"no_torch_{i}"
 
     logging.info(name)
     experiment = Experiment(

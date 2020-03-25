@@ -48,8 +48,8 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
 
         train_loader_list = []
         for idx in indices:
-            # sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
-            sampler = th.utils.data.sampler.SequentialSampler(idx)
+            sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
+            # sampler = th.utils.data.sampler.SequentialSampler(idx)
             loader = th.utils.data.DataLoader(
                 dataset=minist_train_ds,
                 batch_size=self.config.BATCH_SIZE,
