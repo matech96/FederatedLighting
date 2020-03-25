@@ -59,8 +59,8 @@ class SyftFederatedLearner(ABC):
             config {SyftFederatedLearnerConfig} -- Training configuration description.
         """
         super().__init__()
-        random.seed(config.SEED)
-        # np.random.seed(config.SEED)
+        # random.seed(config.SEED)
+        np.random.seed(config.SEED)
         th.manual_seed(config.SEED)
         th.backends.cudnn.deterministic = True
         th.backends.cudnn.benchmark = False
