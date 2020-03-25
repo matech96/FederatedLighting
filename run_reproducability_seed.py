@@ -15,7 +15,7 @@ B = 10  # 600
 is_iid = True
 C = 0.1
 lr = 0.1
-for i in range(10):
+for i in range(3):
     name = f"{i}"
 
     logging.info(name)
@@ -32,7 +32,7 @@ for i in range(10):
         N_CLIENTS=100,
         N_EPOCH_PER_CLIENT=5,
         MAX_ROUNDS=300,
-        DATA_SEED=0,
+        SEED=0,
     )
     learner = SyftFederatedLearnerMNIST(experiment, config)
     learner.train()

@@ -41,8 +41,6 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
         logging.info("Number of training samples: {n_training_samples}")
         if self.config.IS_IID_DATA:
             indices = np.arange(n_training_samples)
-            np.random.seed(self.config.DATA_SEED)
-            np.random.shuffle(indices)
             indices = indices.reshape(self.config.N_CLIENTS, -1)
             indices = indices.tolist()
         else:
@@ -74,7 +72,6 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             "../data",
             train=True,
             download=True,
-            shuffle=False,
             transform=transforms.Compose(
                 [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
             ),
@@ -93,10 +90,9 @@ class SyftFederatedLearnerMNIST(SyftFederatedLearner):
             [np.where(minist_train_ds.targets == i)[0] for i in range(10)]
         )
         digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
-        np.random.seed(self.config.DATA_SEED)
         np.random.shuffle(digit_sort_idx)
         indices = [
-            digit_sort_idx[i : i + 2,].flatten()
+            digit_sort_idx[i : i + 2, ].flatten()
             for i in range(0, 2 * self.config.N_CLIENTS, 2)
         ]
         return indices

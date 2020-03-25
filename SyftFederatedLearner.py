@@ -6,15 +6,14 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Dict, List, Callable
 import logging
 
+import numpy as np
 from pydantic import BaseModel, validator
 
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 
 from syftutils.multipointer import avg_model_state_dicts
-from syftutils.datasets import ClientBatchIter
 
 from Client import Client
 
@@ -31,7 +30,7 @@ class SyftFederatedLearnerConfig(BaseModel):
     BATCH_SIZE: int = 64  # Batch size. If set to sys.maxsize, the epoch is processed in a single batch.
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
-    DATA_SEED: int = 0  # The seed used for data shuffeling.
+    SEED: int = 0  # The seed.
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
     @staticmethod
@@ -60,6 +59,11 @@ class SyftFederatedLearner(ABC):
             config {SyftFederatedLearnerConfig} -- Training configuration description.
         """
         super().__init__()
+        np.random.seed(self.config.SEED)
+        th.manual_seed(self.config.SEED)
+        th.backends.cudnn.deterministic = True
+        th.backends.cudnn.benchmark = False
+
         self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
         self.config = config
