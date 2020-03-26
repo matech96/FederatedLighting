@@ -11,10 +11,10 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-B = 10  # 600
+B = 600  # 10
 
 for is_iid in [True, False]:
-    for C in [0.0]:  # 0.0
+    for C in [0.0, 0.1, 0.2, 0.5, 1.0]:
         dist = "IID" if is_iid else "non IID"
         name = f"{dist} - {B} - {C}"
 
@@ -31,7 +31,7 @@ for is_iid in [True, False]:
             CLIENT_FRACTION=C,
             N_CLIENTS=100,
             N_EPOCH_PER_CLIENT=5,
-            MAX_ROUNDS=300,
+            MAX_ROUNDS=1500,
         )
         learner = SyftFederatedLearnerMNIST(experiment, config)
         learner.train()
