@@ -14,7 +14,7 @@ logging.basicConfig(
 B = 10  # 600
 
 for is_iid in [True, False]:
-    for C in [0.1, 0.2, 0.5, 1.0]:  # 0.0
+    for C in [0.0]:  # 0.0
         dist = "IID" if is_iid else "non IID"
         name = f"{dist} - {B} - {C}"
 

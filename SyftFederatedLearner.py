@@ -30,7 +30,7 @@ class SyftFederatedLearnerConfig(BaseModel):
     BATCH_SIZE: int = 64  # Batch size. If set to sys.maxsize, the epoch is processed in a single batch.
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
-    SEED: int = 0  # The seed.
+    SEED: int = None  # The seed.
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
     @staticmethod
@@ -59,11 +59,12 @@ class SyftFederatedLearner(ABC):
             config {SyftFederatedLearnerConfig} -- Training configuration description.
         """
         super().__init__()
-        # random.seed(config.SEED)
-        np.random.seed(config.SEED)
-        th.manual_seed(config.SEED)
-        th.backends.cudnn.deterministic = True
-        th.backends.cudnn.benchmark = False
+        if config.SEED is not None:
+            random.seed(config.SEED)
+            np.random.seed(config.SEED)
+            th.manual_seed(config.SEED)
+            th.backends.cudnn.deterministic = True
+            th.backends.cudnn.benchmark = False
 
         self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
