@@ -21,9 +21,7 @@ for NC in [1, 2, 3, 4, 5, 10, 20, 50, 100]:
     name = f"{dist} - {NC}"
 
     logging.info(name)
-    experiment = Experiment(
-        workspace="federated-learning", project_name="less_client"
-    )
+    experiment = Experiment(workspace="federated-learning", project_name="less_client")
     experiment.set_name(name)
     # TODO a paraméterek helytelen nevére nem adott hibát
     config = SyftFederatedLearnerMNISTConfig(
@@ -34,6 +32,7 @@ for NC in [1, 2, 3, 4, 5, 10, 20, 50, 100]:
         N_CLIENTS=NC,
         N_EPOCH_PER_CLIENT=E,
         MAX_ROUNDS=1500,
+        DL_N_WORKER=2,
     )
     learner = SyftFederatedLearnerMNIST(experiment, config)
     learner.train()
