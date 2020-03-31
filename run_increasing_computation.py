@@ -13,7 +13,7 @@ logging.basicConfig(
 
 C = 0.1
 
-for is_iid in [True, False]:
+for is_iid in [False]:
     for E in [1, 5, 20]:
         for B in [10, 50, 600]:
             dist = "IID" if is_iid else "non IID"
