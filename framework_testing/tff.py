@@ -28,7 +28,7 @@ def client_data(n):
 
 
 # Pick a subset of client devices to participate in training.
-train_data = [client_data(n) for n in range(2)]
+train_data = [client_data(n) for n in range(len(source.client_ids))]
 
 # Grab a single batch of data so that TFF knows what data looks like.
 sample_batch = tf.nest.map_structure(lambda x: x.numpy(), iter(train_data[0]).next())
@@ -60,7 +60,7 @@ trainer = tff.learning.build_federated_averaging_process(
     model_fn, client_optimizer_fn=lambda: tf.keras.optimizers.SGD(0.1)
 )
 state = trainer.initialize()
-for _ in range(50):
+for i in range(50):
     state, metrics = trainer.next(state, train_data)
-    exp.log_metric("loss", metrics.loss)
-    exp.log_metric("acc", metrics.sparse_categorical_accuracy)
+    exp.log_metric("loss", metrics.loss, i)
+    exp.log_metric("acc", metrics.sparse_categorical_accuracy, i)
