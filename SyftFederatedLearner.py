@@ -80,7 +80,10 @@ class SyftFederatedLearner(ABC):
         )  # TODO batch per client
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
-        self.clients = [Client(self, model_cls, loader, self.device) for loader in self.train_loader_list]
+        self.clients = [
+            Client(self, model_cls, loader, self.device)
+            for loader in self.train_loader_list
+        ]
 
     @abstractmethod
     def load_data(
@@ -188,6 +191,11 @@ class SyftFederatedLearner(ABC):
         self.experiment.log_metric(f"{client_id}_train_loss", loss, step=step)
 
     def log_test_metric(self, metrics: Dict[str, float], batch_num: int):
+        self.experiment.log_parameter(
+            "TOTAL_EPOCH",
+            self.config.N_EPOCH_PER_CLIENT * batch_num
+            / (self.config.N_EPOCH_PER_CLIENT * self.n_train_batches),
+        )
         for name, value in metrics.items():
             nice_value = 100 * value if name.endswith("_acc") else value
             self.experiment.log_metric(name, nice_value, step=batch_num)
