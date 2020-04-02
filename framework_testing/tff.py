@@ -11,21 +11,7 @@ from tensorflow.keras import backend as K
 import tensorflow_datasets as tfds
 
 exp = Experiment(workspace="federated-learning", project_name="compare_frameworks")
-exp.set_name("tff_cache_prefetch_non_iid")
-
-
-# Load simulation data.
-# source, _ = tff.simulation.datasets.emnist.load_data()
-
-
-# def client_data(n):
-#     trf_record = lambda e: (tf.expand_dims(e["image"], -1), e["label"])
-#     return (
-#         source.create_tf_dataset_for_client(source.client_ids[n])
-#         .map(trf_record)
-#         .repeat(5)
-#         .batch(50)
-#     )
+exp.set_name("tff_cache_prefetch_non_iid_test_set")
 
 
 def normalize_img(image, label):
@@ -34,12 +20,26 @@ def normalize_img(image, label):
 
 
 # Pick a subset of client devices to participate in training.
-train_data, test_data = tfds.load("mnist", split=["train", "test"], as_supervised=True)
+train_data, test_data = tfds.load(
+    "mnist", split=["train", "test"], as_supervised=True
+)
 train_data_0 = train_data.filter(lambda x, y: y < 5)
 train_data_1 = train_data.filter(lambda x, y: y >= 5)
 train_data = [train_data_0, train_data_1]
 train_data = [
-    td.map(normalize_img).cache().repeat(5).batch(50).prefetch(tf.data.experimental.AUTOTUNE) for td in train_data
+    td.map(normalize_img)
+    .cache()
+    .repeat(5)
+    .batch(50)
+    .prefetch(tf.data.experimental.AUTOTUNE)
+    for td in train_data
+]
+test_data_0 = test_data.filter(lambda x, y: y < 5)
+test_data_1 = test_data.filter(lambda x, y: y >= 5)
+test_data = [test_data_0, test_data_1]
+test_data = [
+    td.map(normalize_img).cache().batch(100).prefetch(tf.data.experimental.AUTOTUNE)
+    for td in test_data
 ]
 
 # Grab a single batch of data so that TFF knows what data looks like.
@@ -76,5 +76,9 @@ for i in range(50):
     state, metrics = trainer.next(state, train_data)
     exp.log_metric("loss", metrics.loss, i)
     exp.log_metric("acc", metrics.sparse_categorical_accuracy, i)
-    if metrics.sparse_categorical_accuracy > 0.99:
+
+    evaluation = tff.learning.build_federated_evaluation(model_fn)
+    test_metrics = evaluation(state.model, test_data)
+    exp.log_metric("test_acc", test_metrics.sparse_categorical_accuracy, i)
+    if test_metrics.sparse_categorical_accuracy > 0.99:
         break
