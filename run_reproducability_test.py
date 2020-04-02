@@ -1,8 +1,8 @@
 from comet_ml import Experiment
 import logging
-from SyftFederatedLearnerMNIST import (
-    SyftFederatedLearnerMNIST,
-    SyftFederatedLearnerMNISTConfig,
+from TorchFederatedLearnerMNIST import (
+    TorchFederatedLearnerMNIST,
+    TorchFederatedLearnerMNISTConfig,
 )
 
 logging.basicConfig(
@@ -24,7 +24,7 @@ for i in range(10):
     )
     experiment.set_name(name)
     # TODO a paraméterek helytelen nevére nem adott hibát
-    config = SyftFederatedLearnerMNISTConfig(
+    config = TorchFederatedLearnerMNISTConfig(
         LEARNING_RATE=lr,
         IS_IID_DATA=is_iid,
         BATCH_SIZE=B,
@@ -33,5 +33,5 @@ for i in range(10):
         N_EPOCH_PER_CLIENT=5,
         MAX_ROUNDS=300,
     )
-    learner = SyftFederatedLearnerMNIST(experiment, config)
+    learner = TorchFederatedLearnerMNIST(experiment, config)
     learner.train()

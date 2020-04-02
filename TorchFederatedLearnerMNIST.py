@@ -9,22 +9,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
-from SyftFederatedLearner import SyftFederatedLearner, SyftFederatedLearnerConfig
+from TorchFederatedLearner import TorchFederatedLearner, TorchFederatedLearnerConfig
 
 
-class SyftFederatedLearnerMNISTConfig(SyftFederatedLearnerConfig):
+class TorchFederatedLearnerMNISTConfig(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
 
 
-class SyftFederatedLearnerMNIST(SyftFederatedLearner):
+class TorchFederatedLearnerMNIST(TorchFederatedLearner):
     def __init__(
-        self, experiment: Experiment, config: SyftFederatedLearnerMNISTConfig
+        self, experiment: Experiment, config: TorchFederatedLearnerMNISTConfig
     ) -> None:
         """Initialises the training.
 
         Arguments:
             experiment {Experiment} -- Comet.ml experiment object for online logging.
-            config {SyftFederatedLearnerMNISTConfig} -- Training configuration description.
+            config {TorchFederatedLearnerMNISTConfig} -- Training configuration description.
         """
         super().__init__(experiment, config)
         self.config = config  # Purly to help intellisense

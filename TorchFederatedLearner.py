@@ -18,7 +18,7 @@ from syftutils.multipointer import avg_model_state_dicts
 from Client import Client
 
 
-class SyftFederatedLearnerConfig(BaseModel):
+class TorchFederatedLearnerConfig(BaseModel):
     class Config:
         validate_assignment = True
 
@@ -48,15 +48,15 @@ class SyftFederatedLearnerConfig(BaseModel):
     )
 
 
-class SyftFederatedLearner(ABC):
+class TorchFederatedLearner(ABC):
     def __init__(
-        self, experiment: Experiment, config: SyftFederatedLearnerConfig
+        self, experiment: Experiment, config: TorchFederatedLearnerConfig
     ) -> None:
         """Initialises the training.
 
         Arguments:
             experiment {Experiment} -- Comet.ml experiment object for online logging.
-            config {SyftFederatedLearnerConfig} -- Training configuration description.
+            config {TorchFederatedLearnerConfig} -- Training configuration description.
         """
         super().__init__()
         if config.SEED is not None:
