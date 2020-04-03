@@ -9,13 +9,15 @@ import logging
 import numpy as np
 from pydantic import BaseModel, validator
 
-import torch as th
-import torch.nn as nn
-import torch.nn.functional as F
+import tensorflow as tf
+
+# import torch as th
+# import torch.nn as nn
+# import torch.nn.functional as F
 
 from syftutils.multipointer import avg_model_state_dicts
 
-from TensorFlowClient import TorchClient
+from TensorFlowClient import TensorFlowClient
 
 
 class TensorFlowFederatedLearnerConfig(BaseModel):
@@ -29,7 +31,7 @@ class TensorFlowFederatedLearnerConfig(BaseModel):
     N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before sync.
     BATCH_SIZE: int = 64  # Batch size. If set to sys.maxsize, the epoch is processed in a single batch.
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
-    DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers # TODO remove
+    # DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers # TODO remove
     SEED: int = None  # The seed.
     # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
 
@@ -62,17 +64,18 @@ class TensorFlowFederatedLearner(ABC):
         if config.SEED is not None:  # TODO test deterministic
             random.seed(config.SEED)
             np.random.seed(config.SEED)
-            th.manual_seed(config.SEED)
-            th.backends.cudnn.deterministic = True
-            th.backends.cudnn.benchmark = False
+            tf.random.set_seed(config.SEED)
+            # th.manual_seed(config.SEED)
+            # th.backends.cudnn.deterministic = True
+            # th.backends.cudnn.benchmark = False
 
-        self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu") # TODO remove device
+        # self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu") # TODO remove device
         self.experiment = experiment
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
 
         model_cls = self.get_model_cls()
-        self.model = model_cls().to(self.device)  # TODO remove .to
+        self.model = model_cls()  # .to(self.device)  # TODO remove .to
 
         self.train_loader_list, self.test_loader = self.load_data()
         self.n_train_batches = int(
@@ -81,27 +84,25 @@ class TensorFlowFederatedLearner(ABC):
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
         self.clients = [
-            TorchClient(self, model_cls, loader, self.device)  # TODO remove device
+            TensorFlowClient(self, model_cls, loader)  # TODO remove device
             for loader in self.train_loader_list
         ]
 
     @abstractmethod
-    def load_data(
-        self,
-    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
+    def load_data(self,) -> Tuple[List[tf.data.Dataset], tf.data.Dataset]:
         """Loads the data.
 
         Returns:
-            Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader] -- [The first element is the training set, the second is the test set] # TODO datatype
+            Tuple[List[tf.data.Dataset], tf.data.Dataset] -- [The first element is the training set, the second is the test set] # TODO datatype
         """
         pass
 
     @abstractmethod
-    def get_model_cls(self) -> Callable[[], nn.Module]:  # TODO datatype
+    def get_model_cls(self) -> Callable[[], tf.keras.Model]:  # TODO datatype
         """Returns the model to be trained.
 
         Returns:
-            nn.Module -- The instance of the model.
+            tf.keras.Model -- The instance of the model.
         """
         pass
 
@@ -129,7 +130,7 @@ class TensorFlowFederatedLearner(ABC):
         # th.save(model.state_dict(), "mnist_cnn.pt")
 
     def __train_one_round(self, curr_round: int):
-        self.model.train()  # TODO remove
+        # self.model.train()  # TODO remove
 
         client_sample = self.__select_clients()
         for client in client_sample:
@@ -151,30 +152,32 @@ class TensorFlowFederatedLearner(ABC):
         collected_model_state_dicts = [
             client.get_model_state_dict() for client in client_sample
         ]
-        final_state_dict = avg_model_state_dicts(collected_model_state_dicts)
+        final_state_dict = np.mean(collected_model_state_dicts, axis=0)
         self.model.load_state_dict(final_state_dict)
 
-    def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
-        self.model.eval()  # TODO remove
-        test_loss = 0
-        correct = 0
+    def test(self, test_loader: tf.data.Dataset) -> Dict[str, float]:
+        # self.model.eval()  # TODO remove
+        # test_loss = 0
+        # correct = 0
         # TODO remove with statement, use keras api
-        with th.no_grad():
-            for data, target in test_loader:
-                data, target = data.to(self.device), target.to(self.device)
-                output = self.model(data)
-                test_loss += F.nll_loss(
-                    output, target, reduction="sum"
-                ).item()  # sum up batch loss
-                pred = output.argmax(
-                    1, keepdim=True
-                )  # get the index of the max log-probability
-                correct += pred.eq(target.view_as(pred)).sum().item()
+        result = self.model.evaluate(test_loader)
+        # with th.no_grad():
+        #     for data, target in test_loader:
+        #         data, target = data.to(self.device), target.to(self.device)
+        #         output = self.model(data)
+        #         test_loss += F.nll_loss(
+        #             output, target, reduction="sum"
+        #         ).item()  # sum up batch loss
+        #         pred = output.argmax(
+        #             1, keepdim=True
+        #         )  # get the index of the max log-probability
+        #         correct += pred.eq(target.view_as(pred)).sum().item()
 
-        # TODO remove normalization
-        test_loss /= len(test_loader.dataset)
-        test_acc = correct / len(test_loader.dataset)
-        return {"test_loss": test_loss, "test_acc": test_acc}
+        # # TODO remove normalization
+        # test_loss /= len(test_loader.dataset)
+        # test_acc = correct / len(test_loader.dataset)
+        return dict(zip(self.model.metrics_names, result))
+        # return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(
         self,
