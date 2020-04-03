@@ -210,5 +210,5 @@ class TensorFlowFederatedLearner(ABC):
             / (self.config.N_EPOCH_PER_CLIENT * self.n_train_batches),
         )
         for name, value in metrics.items():
-            nice_value = 100 * value if name.endswith("_acc") else value
-            self.experiment.log_metric(name, nice_value, step=batch_num)
+            nice_value = 100 * value if name.endswith("_accuracy") else value
+            self.experiment.log_metric("round_" + name, nice_value, step=batch_num)
