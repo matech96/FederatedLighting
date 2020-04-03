@@ -9,35 +9,41 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
-from TorchFederatedLearner import TensorFlowFederatedLearner, TensorFlowFederatedLearnerConfig
+from TensorFlowFederatedLearner import (
+    TensorFlowFederatedLearner,
+    TensorFlowFederatedLearnerConfig,
+)
 
 
-class TorchFederatedLearnerMNISTConfig(TensorFlowFederatedLearnerConfig):
+class TensorFlowFederatedLearnerMNISTConfig(TensorFlowFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
 
 
-class TorchFederatedLearnerMNIST(TensorFlowFederatedLearner):
+class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
     def __init__(
-        self, experiment: Experiment, config: TorchFederatedLearnerMNISTConfig
+        self, experiment: Experiment, config: TensorFlowFederatedLearnerMNISTConfig
     ) -> None:
         """Initialises the training.
 
         Arguments:
             experiment {Experiment} -- Comet.ml experiment object for online logging.
-            config {TorchFederatedLearnerMNISTConfig} -- Training configuration description.
+            config {TensorFlowFederatedLearnerMNISTConfig} -- Training configuration description.
         """
         super().__init__(experiment, config)
         self.config = config  # Purly to help intellisense
 
     def load_data(
         self,
-    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
+    ) -> Tuple[
+        List[th.utils.data.DataLoader], th.utils.data.DataLoader
+    ]:  # TODO datatype
+        # TODO assert only 2 clients are supported
         logging.info("MNIST data loading ...")
-        minist_train_ds, mnist_test_ds = self.__get_mnist()
+        minist_train_ds, mnist_test_ds = self.__get_mnist()  # TODO load from keras
         logging.info("MNIST data loaded.")
 
         logging.info("Data for client is being sampled ...")
-        n_training_samples = len(minist_train_ds)
+        n_training_samples = len(minist_train_ds)  # TODO use x_train instead
         logging.info("Number of training samples: {n_training_samples}")
         if self.config.IS_IID_DATA:
             indices = np.arange(n_training_samples)
@@ -48,9 +54,11 @@ class TorchFederatedLearnerMNIST(TensorFlowFederatedLearner):
 
         train_loader_list = []
         for idx in indices:
-            sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
+            sampler = th.utils.data.sampler.SubsetRandomSampler(
+                idx
+            )  # TODO numpy slicing on x_train and y_train
             # sampler = th.utils.data.sampler.SequentialSampler(idx)
-            loader = th.utils.data.DataLoader(
+            loader = th.utils.data.DataLoader(  # TODO tf.DataSet # TODO apply normalization
                 dataset=minist_train_ds,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config.DL_N_WORKER,
@@ -59,13 +67,13 @@ class TorchFederatedLearnerMNIST(TensorFlowFederatedLearner):
             train_loader_list.append(loader)
         logging.info("Data for client is sampled.")
 
-        test_loader = th.utils.data.DataLoader(
+        test_loader = th.utils.data.DataLoader(  # TODO tf.Dataset # TODO apply normalization
             mnist_test_ds, batch_size=64, num_workers=self.config.DL_N_WORKER,
         )
 
         return train_loader_list, test_loader
 
-    def __get_mnist(self):
+    def __get_mnist(self):  # TODO remove
         minist_train_ds = datasets.MNIST(
             "../data",
             train=True,
@@ -83,14 +91,18 @@ class TorchFederatedLearnerMNIST(TensorFlowFederatedLearner):
         )
         return minist_train_ds, mnist_test_ds
 
-    def __distribute_data_non_IID(self, minist_train_ds):
+    def __distribute_data_non_IID(
+        self, minist_train_ds
+    ):  # TODO Take x_train and y_train
         digit_sort_idx = np.concatenate(
-            [np.where(minist_train_ds.targets == i)[0] for i in range(10)]
+            [
+                np.where(minist_train_ds.targets == i)[0] for i in range(10)
+            ]  # TODO instead of minist_train_ds.targets use y_train
         )
         digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
         np.random.shuffle(digit_sort_idx)
         indices = [
-            digit_sort_idx[i : i + 2,].flatten()
+            digit_sort_idx[i : i + 2, ].flatten()
             for i in range(0, 2 * self.config.N_CLIENTS, 2)
         ]
         return indices
@@ -99,7 +111,7 @@ class TorchFederatedLearnerMNIST(TensorFlowFederatedLearner):
         return Net
 
 
-class Net(nn.Module):
+class Net(nn.Module):  # TODO keras sequential
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 5, 1)
