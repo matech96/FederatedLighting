@@ -15,9 +15,9 @@ import tensorflow as tf
 # import torch.nn as nn
 # import torch.nn.functional as F
 
-from syftutils.multipointer import avg_model_state_dicts
+# from syftutils.multipointer import avg_model_state_dicts
 
-from TensorFlowClient import TensorFlowClient
+from FLF.TensorFlowClient import TensorFlowClient
 
 
 class TensorFlowFederatedLearnerConfig(BaseModel):
@@ -134,7 +134,7 @@ class TensorFlowFederatedLearner(ABC):
 
         client_sample = self.__select_clients()
         for client in client_sample:
-            client.set_model(self.model.state_dict(), self.config)
+            client.set_model(self.model.get_weights(), self.config)
 
         for client in client_sample:
             client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
@@ -153,7 +153,7 @@ class TensorFlowFederatedLearner(ABC):
             client.get_model_state_dict() for client in client_sample
         ]
         final_state_dict = np.mean(collected_model_state_dicts, axis=0)
-        self.model.load_state_dict(final_state_dict)
+        self.model.set_weights(final_state_dict)
 
     def test(self, test_loader: tf.data.Dataset) -> Dict[str, float]:
         # self.model.eval()  # TODO remove

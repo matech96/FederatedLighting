@@ -12,7 +12,7 @@ from tensorflow.keras.layers import InputLayer, Conv2D, Flatten, Dense
 # import torch.nn.functional as F
 # from torchvision import datasets, transforms
 
-from TensorFlowFederatedLearner import (
+from FLF.TensorFlowFederatedLearner import (
     TensorFlowFederatedLearner,
     TensorFlowFederatedLearnerConfig,
 )
@@ -54,11 +54,14 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
         else:
             indices = self.__distribute_data_non_IID(y_train)
 
+        to_format = lambda x, y: (tf.cast(tf.expand_dims(x, -1), tf.float32) / 255, y)
         train_loader_list = []
         for idx in indices:
-            loader = tf.data.Dataset.from_tensor_slices(
-                (x_train[idx], y_train[idx])
-            ).batch(self.config.BATCH_SIZE)
+            loader = (
+                tf.data.Dataset.from_tensor_slices((x_train[idx], y_train[idx]))
+                .map(to_format)
+                .batch(self.config.BATCH_SIZE)
+            )
             # sampler = th.utils.data.sampler.SubsetRandomSampler(
             #     idx
             # )  # TODO numpy slicing on x_train and y_train
@@ -72,7 +75,11 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
             train_loader_list.append(loader)
         logging.info("Data for client is sampled.")
 
-        test_loader = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(64)
+        test_loader = (
+            tf.data.Dataset.from_tensor_slices((x_test, y_test))
+            .map(to_format)
+            .batch(64)
+        )
         # test_loader = th.utils.data.DataLoader(  # TODO tf.Dataset # TODO apply normalization
         #     mnist_test_ds, batch_size=64, num_workers=self.config.DL_N_WORKER,
         # )
@@ -112,9 +119,9 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
         return indices
 
     def get_model_cls(self) -> Callable[[], tf.keras.Model]:
-        return tf.keras.Sequential(
+        return lambda: tf.keras.Sequential(
             [
-                InputLayer((28, 28, 3)),
+                InputLayer((28, 28, 1)),
                 Conv2D(32, 5, activation="relu"),
                 Conv2D(64, 5, activation="relu"),
                 Flatten(),
