@@ -76,6 +76,13 @@ class TensorFlowFederatedLearner(ABC):
 
         model_cls = self.get_model_cls()
         self.model = model_cls()  # .to(self.device)  # TODO remove .to
+        # TODO this is copyied from the client
+        self.opt = tf.keras.optimizers.SGD(learning_rate=config.LEARNING_RATE)
+        self.model.compile(
+            optimizer=self.opt,
+            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
+        )
 
         self.train_loader_list, self.test_loader = self.load_data()
         self.n_train_batches = int(
@@ -122,7 +129,7 @@ class TensorFlowFederatedLearner(ABC):
                     round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
                 )
 
-                if metrics["test_acc"] > self.config.TARGET_ACC:
+                if metrics["sparse_categorical_accuracy"] > self.config.TARGET_ACC:
                     break
         except InterruptedExperiment:
             pass
