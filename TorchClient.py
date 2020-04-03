@@ -4,7 +4,7 @@ import torch as th
 import torch.nn.functional as F
 
 
-class Client:
+class TorchClient:
     __next_ID = 0
 
     def __init__(
@@ -14,8 +14,8 @@ class Client:
         dataloader: th.utils.data.DataLoader,
         device,
     ):
-        self.id = Client.__next_ID
-        Client.__next_ID += 1
+        self.id = TorchClient.__next_ID
+        TorchClient.__next_ID += 1
 
         self.trainer = trainer
         self.model = model_cls()

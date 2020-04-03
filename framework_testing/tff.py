@@ -69,7 +69,7 @@ def model_fn():
 
 # Simulate a few rounds of training with the selected client devices.
 trainer = tff.learning.build_federated_averaging_process(
-    model_fn, client_optimizer_fn=lambda: tf.keras.optimizers.SGD(0.01)
+    model_fn, client_optimizer_fn=lambda: tf.keras.optimizers.SGD(0.1)
 )
 state = trainer.initialize()
 for i in range(50):

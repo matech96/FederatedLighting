@@ -9,7 +9,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
-name = "ClientBatchIter"
+name = "TorchClientBatchIter"
 logging.info(name)
 experiment = Experiment(
     workspace="federated-learning", project_name="simple_runs"

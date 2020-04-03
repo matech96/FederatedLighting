@@ -9,7 +9,7 @@ def get_dataset_items_at(ds, idx):
     return data, target
 
 
-class ClientBatchIter:
+class TorchClientBatchIter:
     def __init__(self, federated_data_loader: sy.FederatedDataLoader):
         self.federated_data_loader = federated_data_loader
 

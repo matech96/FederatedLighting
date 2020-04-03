@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from syftutils.multipointer import avg_model_state_dicts
 
-from Client import Client
+from TorchClient import TorchClient
 
 
 class TorchFederatedLearnerConfig(BaseModel):
@@ -81,7 +81,7 @@ class TorchFederatedLearner(ABC):
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
         self.clients = [
-            Client(self, model_cls, loader, self.device)
+            TorchClient(self, model_cls, loader, self.device)
             for loader in self.train_loader_list
         ]
 
