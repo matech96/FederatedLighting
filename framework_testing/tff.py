@@ -1,14 +1,13 @@
 from comet_ml import Experiment
 import tensorflow as tf
 
-tf.compat.v1.enable_v2_behavior()
 import tensorflow_federated as tff
-from tensorflow.keras.datasets import mnist
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.layers import Conv2D, MaxPooling2D
-from tensorflow.keras import backend as K
 import tensorflow_datasets as tfds
+
+tf.compat.v1.enable_v2_behavior()
 
 exp = Experiment(workspace="federated-learning", project_name="compare_frameworks")
 exp.set_name("tff_cache_prefetch_non_iid_test_set")
@@ -20,9 +19,7 @@ def normalize_img(image, label):
 
 
 # Pick a subset of client devices to participate in training.
-train_data, test_data = tfds.load(
-    "mnist", split=["train", "test"], as_supervised=True
-)
+train_data, test_data = tfds.load("mnist", split=["train", "test"], as_supervised=True)
 train_data_0 = train_data.filter(lambda x, y: y < 5)
 train_data_1 = train_data.filter(lambda x, y: y >= 5)
 train_data = [train_data_0, train_data_1]
