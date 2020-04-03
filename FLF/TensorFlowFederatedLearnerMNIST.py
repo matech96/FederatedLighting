@@ -57,6 +57,7 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
         to_format = lambda x, y: (tf.cast(tf.expand_dims(x, -1), tf.float32) / 255, y)
         train_loader_list = []
         for idx in indices:
+            np.random.shuffle(idx)
             loader = (
                 tf.data.Dataset.from_tensor_slices((x_train[idx], y_train[idx]))
                 .map(to_format)
