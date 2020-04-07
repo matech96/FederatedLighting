@@ -25,7 +25,7 @@ for E in [1, 2, 3, 4, 5, 10, 20]:
     experiment.set_name(name)
     # TODO a paraméterek helytelen nevére nem adott hibát
     config = TensorFlowFederatedLearnerMNISTConfig(
-        LEARNING_RATE=0.1,
+        LEARNING_RATE=0.01,
         IS_IID_DATA=is_iid,
         BATCH_SIZE=B,
         CLIENT_FRACTION=C,

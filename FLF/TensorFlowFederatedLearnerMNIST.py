@@ -52,7 +52,9 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
             loader = (
                 tf.data.Dataset.from_tensor_slices((x_train[idx], y_train[idx]))
                 .map(to_format)
+                .cache()
                 .batch(self.config.BATCH_SIZE)
+                .prefetch(tf.data.experimental.AUTOTUNE)
             )
             train_loader_list.append(loader)
         logging.info("Data for client is sampled.")
@@ -60,7 +62,9 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
         test_loader = (
             tf.data.Dataset.from_tensor_slices((x_test, y_test))
             .map(to_format)
+            .cache()
             .batch(64)
+            .prefetch(tf.data.experimental.AUTOTUNE)
         )
 
         return train_loader_list, test_loader

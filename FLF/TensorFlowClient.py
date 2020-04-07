@@ -2,8 +2,6 @@ from typing import Callable
 
 import tensorflow as tf
 
-from FLF.TensorFlowFederatedLearner import TensorFlowFederatedLearnerConfig
-
 
 class TensorFlowClient:
     __next_ID = 0
@@ -13,7 +11,6 @@ class TensorFlowClient:
         trainer,
         model_cls: Callable[[], tf.keras.Model],
         dataloader: tf.data.Dataset,
-        config: TensorFlowFederatedLearnerConfig,
     ):
         self.id = TensorFlowClient.__next_ID
         TensorFlowClient.__next_ID += 1

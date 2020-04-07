@@ -90,7 +90,7 @@ class TorchFederatedLearnerMNIST(TensorFlowFederatedLearner):
         digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
         np.random.shuffle(digit_sort_idx)
         indices = [
-            digit_sort_idx[i : i + 2,].flatten()
+            digit_sort_idx[i : i + 2, ].flatten()
             for i in range(0, 2 * self.config.N_CLIENTS, 2)
         ]
         return indices
@@ -103,17 +103,9 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 5, 1)
-        nn.init.zeros_(self.conv1.bias)
-        nn.init.xavier_uniform_(self.conv1.weight)
         self.conv2 = nn.Conv2d(32, 64, 5, 1)
-        nn.init.zeros_(self.conv2.bias)
-        nn.init.xavier_uniform_(self.conv2.weight)
         self.fc1 = nn.Linear(4 * 4 * 64, 512)
-        nn.init.zeros_(self.fc1.bias)
-        nn.init.xavier_uniform_(self.fc1.weight)
         self.fc2 = nn.Linear(512, 10)
-        nn.init.zeros_(self.fc2.bias)
-        nn.init.xavier_uniform_(self.fc2.weight)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
