@@ -10,11 +10,10 @@ logging.basicConfig(
 
 C = 1
 NC = 2
-E = 5
 B = 50
 is_iid = False
 
-for E in [1, 2, 3, 4, 5, 10, 20]:
+for E in [5]:
     dist = "IID" if is_iid else "non IID"
     name = f"{dist} - {E}"
 
@@ -31,7 +30,7 @@ for E in [1, 2, 3, 4, 5, 10, 20]:
         CLIENT_FRACTION=C,
         N_CLIENTS=NC,
         N_EPOCH_PER_CLIENT=E,
-        MAX_ROUNDS=1500,
+        MAX_ROUNDS=50,
     )
     learner = TensorFlowFederatedLearnerMNIST(experiment, config)
     learner.train()

@@ -11,19 +11,19 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+
 C = 1
-NC = 2
-E = 5
+E = 1
 B = 50
 is_iid = False
 
-for E in [1, 2, 3, 4, 5, 10, 20]:
+for NC in [1, 2, 3, 4, 5, 10]:
     dist = "IID" if is_iid else "non IID"
-    name = f"{dist} - {E}"
+    name = f"{dist} - {NC} - {E}"
 
     logging.info(name)
     experiment = Experiment(
-        workspace="federated-learning", project_name="2_clients"
+        workspace="federated-learning", project_name="less_client"
     )
     experiment.set_name(name)
     # TODO a paraméterek helytelen nevére nem adott hibát
