@@ -1,6 +1,6 @@
 from comet_ml import Experiment
 import logging
-from TorchFederatedLearnerMNIST import (
+from FFL.TorchFederatedLearnerMNIST import (
     TorchFederatedLearnerMNIST,
     TorchFederatedLearnerMNISTConfig,
 )
@@ -14,13 +14,13 @@ logging.basicConfig(
 B = 10  # 600
 is_iid = True
 C = 0.1
-lr = 0.1
-for i in range(10):
-    name = f"{i}"
+
+for lr in [0.1, 0.01]:
+    name = f"{lr}"
 
     logging.info(name)
     experiment = Experiment(
-        workspace="federated-learning", project_name="Reproducability"
+        workspace="federated-learning", project_name="Learning rate"
     )
     experiment.set_name(name)
     # TODO a paraméterek helytelen nevére nem adott hibát

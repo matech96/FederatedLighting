@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from syftutils.multipointer import avg_model_state_dicts
 
-from TorchClient import TorchClient
+from FFL.TorchClient import TorchClient
 
 
 class TensorFlowFederatedLearnerConfig(BaseModel):

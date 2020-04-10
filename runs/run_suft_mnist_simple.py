@@ -1,7 +1,7 @@
 from comet_ml import Experiment
 import logging
 
-from TorchFederatedLearnerMNIST import TorchFederatedLearnerMNIST, TorchFederatedLearnerMNISTConfig
+from FFL.TorchFederatedLearnerMNIST import TorchFederatedLearnerMNIST, TorchFederatedLearnerMNISTConfig
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',

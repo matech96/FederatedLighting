@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
-from TorchFederatedLearner import TensorFlowFederatedLearner, TensorFlowFederatedLearnerConfig
+from FFL.TorchFederatedLearner import TensorFlowFederatedLearner, TensorFlowFederatedLearnerConfig
 
 
 class TorchFederatedLearnerMNISTConfig(TensorFlowFederatedLearnerConfig):

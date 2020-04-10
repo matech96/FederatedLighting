@@ -1,6 +1,6 @@
 from comet_ml import Experiment
 import logging
-from TorchFederatedLearnerMNIST import (
+from FFL.TorchFederatedLearnerMNIST import (
     TorchFederatedLearnerMNIST,
     TorchFederatedLearnerMNISTConfig,
 )
@@ -11,30 +11,27 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-
-C = 1
-E = 1
-B = 50
-is_iid = False
-
-for NC in [1, 2, 3, 4, 5, 10]:
-    dist = "IID" if is_iid else "non IID"
-    name = f"{dist} - {NC} - {E}"
+B = 10  # 600
+is_iid = True
+C = 0.1
+lr = 0.1
+for i in range(10):
+    name = f"{i}"
 
     logging.info(name)
     experiment = Experiment(
-        workspace="federated-learning", project_name="less_client"
+        workspace="federated-learning", project_name="Reproducability"
     )
     experiment.set_name(name)
     # TODO a paraméterek helytelen nevére nem adott hibát
     config = TorchFederatedLearnerMNISTConfig(
-        LEARNING_RATE=0.1,
+        LEARNING_RATE=lr,
         IS_IID_DATA=is_iid,
         BATCH_SIZE=B,
         CLIENT_FRACTION=C,
-        N_CLIENTS=NC,
-        N_EPOCH_PER_CLIENT=E,
-        MAX_ROUNDS=1500,
+        N_CLIENTS=100,
+        N_EPOCH_PER_CLIENT=5,
+        MAX_ROUNDS=300,
     )
     learner = TorchFederatedLearnerMNIST(experiment, config)
     learner.train()

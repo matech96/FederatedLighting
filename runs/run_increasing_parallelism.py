@@ -1,6 +1,6 @@
 from comet_ml import Experiment
 import logging
-from TorchFederatedLearnerMNIST import (
+from FFL.TorchFederatedLearnerMNIST import (
     TorchFederatedLearnerMNIST,
     TorchFederatedLearnerMNISTConfig,
 )
