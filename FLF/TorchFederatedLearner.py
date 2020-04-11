@@ -31,7 +31,7 @@ class TensorFlowFederatedLearnerConfig(BaseModel):
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     SEED: int = None  # The seed.
-    # LOG_INTERVALL_STEP: int = 30  # The client reports it's performance to comet.ml after every LOG_INTERVALL_STEP update in the round.
+    # TODO opt_cls 
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -81,7 +81,7 @@ class TensorFlowFederatedLearner(ABC):
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
         self.clients = [
-            TorchClient(self, model_cls, loader, self.device)
+            TorchClient(self, model_cls, loader, self.device) # TODO opt_cls
             for loader in self.train_loader_list
         ]
 
