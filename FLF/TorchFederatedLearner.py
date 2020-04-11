@@ -15,7 +15,8 @@ import torch.nn.functional as F
 
 from syftutils.multipointer import avg_model_state_dicts
 
-from FFL.TorchClient import TorchClient
+from FLF.TorchOptRepo import TorchOptRepo
+from FLF.TorchClient import TorchClient
 
 
 class TensorFlowFederatedLearnerConfig(BaseModel):
@@ -31,7 +32,7 @@ class TensorFlowFederatedLearnerConfig(BaseModel):
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     SEED: int = None  # The seed.
-    # TODO opt_cls 
+    OPT: str = "SGD"  # The optimizer used by the client.
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -81,7 +82,14 @@ class TensorFlowFederatedLearner(ABC):
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
         self.clients = [
-            TorchClient(self, model_cls, loader, self.device) # TODO opt_cls
+            TorchClient(
+                self,
+                model_cls,
+                loader,
+                self.device,
+                TorchOptRepo.name2cls(self.config.OPT),
+                {"lr": self.config.LEARNING_RATE},
+            )
             for loader in self.train_loader_list
         ]
 
@@ -133,7 +141,7 @@ class TensorFlowFederatedLearner(ABC):
 
         client_sample = self.__select_clients()
         for client in client_sample:
-            client.set_model(self.model.state_dict(), self.config)
+            client.set_model(self.model.state_dict())
 
         for client in client_sample:
             client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
@@ -193,7 +201,8 @@ class TensorFlowFederatedLearner(ABC):
     def log_test_metric(self, metrics: Dict[str, float], batch_num: int):
         self.experiment.log_parameter(
             "TOTAL_EPOCH",
-            self.config.N_EPOCH_PER_CLIENT * batch_num
+            self.config.N_EPOCH_PER_CLIENT
+            * batch_num
             / (self.config.N_EPOCH_PER_CLIENT * self.n_train_batches),
         )
         for name, value in metrics.items():

@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Dict
 
 import torch as th
 import torch.nn.functional as F
@@ -12,9 +12,9 @@ class TorchClient:
         trainer,
         model_cls: Callable[[], th.nn.Module],
         dataloader: th.utils.data.DataLoader,
-        device,
-        # TODO opt_cls parameter
-        # TODO ot_cls_param dict parameter
+        device: str,
+        opt_cls: Callable[..., th.optim.Optimizer],
+        opt_cls_param: Dict
     ):
         self.id = TorchClient.__next_ID
         TorchClient.__next_ID += 1
@@ -23,15 +23,15 @@ class TorchClient:
         self.model = model_cls()
         self.dataloader = dataloader
         self.device = device
+        self.opt_cls = opt_cls
+        self.opt_cls_param = opt_cls_param
 
     def set_model(
-        self, model_state_dict, config
+        self, model_state_dict
     ):  # TODO Doc: you have to call this before train_round!
         self.model.load_state_dict(model_state_dict)
         self.model.to(self.device)
-        self.opt = th.optim.SGD(
-            self.model.parameters(), lr=config.LEARNING_RATE
-        )  # TODO use self.opt_cls instead
+        self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
 
     def train_round(
         self, n_epochs, curr_round
