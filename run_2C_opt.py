@@ -18,7 +18,7 @@ NC = 2
 E = 1
 B = 50
 is_iid = False
-for opt in TorchOptRepo.get_opt_names():
+for opt in TorchOptRepo.get_opt_names()[1:]:
     for lr in [0.1, 0.01]:
         name = f"{opt} - {lr} - {E}"
 
@@ -35,7 +35,7 @@ for opt in TorchOptRepo.get_opt_names():
             CLIENT_FRACTION=C,
             N_CLIENTS=NC,
             N_EPOCH_PER_CLIENT=E,
-            MAX_ROUNDS=1500,
+            MAX_ROUNDS=100,
         )
         learner = TorchFederatedLearnerMNIST(experiment, config)
         learner.train()
