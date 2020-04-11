@@ -18,7 +18,7 @@ NC = 2
 E = 1
 B = 50
 is_iid = False
-for opt in TorchOptRepo.get_opt_names()[1:]:
+for opt in TorchOptRepo.get_opt_names()[4:]:
     for lr in [0.1, 0.01]:
         name = f"{opt} - {lr} - {E}"
 

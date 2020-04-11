@@ -8,7 +8,9 @@ class TorchOptRepo:
 
     @classmethod
     def get_opt_names(cls) -> List:
-        return list(cls.repo.keys())
+        res = list(cls.repo.keys())        
+        res.remove("SparseAdam")
+        return res
 
     @classmethod
     def name2cls(cls, name) -> th.optim.Optimizer:
