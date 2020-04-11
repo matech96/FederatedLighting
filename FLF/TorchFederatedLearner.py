@@ -81,6 +81,7 @@ class TensorFlowFederatedLearner(ABC):
         )  # TODO batch per client
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
+        TorchClient.reset_ID_counter()
         self.clients = [
             TorchClient(
                 self,

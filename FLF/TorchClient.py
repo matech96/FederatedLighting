@@ -7,6 +7,10 @@ import torch.nn.functional as F
 class TorchClient:
     __next_ID = 0
 
+    @classmethod
+    def reset_ID_counter(cls):
+        cls.__next_ID = 0
+
     def __init__(
         self,
         trainer,

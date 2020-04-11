@@ -8,8 +8,9 @@ class TorchOptRepo:
 
     @classmethod
     def get_opt_names(cls) -> List:
-        res = list(cls.repo.keys())        
+        res = list(cls.repo.keys())
         res.remove("SparseAdam")
+        res.remove("LBFGS")
         return res
 
     @classmethod
