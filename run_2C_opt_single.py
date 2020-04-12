@@ -18,18 +18,19 @@ NC = 2
 E = 1
 B = 50
 is_iid = False
-lr = 0.000001
-opt = "Rprop"
-name = f"{opt} - {lr} - {E}"
+lr = 1
+opt = "Adadelta"
+opt_strategy = "nothing"
+name = f"{opt} - {opt_strategy} - {lr} - {E}"
 
 logging.info(name)
 experiment = Experiment(workspace="federated-learning", project_name="2C_opt")
 experiment.set_name(name)
-experiment.log_parameter("opt_srategy", "reinit")
 # TODO a paraméterek helytelen nevére nem adott hibát
 config = TorchFederatedLearnerMNISTConfig(
     LEARNING_RATE=lr,
     OPT=opt,
+    OPT_STRATEGY=opt_strategy,
     IS_IID_DATA=is_iid,
     BATCH_SIZE=B,
     CLIENT_FRACTION=C,

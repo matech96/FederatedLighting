@@ -33,6 +33,10 @@ class TorchFederatedLearnerConfig(BaseModel):
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     SEED: int = None  # The seed.
     OPT: str = "SGD"  # The optimizer used by the client.
+    OPT_STRATEGY: str = "reinit"  # The optimizer sync strategy. Options are:
+    # reinit: reinitializes the optimizer in every round
+    # nothing: leavs the optimizer intect
+    # avg: averages the optimizer states in every round
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -90,6 +94,7 @@ class TorchFederatedLearner(ABC):
                 self.device,
                 TorchOptRepo.name2cls(self.config.OPT),
                 {"lr": self.config.LEARNING_RATE},
+                config.OPT_STRATEGY == "nothing"
             )
             for loader in self.train_loader_list
         ]
@@ -143,6 +148,8 @@ class TorchFederatedLearner(ABC):
         client_sample = self.__select_clients()
         for client in client_sample:
             client.set_model(self.model.state_dict())
+            # if curr_round != 0 and self.config.OPT_STRATEGY == "nothing":
+                # client.
 
         for client in client_sample:
             client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
@@ -162,6 +169,9 @@ class TorchFederatedLearner(ABC):
         ]
         final_state_dict = avg_model_state_dicts(collected_model_state_dicts)
         self.model.load_state_dict(final_state_dict)
+
+    # def __collect_opt_states(self, client_sample):
+    #     self.client_opt_state = {cliefor client in client_sample}
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         self.model.eval()
