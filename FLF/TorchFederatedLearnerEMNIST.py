@@ -11,10 +11,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
-from FLF.TorchFederatedLearner import TensorFlowFederatedLearner
+from FLF.TorchFederatedLearner import TorchFederatedLearner
 
 
-class TorchFederatedLearnerEMNIST(TensorFlowFederatedLearner):
+class TorchFederatedLearnerEMNIST(TorchFederatedLearner):
     def load_data(
         self,
     ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:

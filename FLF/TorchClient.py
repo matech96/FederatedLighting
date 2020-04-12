@@ -37,6 +37,8 @@ class TorchClient:
         self.model.to(self.device)
         self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
 
+    # TODO def set_opt_state(self, state):
+
     def train_round(
         self, n_epochs, curr_round
     ):  # TODO DOC: curr_round for logging purpuses.
@@ -54,5 +56,7 @@ class TorchClient:
                         loss.item(), self.id, curr_round, curr_epoch, curr_batch
                     )
 
+    # TODO get_opt_state(self):
+    
     def get_model_state_dict(self):
         return self.model.state_dict()

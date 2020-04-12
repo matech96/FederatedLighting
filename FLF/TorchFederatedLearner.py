@@ -19,7 +19,7 @@ from FLF.TorchOptRepo import TorchOptRepo
 from FLF.TorchClient import TorchClient
 
 
-class TensorFlowFederatedLearnerConfig(BaseModel):
+class TorchFederatedLearnerConfig(BaseModel):
     class Config:
         validate_assignment = True
 
@@ -49,9 +49,9 @@ class TensorFlowFederatedLearnerConfig(BaseModel):
     )
 
 
-class TensorFlowFederatedLearner(ABC):
+class TorchFederatedLearner(ABC):
     def __init__(
-        self, experiment: Experiment, config: TensorFlowFederatedLearnerConfig
+        self, experiment: Experiment, config: TorchFederatedLearnerConfig
     ) -> None:
         """Initialises the training.
 

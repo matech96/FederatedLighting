@@ -9,14 +9,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
-from FLF.TorchFederatedLearner import TensorFlowFederatedLearner, TensorFlowFederatedLearnerConfig
+from FLF.TorchFederatedLearner import TorchFederatedLearner, TorchFederatedLearnerConfig
 
 
-class TorchFederatedLearnerMNISTConfig(TensorFlowFederatedLearnerConfig):
+class TorchFederatedLearnerMNISTConfig(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
 
 
-class TorchFederatedLearnerMNIST(TensorFlowFederatedLearner):
+class TorchFederatedLearnerMNIST(TorchFederatedLearner):
     def __init__(
         self, experiment: Experiment, config: TorchFederatedLearnerMNISTConfig
     ) -> None:
