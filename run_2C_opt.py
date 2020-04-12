@@ -41,3 +41,4 @@ for lr in [0.001, 0.01, 0.1, 0.0001, 1, 0.00001, 10]:
         )
         learner = TorchFederatedLearnerMNIST(experiment, config)
         learner.train()
+    break
