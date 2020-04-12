@@ -32,12 +32,14 @@ class TorchClient:
         self.opt_cls_param = opt_cls_param
         self.is_maintaine_opt_state = is_maintaine_opt_state
 
+        self.opt = None
+
     def set_model(
         self, model_state_dict
     ):  # TODO Doc: you have to call this before train_round!
         self.model.load_state_dict(model_state_dict)
         self.model.to(self.device)
-        if self.is_maintaine_opt_state:
+        if (self.opt is not None) and self.is_maintaine_opt_state:
             old_state = self.get_opt_state()
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
             self.set_opt_state(old_state)

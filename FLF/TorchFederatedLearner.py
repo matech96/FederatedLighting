@@ -94,7 +94,7 @@ class TorchFederatedLearner(ABC):
                 self.device,
                 TorchOptRepo.name2cls(self.config.OPT),
                 {"lr": self.config.LEARNING_RATE},
-                config.OPT_STRATEGY == "nothing"
+                config.OPT_STRATEGY == "nothing",
             )
             for loader in self.train_loader_list
         ]
@@ -149,7 +149,6 @@ class TorchFederatedLearner(ABC):
         for client in client_sample:
             client.set_model(self.model.state_dict())
             # if curr_round != 0 and self.config.OPT_STRATEGY == "nothing":
-                # client.
 
         for client in client_sample:
             client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
