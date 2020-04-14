@@ -19,7 +19,12 @@ def avg_models(models):
 def avg_model_state_dicts(state_dicts):
     final_state_dict = {}
     with th.no_grad():
-        for parameter_name in state_dicts[0].keys():
+        for parameter_name in state_dicts[0].keys():            
+            if not isinstance(state_dicts[0][parameter_name], th.Tensor):
+                final_state_dict[parameter_name] = state_dicts[0][parameter_name]
+                # TODO assert equivalnce
+                continue
+
             final_state_dict[parameter_name] = th.mean(
                 th.stack(
                     [
@@ -30,4 +35,3 @@ def avg_model_state_dicts(state_dicts):
                 dim=0,
             )
     return final_state_dict
-

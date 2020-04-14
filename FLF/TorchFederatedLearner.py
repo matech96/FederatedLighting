@@ -154,6 +154,10 @@ class TorchFederatedLearner(ABC):
             client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
 
         self.__collect_avg_model(client_sample)
+        if self.config.OPT_STRATEGY == "avg":
+            avg_opt_state = self.__get_avg_opt_state(client_sample)
+            for client in client_sample:
+                client.set_opt_state(avg_opt_state)
 
     def __select_clients(self):
         client_sample = random.sample(
@@ -169,8 +173,9 @@ class TorchFederatedLearner(ABC):
         final_state_dict = avg_model_state_dicts(collected_model_state_dicts)
         self.model.load_state_dict(final_state_dict)
 
-    # def __collect_opt_states(self, client_sample):
-    #     self.client_opt_state = {cliefor client in client_sample}
+    def __get_avg_opt_state(self, client_sample):
+        client_opt_states = [client.get_opt_state() for client in client_sample]
+        return [avg_model_state_dicts(opt_state) for opt_state in zip(*client_opt_states)]
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         self.model.eval()

@@ -17,9 +17,9 @@ C = 1
 NC = 2
 E = 1
 B = 50
-opt_strategy = "nothing"
+opt_strategy = "avg"
 is_iid = False
-for lr in [0.001, 0.01, 0.1, 0.0001, 1, 0.00001, 10]:
+for lr in [0.01, 0.1, 0.0001, 1, 0.00001, 10]:
     for opt in TorchOptRepo.get_opt_names():
         name = f"{opt} - {opt_strategy} - {lr} - {E}"
 
@@ -41,4 +41,3 @@ for lr in [0.001, 0.01, 0.1, 0.0001, 1, 0.00001, 10]:
         )
         learner = TorchFederatedLearnerMNIST(experiment, config)
         learner.train()
-    break
