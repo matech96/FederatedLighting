@@ -3,3 +3,4 @@ __pycache__/*
 data/*
 *.pyc
 *.npy
+notebooks/2c_opt/*
