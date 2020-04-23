@@ -12,23 +12,30 @@ class TorchCIFAR10Fed(Dataset):
     def __init__(self, split: Union[str, List[str]], transform: Callable = None):
         if isinstance(split, str) and split == "test":
             self.h5 = get_cifar100fed_h5("test")
-            self.clients = list(self.h5.keys())
+            self.client_ids = list(self.h5.keys())
         else:
             self.h5 = get_cifar100fed_h5("train")
-            self.clients = split
+            self.client_ids = split
 
+        self.images = []
+        self.labels = []
+        for client_id in self.client_ids:
+            for item_id in range(100):
+                self.images.append(self.h5[client_id]["image"][item_id])
+                self.labels.append(self.h5[client_id]["label"][item_id])
+        # self.cliens = [self.h5[id] for id in self.client_ids]
         self.transform = transform
 
     def __len__(self):
-        return len(self.clients) * self.N_ELEMENTS_PER_CLIENT
+        return len(self.client_ids) * self.N_ELEMENTS_PER_CLIENT
 
     def __getitem__(self, idx):
-        client_id = idx // self.N_ELEMENTS_PER_CLIENT
-        item_id = idx % self.N_ELEMENTS_PER_CLIENT
+        # client_id = idx // self.N_ELEMENTS_PER_CLIENT
+        # item_id = idx % self.N_ELEMENTS_PER_CLIENT
 
-        client = self.h5[self.clients[client_id]]
-        img = client["image"][item_id]
-        label = client["label"][item_id]
+        # client = self.cliens[client_id]
+        img = self.images[idx]
+        label = self.labels[idx]
 
         if self.transform is not None:
             img = self.transform(img)
