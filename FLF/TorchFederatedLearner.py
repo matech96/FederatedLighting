@@ -90,6 +90,7 @@ class TorchFederatedLearner(ABC):
             TorchClient(
                 self,
                 model_cls,
+                self.get_loss(),
                 loader,
                 self.device,
                 TorchOptRepo.name2cls(self.config.OPT),
@@ -116,6 +117,15 @@ class TorchFederatedLearner(ABC):
 
         Returns:
             nn.Module -- The instance of the model.
+        """
+        pass
+
+    @abstractmethod
+    def get_loss(self) -> nn.Module:
+        """Returns the loss function.
+
+        Returns:
+            nn.Module -- The loss function.
         """
         pass
 
@@ -175,7 +185,9 @@ class TorchFederatedLearner(ABC):
 
     def __get_avg_opt_state(self, client_sample):
         client_opt_states = [client.get_opt_state() for client in client_sample]
-        return [avg_model_state_dicts(opt_state) for opt_state in zip(*client_opt_states)]
+        return [
+            avg_model_state_dicts(opt_state) for opt_state in zip(*client_opt_states)
+        ]
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         self.model.eval()

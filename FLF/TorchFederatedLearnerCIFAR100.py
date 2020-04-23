@@ -92,6 +92,9 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
     def get_model_cls(self) -> Callable[[], nn.Module]:
         return Net
 
+    def get_loss(self):
+        return nn.CrossEntropyLoss()
+
 
 class Net(nn.Module):
     def __init__(self):

@@ -48,6 +48,6 @@ get_cifar100fed_h5.path = tf.keras.utils.get_file(
     origin="https://storage.googleapis.com/tff-datasets-public/fed_cifar100.tar.bz2",
     file_hash="e8575e22c038ecef1ce6c7d492d7abee7da13b1e1ba9b70a7fc18531ba7590de",
     hash_algorithm="sha256",
-    extract=True,
+    extract=False,#True,
     archive_format="tar",
 )

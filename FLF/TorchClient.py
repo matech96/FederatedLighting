@@ -15,6 +15,7 @@ class TorchClient:
         self,
         trainer,
         model_cls: Callable[[], th.nn.Module],
+        loss: nn.Module,
         dataloader: th.utils.data.DataLoader,
         device: str,
         opt_cls: Callable[..., th.optim.Optimizer],
@@ -26,6 +27,7 @@ class TorchClient:
 
         self.trainer = trainer
         self.model = model_cls()
+        self.loss = loss
         self.dataloader = dataloader
         self.device = device
         self.opt_cls = opt_cls
@@ -59,7 +61,7 @@ class TorchClient:
                 data, target = data.to(self.device), target.to(self.device)
                 self.opt.zero_grad()
                 output = self.model(data)
-                loss = F.nll_loss(output, target)
+                loss = self.loss(output, target)
                 loss.backward()
                 self.opt.step()
 

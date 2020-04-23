@@ -98,6 +98,9 @@ class TorchFederatedLearnerMNIST(TorchFederatedLearner):
     def get_model_cls(self) -> Callable[[], nn.Module]:
         return Net
 
+    def get_loss(self) -> nn.Module:
+        return F.nll_loss
+
 
 class Net(nn.Module):
     def __init__(self):
