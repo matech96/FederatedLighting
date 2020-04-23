@@ -45,7 +45,9 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
         else:
             indices = self.__distribute_data_non_IID(y_train)
 
-        to_format = lambda x, y: (tf.cast(tf.expand_dims(x, -1), tf.float32) / 2[55, y)
+        def to_format(x, y):
+            return (tf.cast(tf.expand_dims(x, -1), tf.float32) / 2[55, y)
+
         train_loader_list = []
         for idx in indices:
             np.random.shuffle(idx)
