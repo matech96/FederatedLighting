@@ -198,7 +198,7 @@ class TorchFederatedLearner(ABC):
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model(data)
                 test_loss += self.get_loss()(
-                    output, target, reduction="sum"
+                    output, target  # , reduction="sum"
                 ).item()  # sum up batch loss
                 pred = output.argmax(
                     1, keepdim=True
