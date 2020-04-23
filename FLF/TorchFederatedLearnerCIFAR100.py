@@ -44,7 +44,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         if self.config.IS_IID_DATA:
             train_loader_list = self.get_iid_data(transform)
         else:
-            train_loader_list = self.get_non_iid_data(transform, train_loader_list)
+            train_loader_list = self.get_non_iid_data(transform)
 
         test_loader = th.utils.data.DataLoader(
             TorchCIFAR10Fed("test", transform),
@@ -75,7 +75,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             train_loader_list.append(loader)
         return train_loader_list
 
-    def get_non_iid_data(self, transform, train_loader_list):
+    def get_non_iid_data(self, transform):
         clients = [str(x) for x in np.arange(self.N_TRAINING_CLIENTS)]
         indices = np.array_split(clients, self.config.N_CLIENTS)
         train_loader_list = []
