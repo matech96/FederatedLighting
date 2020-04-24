@@ -1,5 +1,7 @@
 import os
 import h5py
+import numpy as np
+from pathlib import Path
 from typing import Union, List, Callable
 
 import tensorflow as tf
@@ -10,32 +12,16 @@ class TorchCIFAR10Fed(Dataset):
     N_ELEMENTS_PER_CLIENT = 100
 
     def __init__(self, split: Union[str, List[str]], transform: Callable = None):
-        if isinstance(split, str) and split == "test":
-            self.h5 = get_cifar100fed_h5("test")
-            self.client_ids = list(self.h5.keys())
-        else:
-            self.h5 = get_cifar100fed_h5("train")
-            self.client_ids = split
-
-        self.images = []
-        self.labels = []
-        for client_id in self.client_ids:
-            for item_id in range(100):
-                self.images.append(self.h5[client_id]["image"][item_id])
-                self.labels.append(self.h5[client_id]["label"][item_id])
-        # self.cliens = [self.h5[id] for id in self.client_ids]
+        download_all_data()
+        self.images, self.labels = get_data(split)
         self.transform = transform
 
     def __len__(self):
         return len(self.client_ids) * self.N_ELEMENTS_PER_CLIENT
 
     def __getitem__(self, idx):
-        # client_id = idx // self.N_ELEMENTS_PER_CLIENT
-        # item_id = idx % self.N_ELEMENTS_PER_CLIENT
-
-        # client = self.cliens[client_id]
-        img = self.images[idx]
-        label = self.labels[idx]
+        img = self.images[idx, ]
+        label = self.labels[idx, ]
 
         if self.transform is not None:
             img = self.transform(img)
@@ -43,18 +29,66 @@ class TorchCIFAR10Fed(Dataset):
         return img, label
 
 
-def get_cifar100fed_h5(split):
-    dir_path = os.path.dirname(get_cifar100fed_h5.path)
-    return h5py.File(os.path.join(dir_path, f"fed_cifar100_{split}.h5"), "r")[
-        "examples"
-    ]
+def download_all_data():
+    data_dir = Path("data/cifar100fed")
+
+    path = tf.keras.utils.get_file(
+        "fed_cifar100.tar.bz2",
+        origin="https://storage.googleapis.com/tff-datasets-public/fed_cifar100.tar.bz2",
+        file_hash="e8575e22c038ecef1ce6c7d492d7abee7da13b1e1ba9b70a7fc18531ba7590de",
+        hash_algorithm="sha256",
+        extract=True,
+        archive_format="tar",
+    )
+    dir_path = os.path.dirname(path)
+
+    def download_split(data_set):
+        split_dir = data_dir / data_set
+        try:
+            os.makedirs(split_dir)
+        except FileExistsError:
+            return
+        h5 = h5py.File(os.path.join(dir_path, f"fed_cifar100_{data_set}.h5"), "r")[
+            "examples"
+        ]
+
+        for client_id in h5.keys():
+            images = []
+            labels = []
+            for item_id in range(100):
+                images.append(h5[client_id]["image"][item_id])
+                labels.append(h5[client_id]["label"][item_id])
+            images = np.stack(images, axis=0)
+            labels = np.stack(labels, axis=0)
+            np.save(split_dir / f"{client_id}_img", images)
+            np.save(split_dir / f"{client_id}_label", labels)
+
+    download_split("train")
+    download_split("test")
 
 
-get_cifar100fed_h5.path = tf.keras.utils.get_file(
-    "fed_cifar100.tar.bz2",
-    origin="https://storage.googleapis.com/tff-datasets-public/fed_cifar100.tar.bz2",
-    file_hash="e8575e22c038ecef1ce6c7d492d7abee7da13b1e1ba9b70a7fc18531ba7590de",
-    hash_algorithm="sha256",
-    extract=False,#True,
-    archive_format="tar",
-)
+def get_data(split):
+    if isinstance(split, str) and split == "test":
+        data_set = "test"
+        client_ids = [str(i) for i in range(100)]
+    else:
+        data_set = "train"
+        client_ids = split
+
+    images = []
+    labels = []
+    for c in client_ids:
+        i, l = get_client_data(data_set, c)
+        images.append(i)
+        labels.append(l)
+
+    return np.concatenate(images), np.concatenate(labels)
+
+
+def get_client_data(data_set, client_id):
+    data_dir = Path("data/cifar100fed")
+    split_dir = data_dir / data_set
+
+    images = np.load(split_dir / f"{client_id}_img.npy")
+    labels = np.load(split_dir / f"{client_id}_label.npy")
+    return images, labels
