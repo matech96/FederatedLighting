@@ -1,5 +1,6 @@
 from comet_ml import Experiment
 
+import logging
 from typing import Tuple, List, Callable
 
 import numpy as np
@@ -9,7 +10,7 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 
 from FLF.TorchFederatedLearner import TorchFederatedLearner, TorchFederatedLearnerConfig
-from FLF.data.TorchCIFAR100Fed import TorchCIFAR10Fed
+from FLF.data.TorchCIFAR100Fed import TorchCIFAR100Fed
 
 
 class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
@@ -47,7 +48,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             train_loader_list = self.get_non_iid_data(transform)
 
         test_loader = th.utils.data.DataLoader(
-            TorchCIFAR10Fed("test", transform),
+            TorchCIFAR100Fed("test", transform),
             batch_size=64,
             num_workers=self.config.DL_N_WORKER,
         )
@@ -55,9 +56,12 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         return train_loader_list, test_loader
 
     def get_iid_data(self, transform):
+        logging.info("Torch CIFAR100 loading ...")
         cifar100_train_ds = datasets.CIFAR10(
             "data/cifar10", download=True, transform=transform,
         )
+        logging.info("Torch CIFAR100 loaded")
+        logging.info("IID distribution ...")
         n_training_samples = len(cifar100_train_ds)
         indices = np.arange(n_training_samples)
         indices = indices.reshape(self.config.N_CLIENTS, -1)
@@ -73,20 +77,23 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
                 sampler=sampler,
             )
             train_loader_list.append(loader)
+        logging.info("IID distributed")
         return train_loader_list
 
     def get_non_iid_data(self, transform):
+        logging.info("Non IID loading ...")
         clients = [str(x) for x in np.arange(self.N_TRAINING_CLIENTS)]
         indices = np.array_split(clients, self.config.N_CLIENTS)
         train_loader_list = []
         for indice in indices:
-            ds = TorchCIFAR10Fed(indice, transform)
+            ds = TorchCIFAR100Fed(indice, transform)
             loader = th.utils.data.DataLoader(
                 dataset=ds,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config.DL_N_WORKER,
             )
             train_loader_list.append(loader)
+        logging.info("Non IID loaded")
         return train_loader_list
 
     def get_model_cls(self) -> Callable[[], nn.Module]:

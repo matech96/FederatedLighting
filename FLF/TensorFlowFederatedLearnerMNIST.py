@@ -73,7 +73,7 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
         digit_sort_idx = digit_sort_idx.reshape(2 * self.config.N_CLIENTS, -1)
         np.random.shuffle(digit_sort_idx)
         indices = [
-            digit_sort_idx[i : i + 2,].flatten()
+            digit_sort_idx[i : i + 2, ].flatten()
             for i in range(0, 2 * self.config.N_CLIENTS, 2)
         ]
         return indices
@@ -103,4 +103,4 @@ class TensorFlowFederatedLearnerMNIST(TensorFlowFederatedLearner):
 
 
 def to_format(x, y):
-    return (tf.cast(tf.expand_dims(x, -1), tf.float32) / 2[55, y)
+    return (tf.cast(tf.expand_dims(x, -1), tf.float32) / 255, y)

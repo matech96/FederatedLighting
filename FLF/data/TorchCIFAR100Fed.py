@@ -1,3 +1,4 @@
+import logging
 import os
 import h5py
 import numpy as np
@@ -8,7 +9,7 @@ import tensorflow as tf
 from torch.utils.data import Dataset
 
 
-class TorchCIFAR10Fed(Dataset):
+class TorchCIFAR100Fed(Dataset):
     N_ELEMENTS_PER_CLIENT = 100
 
     def __init__(self, split: Union[str, List[str]], transform: Callable = None):
@@ -32,15 +33,20 @@ class TorchCIFAR10Fed(Dataset):
 def download_all_data():
     data_dir = Path("data/cifar100fed")
     is_extract = not data_dir.exists()
+    if not is_extract:
+        return
+
+    logging.info(f"Data extration: {is_extract} ...")
 
     path = tf.keras.utils.get_file(
         "fed_cifar100.tar.bz2",
         origin="https://storage.googleapis.com/tff-datasets-public/fed_cifar100.tar.bz2",
         file_hash="e8575e22c038ecef1ce6c7d492d7abee7da13b1e1ba9b70a7fc18531ba7590de",
         hash_algorithm="sha256",
-        extract=is_extract,
+        extract=True,
         archive_format="tar",
     )
+    logging.info(f"Data extrated")
     
     dir_path = os.path.dirname(path)
 
