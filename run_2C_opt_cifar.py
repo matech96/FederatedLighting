@@ -17,8 +17,9 @@ NC = 2
 E = 1
 B = 50
 is_iid = False
+opt_strategy = "avg"
 for opt_strategy in ["nothing", "reinit", "avg"]:
-    for lr in [0.001, 0.1, 0.0001]:
+    for lr in [1, 0.00001, 10, 0.000001]:
         for opt in ["SGD", "ASGD", "Adadelta", "Adam"]:
             name = f"{opt} - {opt_strategy} - {lr} - {E}"
 

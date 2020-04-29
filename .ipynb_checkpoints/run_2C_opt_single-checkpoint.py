@@ -1,8 +1,8 @@
 from comet_ml import Experiment
 import logging
-from FLF.TorchFederatedLearnerCIFAR100 import (
-    TorchFederatedLearnerCIFAR100,
-    TorchFederatedLearnerCIFAR100Config,
+from FLF.TorchFederatedLearnerMNIST import (
+    TorchFederatedLearnerMNIST,
+    TorchFederatedLearnerMNISTConfig,
 )
 
 logging.basicConfig(
@@ -13,20 +13,20 @@ logging.basicConfig(
 
 
 C = 1
-NC = 500
-E = 5
-B = 64
+NC = 2
+E = 1
+B = 50
 is_iid = False
-lr = 0.01
-opt = "SGD"
+lr = 1
+opt = "Adadelta"
 opt_strategy = "nothing"
 name = f"{opt} - {opt_strategy} - {lr} - {E}"
 
 logging.info(name)
-experiment = Experiment(workspace="federated-learning", project_name="cifar")
+experiment = Experiment(workspace="federated-learning", project_name="2C_opt")
 experiment.set_name(name)
 # TODO a paraméterek helytelen nevére nem adott hibát
-config = TorchFederatedLearnerCIFAR100Config(
+config = TorchFederatedLearnerMNISTConfig(
     LEARNING_RATE=lr,
     OPT=opt,
     OPT_STRATEGY=opt_strategy,
@@ -37,5 +37,5 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=100,
 )
-learner = TorchFederatedLearnerCIFAR100(experiment, config)
+learner = TorchFederatedLearnerMNIST(experiment, config)
 learner.train()

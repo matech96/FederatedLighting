@@ -17,7 +17,7 @@ class TorchCIFAR10Fed(Dataset):
         self.transform = transform
 
     def __len__(self):
-        return len(self.client_ids) * self.N_ELEMENTS_PER_CLIENT
+        return self.images.shape[0]
 
     def __getitem__(self, idx):
         img = self.images[idx, ]
@@ -31,15 +31,17 @@ class TorchCIFAR10Fed(Dataset):
 
 def download_all_data():
     data_dir = Path("data/cifar100fed")
+    is_extract = not data_dir.exists()
 
     path = tf.keras.utils.get_file(
         "fed_cifar100.tar.bz2",
         origin="https://storage.googleapis.com/tff-datasets-public/fed_cifar100.tar.bz2",
         file_hash="e8575e22c038ecef1ce6c7d492d7abee7da13b1e1ba9b70a7fc18531ba7590de",
         hash_algorithm="sha256",
-        extract=True,
+        extract=is_extract,
         archive_format="tar",
     )
+    
     dir_path = os.path.dirname(path)
 
     def download_split(data_set):
