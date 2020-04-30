@@ -74,6 +74,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
                 dataset=cifar100_train_ds,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config.DL_N_WORKER,
+                # pin_memory=True,
                 sampler=sampler,
             )
             train_loader_list.append(loader)

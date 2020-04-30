@@ -1,5 +1,6 @@
 from comet_ml import Experiment
 import sys
+import multiprocessing
 import logging
 from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
@@ -15,17 +16,30 @@ logging.basicConfig(
 
 C = 1
 NC = 100
-E = int(sys.argv[0])
+E = 3
 B = 64
 is_iid = False
 opt = "SGD"
 opt_strategy = "nothing"
-for lr in [0.001, 0.01, 0.1]:
-    name = f"{opt} - {opt_strategy} - {lr} - {E}"
+lr = 0.1
+configs = []
 
-    logging.info(name)
-    experiment = Experiment(workspace="federated-learning", project_name="cifar")
-    experiment.set_name(name)
+
+config = TorchFederatedLearnerCIFAR100Config(
+    LEARNING_RATE=1,
+    OPT=opt,
+    OPT_STRATEGY=opt_strategy,
+    IS_IID_DATA=is_iid,
+    BATCH_SIZE=B,
+    CLIENT_FRACTION=C,
+    N_CLIENTS=NC,
+    N_EPOCH_PER_CLIENT=5,
+    MAX_ROUNDS=2,
+    DL_N_WORKER=0,
+)
+configs.append(config)
+
+for lr in [0.001, 0.01, 0.1]:
     # TODO a paraméterek helytelen nevére nem adott hibát
     config = TorchFederatedLearnerCIFAR100Config(
         LEARNING_RATE=lr,
@@ -36,7 +50,20 @@ for lr in [0.001, 0.01, 0.1]:
         CLIENT_FRACTION=C,
         N_CLIENTS=NC,
         N_EPOCH_PER_CLIENT=E,
-        MAX_ROUNDS=100,
+        MAX_ROUNDS=2,
+        DL_N_WORKER=0,
     )
+    configs.append(config)
+
+
+def do_training(config: TorchFederatedLearnerCIFAR100Config):
+    name = f"{config.OPT} - {config.OPT_STRATEGY} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
+    logging.info(name)
+    experiment = Experiment(workspace="federated-learning", project_name="cifar")
+    experiment.set_name(name)
     learner = TorchFederatedLearnerCIFAR100(experiment, config)
     learner.train()
+
+
+pool = multiprocessing.Pool(2)
+pool.map(do_training, configs)

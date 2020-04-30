@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Union, List, Callable
 
 import tensorflow as tf
+import torch as th
 from torch.utils.data import Dataset
 
 
@@ -17,17 +18,23 @@ class TorchCIFAR100Fed(Dataset):
         self.images, self.labels = get_data(split)
         self.transform = transform
 
+        if self.transform is not None:
+            self.images = th.tensor(
+                np.stack(
+                    [
+                        self.transform(self.images[i,])
+                        for i in range(self.images.shape[0])
+                    ]
+                )
+            )
+
+        self.images.cuda()
+
     def __len__(self):
         return self.images.shape[0]
 
     def __getitem__(self, idx):
-        img = self.images[idx, ]
-        label = self.labels[idx, ]
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        return img, label
+        return self.images[idx, ], self.labels[idx, ]
 
 
 def download_all_data():
@@ -47,7 +54,7 @@ def download_all_data():
         archive_format="tar",
     )
     logging.info(f"Data extrated")
-    
+
     dir_path = os.path.dirname(path)
 
     def download_split(data_set):
