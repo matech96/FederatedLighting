@@ -1,6 +1,4 @@
 from comet_ml import Experiment
-import sys
-import multiprocessing
 import logging
 from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
@@ -34,7 +32,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     CLIENT_FRACTION=C,
     N_CLIENTS=NC,
     N_EPOCH_PER_CLIENT=5,
-    MAX_ROUNDS=2,
+    MAX_ROUNDS=100,
     DL_N_WORKER=0,
 )
 configs.append(config)
@@ -65,5 +63,5 @@ def do_training(config: TorchFederatedLearnerCIFAR100Config):
     learner.train()
 
 
-pool = multiprocessing.Pool(2)
-pool.map(do_training, configs)
+for config in configs:
+    do_training(config)
