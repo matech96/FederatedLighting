@@ -22,13 +22,15 @@ class TorchCIFAR100Fed(Dataset):
             self.images = th.tensor(
                 np.stack(
                     [
-                        self.transform(self.images[i,])
+                        self.transform(self.images[i, ])
                         for i in range(self.images.shape[0])
                     ]
                 )
             )
 
         self.images.cuda()
+        # self.labels = th.tensor(self.labels)
+        # self.labels.cuda()
 
     def __len__(self):
         return self.images.shape[0]
