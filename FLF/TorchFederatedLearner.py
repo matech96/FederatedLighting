@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from syftutils.multipointer import avg_model_state_dicts
+from mutil.ElapsedTime import ElapsedTime
 
 from FLF.TorchOptRepo import TorchOptRepo
 from FLF.TorchClient import TorchClient
@@ -136,17 +137,18 @@ class TorchFederatedLearner(ABC):
             None -- No return value.
         """
         try:
-            for round in range(self.config.MAX_ROUNDS):
-                self.experiment.log_parameter("curr_round", round)
-                self.__train_one_round(round)
-                metrics = self.test(self.test_loader)
-                self.log_test_metric(
-                    metrics,
-                    round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
-                )
+            with ElapsedTime("Training"):
+                for round in range(self.config.MAX_ROUNDS):
+                    self.experiment.log_parameter("curr_round", round)
+                    self.__train_one_round(round)
+                    metrics = self.test(self.test_loader)
+                    self.log_test_metric(
+                        metrics,
+                        round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
+                    )
 
-                if metrics["test_acc"] > self.config.TARGET_ACC:
-                    break
+                    if metrics["test_acc"] > self.config.TARGET_ACC:
+                        break
         except InterruptedExperiment:
             pass
 

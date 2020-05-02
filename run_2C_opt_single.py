@@ -14,33 +14,33 @@ logging.basicConfig(
 
 C = 1
 NC = 100
-E = 3
+E = 5
 B = 64
 is_iid = False
 opt = "SGD"
 opt_strategy = "nothing"
-lr = 0.1
+lr = 0.01
 configs = []
 
-for lr in [0.001, 0.01, 0.1]:
-    # TODO a paraméterek helytelen nevére nem adott hibát
-    config = TorchFederatedLearnerCIFAR100Config(
-        LEARNING_RATE=lr,
-        OPT=opt,
-        OPT_STRATEGY=opt_strategy,
-        IS_IID_DATA=is_iid,
-        BATCH_SIZE=B,
-        CLIENT_FRACTION=C,
-        N_CLIENTS=NC,
-        N_EPOCH_PER_CLIENT=E,
-        MAX_ROUNDS=100,
-        DL_N_WORKER=0,
-    )
-    configs.append(config)
+# for lr in [0.001, 0.01, 0.1]:
+# TODO a paraméterek helytelen nevére nem adott hibát
+config = TorchFederatedLearnerCIFAR100Config(
+    LEARNING_RATE=lr,
+    OPT=opt,
+    OPT_STRATEGY=opt_strategy,
+    IS_IID_DATA=is_iid,
+    BATCH_SIZE=B,
+    CLIENT_FRACTION=C,
+    N_CLIENTS=NC,
+    N_EPOCH_PER_CLIENT=E,
+    MAX_ROUNDS=1000,
+    DL_N_WORKER=0,
+)
+configs.append(config)
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"{config.OPT} - {config.OPT_STRATEGY} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
+    name = f"{config.MAX_ROUNDS} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name="cifar")
     experiment.set_name(name)

@@ -41,7 +41,7 @@ configs.append(config)
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"GPU - cuda() - par0 - {config.OPT} - {config.OPT_STRATEGY} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
+    name = f"GPU - pinMem - tensors - par0 - {config.OPT} - {config.OPT_STRATEGY} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name="cifar-speed-up")
     experiment.set_name(name)
