@@ -1,3 +1,4 @@
+import logging
 from typing import Callable, Dict
 
 import torch as th
@@ -35,6 +36,8 @@ class TorchClient:
         self.is_maintaine_opt_state = is_maintaine_opt_state
 
         self.opt = None
+
+        logging.info(f"Client {self.id} was created")
 
     def set_model(
         self, model_state_dict

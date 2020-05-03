@@ -13,7 +13,7 @@ logging.basicConfig(
 
 
 C = 1
-NC = 500
+NC = 50
 E = 5
 B = 64
 is_iid = False
@@ -40,7 +40,7 @@ for lr in [0.01, 0.1, 0.001]:
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"{config.MAX_ROUNDS} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
+    name = f"resnet - {config.MAX_ROUNDS} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name="cifar")
     experiment.set_name(name)

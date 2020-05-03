@@ -6,7 +6,6 @@ from typing import Tuple, List, Callable
 import numpy as np
 import torch as th
 import torch.nn as nn
-import torch.nn.functional as F
 from torchvision import datasets, transforms
 import torchvision.models as models
 

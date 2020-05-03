@@ -11,7 +11,6 @@ from pydantic import BaseModel, validator
 
 import torch as th
 import torch.nn as nn
-import torch.nn.functional as F
 
 from syftutils.multipointer import avg_model_state_dicts
 from mutil.ElapsedTime import ElapsedTime
@@ -146,6 +145,7 @@ class TorchFederatedLearner(ABC):
                         metrics,
                         round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
                     )
+                    logging.info(f'Test accuracy: {metrics["test_acc"]}')
 
                     if metrics["test_acc"] > self.config.TARGET_ACC:
                         break
