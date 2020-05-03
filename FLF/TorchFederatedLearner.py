@@ -77,7 +77,7 @@ class TorchFederatedLearner(ABC):
         self.experiment.log_parameters(self.config.__dict__)
 
         model_cls = self.get_model_cls()
-        self.model = model_cls().to(self.device)
+        self.model = model_cls()
 
         self.train_loader_list, self.test_loader = self.load_data()
         self.n_train_batches = int(
@@ -192,6 +192,7 @@ class TorchFederatedLearner(ABC):
         ]
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
+        self.model.to(self.device)
         self.model.eval()
         test_loss = 0
         correct = 0
@@ -209,6 +210,7 @@ class TorchFederatedLearner(ABC):
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
+        self.model.to("cpu")
         return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(

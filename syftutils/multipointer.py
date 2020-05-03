@@ -19,8 +19,10 @@ def avg_models(models):
 def avg_model_state_dicts(state_dicts):
     final_state_dict = {}
     with th.no_grad():
-        for parameter_name in state_dicts[0].keys():            
-            if not isinstance(state_dicts[0][parameter_name], th.Tensor):
+        for parameter_name in state_dicts[0].keys():
+            if (not isinstance(state_dicts[0][parameter_name], th.Tensor)) or (
+                state_dicts[0][parameter_name].dtype == th.int64
+            ):
                 final_state_dict[parameter_name] = state_dicts[0][parameter_name]
                 # TODO assert equivalnce
                 continue
