@@ -42,8 +42,7 @@ class TorchClient:
     def set_model(
         self, model_state_dict
     ):  # TODO Doc: you have to call this before train_round!
-        self.model.load_state_dict(model_state_dict)
-        self.model.to(self.device)
+        self.model.load_state_dict(model_state_dict)        
         if (self.opt is not None) and self.is_maintaine_opt_state:
             old_state = self.get_opt_state()
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
@@ -59,6 +58,7 @@ class TorchClient:
     def train_round(
         self, n_epochs, curr_round
     ):  # TODO DOC: curr_round for logging purpuses.
+        self.model.to(self.device)
         for curr_epoch in range(n_epochs):
             for curr_batch, (data, target) in enumerate(self.dataloader):
                 data, target = data.to(self.device), target.to(self.device)
@@ -72,6 +72,7 @@ class TorchClient:
                     self.trainer.log_client_step(
                         loss.item(), self.id, curr_round, curr_epoch, curr_batch
                     )
+        self.model.to("cpu")
 
     def get_opt_state(self):
         return self.opt.state_dict()['state'].values()
