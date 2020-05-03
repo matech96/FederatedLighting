@@ -13,30 +13,30 @@ logging.basicConfig(
 
 
 C = 1
-NC = 100
+NC = 500
 E = 5
 B = 64
 is_iid = False
 opt = "SGD"
 opt_strategy = "nothing"
-lr = 0.01
+# lr = 0.01
 configs = []
 
-# for lr in [0.001, 0.01, 0.1]:
-# TODO a paraméterek helytelen nevére nem adott hibát
-config = TorchFederatedLearnerCIFAR100Config(
-    LEARNING_RATE=lr,
-    OPT=opt,
-    OPT_STRATEGY=opt_strategy,
-    IS_IID_DATA=is_iid,
-    BATCH_SIZE=B,
-    CLIENT_FRACTION=C,
-    N_CLIENTS=NC,
-    N_EPOCH_PER_CLIENT=E,
-    MAX_ROUNDS=1000,
-    DL_N_WORKER=0,
-)
-configs.append(config)
+for lr in [0.01, 0.1, 0.001]:
+    # TODO a paraméterek helytelen nevére nem adott hibát
+    config = TorchFederatedLearnerCIFAR100Config(
+        LEARNING_RATE=lr,
+        OPT=opt,
+        OPT_STRATEGY=opt_strategy,
+        IS_IID_DATA=is_iid,
+        BATCH_SIZE=B,
+        CLIENT_FRACTION=C,
+        N_CLIENTS=NC,
+        N_EPOCH_PER_CLIENT=E,
+        MAX_ROUNDS=1000,
+        DL_N_WORKER=0,
+    )
+    configs.append(config)
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):

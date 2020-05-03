@@ -8,6 +8,7 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
+import torchvision.models as models
 
 from FLF.TorchFederatedLearner import TorchFederatedLearner, TorchFederatedLearnerConfig
 from FLF.data.TorchCIFAR100Fed import TorchCIFAR100Fed
@@ -98,27 +99,28 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         return train_loader_list
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        return Net
+        return models.resnet18
+        # return Net
 
     def get_loss(self):
         return nn.CrossEntropyLoss()
 
 
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 120)
-        self.fc3 = nn.Linear(120, 100)
+# class Net(nn.Module):
+#     def __init__(self):
+#         super(Net, self).__init__()
+#         self.conv1 = nn.Conv2d(3, 6, 5)
+#         self.pool = nn.MaxPool2d(2, 2)
+#         self.conv2 = nn.Conv2d(6, 16, 5)
+#         self.fc1 = nn.Linear(16 * 5 * 5, 120)
+#         self.fc2 = nn.Linear(120, 120)
+#         self.fc3 = nn.Linear(120, 100)
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+#     def forward(self, x):
+#         x = self.pool(F.relu(self.conv1(x)))
+#         x = self.pool(F.relu(self.conv2(x)))
+#         x = x.view(-1, 16 * 5 * 5)
+#         x = F.relu(self.fc1(x))
+#         x = F.relu(self.fc2(x))
+#         x = self.fc3(x)
+#         return x
