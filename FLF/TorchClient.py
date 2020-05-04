@@ -43,10 +43,10 @@ class TorchClient:
     def set_model(
         self, model_state_dict
     ):  # TODO Doc: you have to call this before train_round!
-        self.state_man.set_model_state(model_state_dict)
+        self.state_man.set_model_state_to_be_loaded(model_state_dict)
 
     def set_opt_state(self, state):
-        self.state_man.set_opt_state(state)
+        self.state_man.set_opt_state_to_be_loaded(state)
 
     def train_round(
         self, n_epochs, curr_round

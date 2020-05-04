@@ -33,7 +33,7 @@ class TorchModelOptStateManager:
         if self.model is None:
             self.model = self.model_cls()
             self.__log("model instanciated")
-        if self.model_state is not None:
+        if self.__model_state_to_be_loaded is not None:
             self.model.load_state_dict(self.__model_state_to_be_loaded)
             self.__log("model state loaded")
         self.model.cuda()
@@ -42,7 +42,7 @@ class TorchModelOptStateManager:
         if self.opt is None:
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
             self.__log("opt instanciated")
-        if self.opt_state is not None:
+        if self.__opt_state_to_be_loaded is not None:
             new_state_dict = self.opt.state_dict()
             new_state_dict["state"].update(
                 zip(new_state_dict["param_groups"][0]["params"], self.__opt_state_to_be_loaded)
