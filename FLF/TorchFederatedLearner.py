@@ -5,7 +5,6 @@ import random
 from abc import ABC, abstractmethod
 from typing import Tuple, Dict, List, Callable
 import logging
-import gc
 
 import numpy as np
 from pydantic import BaseModel, validator

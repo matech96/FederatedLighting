@@ -15,12 +15,22 @@ class TorchModelOptStateManager:
         self.model = None
         self.opt = None
 
-    def set_model_state(self, model_state):
-        self.model_state = model_state
+    @property
+    def model_state(self):
+        return self.model.state_dict()
+
+    @model_state.setter
+    def model_state(self, state):
+        self.model_state = state
         self.__log("model set")
 
-    def set_opt_state(self, opt_state):
-        self.opt_state = opt_state
+    @property
+    def opt_state(self):
+        return self.opt.state_dict()["state"].values()
+
+    @opt_state.setter
+    def opt_state(self, state):
+        self.opt_state = state
         self.__log("opt set")
 
     def __enter__(self):
@@ -29,8 +39,9 @@ class TorchModelOptStateManager:
             self.__log("model instanciated")
         if self.model_state is not None:
             self.model.load_state_dict(self.model_state)
-            self.__log("model loaded")
+            self.__log("model state loaded")
         self.model.cuda()
+        self.__log("model is on GPU")
 
         if self.opt is None:
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
@@ -41,11 +52,12 @@ class TorchModelOptStateManager:
                 zip(new_state_dict["param_groups"][0]["params"], self.opt_state)
             )
             self.opt.load_state_dict(new_state_dict)
-            self.__log("opt loaded")
+            self.__log("opt state loaded")
 
     def __exit__(self, *exc):
         if not self.is_keep_model_on_gpu:
             self.model.cpu()
+            self.__log("model is on CPU")
 
     def __log(self, m):
         logging.info(f"Client {self.id}: {m}")

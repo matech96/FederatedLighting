@@ -51,27 +51,25 @@ class TorchClient:
     def train_round(
         self, n_epochs, curr_round
     ):  # TODO DOC: curr_round for logging purpuses.
-        model, opt = self.state_man.instanciate()
-        for curr_epoch in range(n_epochs):
-            for curr_batch, (data, target) in enumerate(self.dataloader):
-                data, target = data.to(self.device), target.to(self.device)
-                opt.zero_grad()
-                output = model(data)
-                loss = self.loss(output, target)
-                loss.backward()
-                opt.step()
+        with self.state_man:
+            for curr_epoch in range(n_epochs):
+                for curr_batch, (data, target) in enumerate(self.dataloader):
+                    data, target = data.to(self.device), target.to(self.device)
+                    self.state_man.opt.zero_grad()
+                    output = self.state_man.model(data)
+                    loss = self.loss(output, target)
+                    loss.backward()
+                    self.state_man.opt.step()
 
-                if (curr_batch == 0) or (curr_batch % 10 == 0):
-                    self.trainer.log_client_step(
-                        loss.item(), self.id, curr_round, curr_epoch, curr_batch
-                    )
+                    if (curr_batch == 0) or (curr_batch % 10 == 0):
+                        self.trainer.log_client_step(
+                            loss.item(), self.id, curr_round, curr_epoch, curr_batch
+                        )
 
-        model_state = model.state_dict()
-        opt_state = opt.state_dict()["state"].values()
         if self.is_maintaine_opt_state:
-            self.state_man.set_opt_state(opt_state)
+            self.state_man.opt_state = self.state_man.opt_state
 
-        return model_state, opt_state
+        return self.state_man.model_state, self.state_man.opt_state
 
     def __log(self, m):
         logging.info(f"Client {self.id}: {m}")
