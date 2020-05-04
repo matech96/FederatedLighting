@@ -98,7 +98,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         return train_loader_list
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        return models.resnet18
+        return models.resnet18, False
         # return Net
 
     def get_loss(self):

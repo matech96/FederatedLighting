@@ -12,7 +12,7 @@ logging.basicConfig(
 )
 
 
-C = 0.02
+C = 1
 NC = 50
 E = 5
 B = 64

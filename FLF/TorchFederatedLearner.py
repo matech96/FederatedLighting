@@ -5,6 +5,7 @@ import random
 from abc import ABC, abstractmethod
 from typing import Tuple, Dict, List, Callable
 import logging
+import gc
 
 import numpy as np
 from pydantic import BaseModel, validator
@@ -76,7 +77,7 @@ class TorchFederatedLearner(ABC):
         self.config = config
         self.experiment.log_parameters(self.config.__dict__)
 
-        model_cls = self.get_model_cls()
+        model_cls, is_keep_model_on_gpu = self.get_model_cls()
         self.model = model_cls()
 
         self.train_loader_list, self.test_loader = self.load_data()
@@ -90,6 +91,7 @@ class TorchFederatedLearner(ABC):
             TorchClient(
                 self,
                 model_cls,
+                is_keep_model_on_gpu,
                 self.get_loss(),
                 loader,
                 self.device,
@@ -112,11 +114,13 @@ class TorchFederatedLearner(ABC):
         pass
 
     @abstractmethod
-    def get_model_cls(self) -> Callable[[], nn.Module]:
+    def get_model_cls(self) -> Tuple[Callable[[], nn.Module], bool]:
         """Returns the model to be trained.
 
         Returns:
             nn.Module -- The instance of the model.
+            bool -- If false the model will only be allocated on the gpu if the client, that it belongs to is beeing trained.
+            This increases training time, but reduces GPU memory requirement.
         """
         pass
 
@@ -160,14 +164,20 @@ class TorchFederatedLearner(ABC):
         client_sample = self.__select_clients()
         for client in client_sample:
             client.set_model(self.model.state_dict())
-            # if curr_round != 0 and self.config.OPT_STRATEGY == "nothing":
 
+        model_states = []
+        opt_states = []
         for client in client_sample:
-            client.train_round(self.config.N_EPOCH_PER_CLIENT, curr_round)
+            client.set_model(self.model.state_dict())
+            model_state, opt_state = client.train_round(
+                self.config.N_EPOCH_PER_CLIENT, curr_round
+            )
+            model_states.append(model_state)
+            opt_states.append(opt_state)
 
-        self.__collect_avg_model(client_sample)
+        self.__calculate_avg_model(model_states)
         if self.config.OPT_STRATEGY == "avg":
-            avg_opt_state = self.__get_avg_opt_state(client_sample)
+            avg_opt_state = self.__get_avg_opt_state(opt_states)
             for client in client_sample:
                 client.set_opt_state(avg_opt_state)
 
@@ -178,18 +188,12 @@ class TorchFederatedLearner(ABC):
         logging.info(f"Selected {len(client_sample)} clients in this round.")
         return client_sample
 
-    def __collect_avg_model(self, client_sample):
-        collected_model_state_dicts = [
-            client.get_model_state_dict() for client in client_sample
-        ]
-        final_state_dict = avg_model_state_dicts(collected_model_state_dicts)
+    def __calculate_avg_model(self, model_states):
+        final_state_dict = avg_model_state_dicts(model_states)
         self.model.load_state_dict(final_state_dict)
 
-    def __get_avg_opt_state(self, client_sample):
-        client_opt_states = [client.get_opt_state() for client in client_sample]
-        return [
-            avg_model_state_dicts(opt_state) for opt_state in zip(*client_opt_states)
-        ]
+    def __get_avg_opt_state(self, opt_states):
+        return [avg_model_state_dicts(opt_state) for opt_state in zip(*opt_states)]
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         self.model.to(self.device)

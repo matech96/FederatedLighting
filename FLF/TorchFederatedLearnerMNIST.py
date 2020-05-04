@@ -54,6 +54,7 @@ class TorchFederatedLearnerMNIST(TorchFederatedLearner):
                 dataset=minist_train_ds,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config.DL_N_WORKER,
+                # pin_memory=True,
                 sampler=sampler,
             )
             train_loader_list.append(loader)
@@ -96,7 +97,7 @@ class TorchFederatedLearnerMNIST(TorchFederatedLearner):
         return indices
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        return Net
+        return Net, True
 
     def get_loss(self) -> nn.Module:
         return F.nll_loss
