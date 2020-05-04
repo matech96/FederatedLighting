@@ -67,9 +67,9 @@ class TorchClient:
                         )
 
         if self.is_maintaine_opt_state:
-            self.state_man.opt_state = self.state_man.opt_state
+            self.state_man.set_model_state_to_be_loaded(self.state_man.get_current_opt_state())
 
-        return self.state_man.model_state, self.state_man.opt_state
+        return self.state_man.get_current_model_state(), self.state_man.get_current_opt_state()
 
     def __log(self, m):
         logging.info(f"Client {self.id}: {m}")

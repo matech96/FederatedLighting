@@ -9,28 +9,24 @@ class TorchModelOptStateManager:
         self.is_keep_model_on_gpu = is_keep_model_on_gpu
         self.id = id
 
-        self.model_state = None
-        self.opt_state = None
+        self.__model_state_to_be_loaded = None
+        self.__opt_state_to_be_loaded = None
 
         self.model = None
         self.opt = None
 
-    @property
-    def model_state(self):
+    def get_current_model_state(self):
         return self.model.state_dict()
 
-    @model_state.setter
-    def model_state(self, state):
-        self.model_state = state
-        self.__log("model set")
-
-    @property
-    def opt_state(self):
+    def get_current_opt_state(self):
         return self.opt.state_dict()["state"].values()
 
-    @opt_state.setter
-    def opt_state(self, state):
-        self.opt_state = state
+    def set_model_state_to_be_loaded(self, state):
+        self.__model_state_to_be_loaded = state
+        self.__log("model set")
+
+    def set_opt_state_to_be_loaded(self, state):
+        self.__opt_state_to_be_loaded = state
         self.__log("opt set")
 
     def __enter__(self):
@@ -38,7 +34,7 @@ class TorchModelOptStateManager:
             self.model = self.model_cls()
             self.__log("model instanciated")
         if self.model_state is not None:
-            self.model.load_state_dict(self.model_state)
+            self.model.load_state_dict(self.__model_state_to_be_loaded)
             self.__log("model state loaded")
         self.model.cuda()
         self.__log("model is on GPU")
@@ -49,7 +45,7 @@ class TorchModelOptStateManager:
         if self.opt_state is not None:
             new_state_dict = self.opt.state_dict()
             new_state_dict["state"].update(
-                zip(new_state_dict["param_groups"][0]["params"], self.opt_state)
+                zip(new_state_dict["param_groups"][0]["params"], self.__opt_state_to_be_loaded)
             )
             self.opt.load_state_dict(new_state_dict)
             self.__log("opt state loaded")
