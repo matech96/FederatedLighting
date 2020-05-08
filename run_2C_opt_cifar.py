@@ -85,7 +85,7 @@ for opt_strategy in ["avg", "nothing", "reinit"]:
                 CLIENT_FRACTION=C,
                 N_CLIENTS=NC,
                 N_EPOCH_PER_CLIENT=E,
-                MAX_ROUNDS=100,
+                MAX_ROUNDS=1,
                 DL_N_WORKER=0,
             )
             learner = TorchFederatedLearnerCIFAR100(experiment, config)

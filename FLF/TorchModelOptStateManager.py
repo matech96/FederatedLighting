@@ -2,12 +2,28 @@ from pathlib import Path
 import logging
 
 import torch as th
+import os
+import shutil
+
+from mutil.pickle import save, load
+
+os.makedirs('tmp', exist_ok=True)
+shutil.rmtree("tmp")
+os.mkdir('tmp')
 
 
 class TorchModelOptStateManager:
-    tmp_dir = Path('tmp')
+    tmp_dir = Path("tmp")
 
-    def __init__(self, model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, is_store_on_disk, id):
+    def __init__(
+        self,
+        model_cls,
+        opt_cls,
+        opt_cls_param,
+        is_keep_model_on_gpu,
+        is_store_on_disk,
+        id,
+    ):
         self.model_cls = model_cls
         self.opt_cls = opt_cls
         self.opt_cls_param = opt_cls_param
@@ -15,8 +31,8 @@ class TorchModelOptStateManager:
         self.is_store_on_disk = is_store_on_disk
         self.id = id
 
-        self.__model_path = self.tmp_dir / f'{self.id}_model.pt'
-        self.__opt_path = self.tmp_dir / f'{self.id}_opt.pt'
+        self.__model_path = self.tmp_dir / f"{self.id}_model.pt"
+        self.__opt_path = self.tmp_dir / f"{self.id}_opt.pt"
 
         self.model = None
         self.opt = None
@@ -32,7 +48,7 @@ class TorchModelOptStateManager:
         self.__log("model saved")
 
     def set_opt_state_to_be_loaded(self, state):
-        th.save(state, self.__opt_path)
+        save(state, self.__opt_path)
         self.__log("opt saved")
 
     def __enter__(self):
@@ -50,12 +66,19 @@ class TorchModelOptStateManager:
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
             self.__log("opt instanciated")
         if self.__opt_path.exists():
-            new_state_dict = self.opt.state_dict()
-            new_state_dict["state"].update(
-                zip(new_state_dict["param_groups"][0]["params"], self.__opt_state_to_be_loaded)
-            )
-            self.opt.load_state_dict(new_state_dict)
-            self.__log("opt state loaded")
+            try:
+                new_state_dict = self.opt.state_dict()
+                new_state_dict["state"].update(
+                    zip(
+                        new_state_dict["param_groups"][0]["params"],
+                        load(self.__opt_path),
+                    )
+                )
+                self.opt.load_state_dict(new_state_dict)
+                self.__log("opt state loaded")
+            except Exception as e:
+                print(th.load(self.__opt_path))
+                raise e
 
     def __exit__(self, *exc):
         if not self.is_keep_model_on_gpu:
