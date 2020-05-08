@@ -67,7 +67,7 @@ class TorchClient:
                         )
 
             if self.is_maintaine_opt_state:
-                self.state_man.set_model_state_to_be_loaded(self.state_man.get_current_opt_state())
+                self.state_man.set_opt_state_to_be_loaded(self.state_man.get_current_opt_state(), True)
 
             return self.state_man.get_current_model_state(), self.state_man.get_current_opt_state()
 

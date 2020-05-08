@@ -29,7 +29,8 @@ class TorchModelOptStateManager:
         self.is_store_on_disk = is_store_on_disk
         self.id = id
 
-        self.__model_path = self.tmp_dir / f"{self.id}_model.pt"
+        self.__model_state_to_be_loaded = None
+        self.__opt_state_to_be_loaded = None
         self.__opt_path = self.tmp_dir / f"{self.id}_opt.pt"
 
         self.model = None
@@ -42,20 +43,23 @@ class TorchModelOptStateManager:
         return self.opt.state_dict()["state"].values()
 
     def set_model_state_to_be_loaded(self, state):
-        th.save(state, self.__model_path)
-        self.__log("model saved")
+        self.__model_state_to_be_loaded = state
+        self.__log("model set")
 
-    def set_opt_state_to_be_loaded(self, state):
-        th.save(state, self.__opt_path)
-        self.__log("opt saved")
+    def set_opt_state_to_be_loaded(self, state, is_preserve=False):
+        if is_preserve:
+            th.save(state, self.__opt_path)
+            self.__log("opt saved")
+        else:
+            self.__opt_state_to_be_loaded = state
+            self.__log("opt set")
 
     def __enter__(self):
         if self.model is None:
             self.model = self.model_cls()
             self.__log("model instanciated")
-        if self.__model_path.exists():
-            model_state = th.load(self.__model_path)
-            self.model.load_state_dict(model_state)
+        if self.__model_state_to_be_loaded is not None:
+            self.model.load_state_dict(self.__model_state_to_be_loaded)
             self.__log("model state loaded")
         self.model.cuda()
         self.__log("model is on GPU")
@@ -63,8 +67,12 @@ class TorchModelOptStateManager:
         if self.opt is None:
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
             self.__log("opt instanciated")
-        if self.__opt_path.exists():
+        new_state_dict = None
+        if self.__opt_state_to_be_loaded is not None:
+            new_state_dict = self.__opt_state_to_be_loaded
+        elif self.__opt_path.exists():
             new_state_dict = self.opt.state_dict()
+        if new_state_dict is not None:
             new_state_dict["state"].update(
                 zip(
                     new_state_dict["param_groups"][0]["params"],
@@ -82,6 +90,8 @@ class TorchModelOptStateManager:
         if self.is_store_on_disk:
             self.opt = None
             self.model = None
+            self.__opt_state_to_be_loaded = None
+            self.__model_state_to_be_loaded = None
 
     def __log(self, m):
         logging.info(f"Client {self.id}: {m}")
