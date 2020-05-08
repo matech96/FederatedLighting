@@ -18,14 +18,14 @@ E = 1
 B = 50
 is_iid = False
 opt_strategy = "avg"
-for opt_strategy in ["nothing", "reinit", "avg"]:
-    for lr in [1, 0.00001, 10, 0.000001]:
+for opt_strategy in ["avg", "nothing", "reinit"]:
+    for lr in [0.1, 0.01, 0.001]:
         for opt in ["SGD", "ASGD", "Adadelta", "Adam"]:
             name = f"{opt} - {opt_strategy} - {lr} - {E}"
 
             logging.info(name)
             experiment = Experiment(
-                workspace="federated-learning", project_name="2C_opt_cifar"
+                workspace="federated-learning", project_name="2C_opt_cifar_new"
             )
             experiment.set_name(name)
             # TODO a paraméterek helytelen nevére nem adott hibát
@@ -39,7 +39,7 @@ for opt_strategy in ["nothing", "reinit", "avg"]:
                 N_CLIENTS=NC,
                 N_EPOCH_PER_CLIENT=E,
                 MAX_ROUNDS=100,
-                DL_N_WORKER=4,
+                DL_N_WORKER=0,
             )
             learner = TorchFederatedLearnerCIFAR100(experiment, config)
             learner.train()

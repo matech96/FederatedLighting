@@ -85,13 +85,14 @@ class TorchFederatedLearner(ABC):
         )  # TODO batch per client
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
+        # TODO create TorchModelOptStateManager(model_cls, self.get_loss(), is_keep_model_on_gpu)
         TorchClient.reset_ID_counter()
         self.clients = [
-            TorchClient(
+            TorchClient( # TODO pass manager
                 self,
-                model_cls,
-                is_keep_model_on_gpu,
-                self.get_loss(),
+                model_cls, # TODO remove
+                is_keep_model_on_gpu, # TODO remove
+                self.get_loss(), # TODO remove
                 loader,
                 self.device,
                 TorchOptRepo.name2cls(self.config.OPT),

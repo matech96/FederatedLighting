@@ -26,7 +26,7 @@ for lr in [0.01, 0.1, 0.0001, 1, 0.00001, 10]:
         name = f"noKeep - {opt} - {opt_strategy} - {lr} - {E}"
 
         logging.info(name)
-        experiment = Experiment(workspace="federated-learning", project_name="2C_opt")
+        experiment = Experiment(workspace="federated-learning", project_name="2C_opt_new")
         experiment.set_name(name)
         experiment.log_parameter("opt_srategy", opt_strategy)
         # TODO a paraméterek helytelen nevére nem adott hibát
