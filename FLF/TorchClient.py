@@ -33,7 +33,7 @@ class TorchClient:
         self.loss = loss
         self.dataloader = dataloader
         self.device = device
-        self.state_man = TorchModelOptStateManager(model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, self.id)
+        self.state_man = TorchModelOptStateManager(model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, True, self.id)
         self.is_maintaine_opt_state = is_maintaine_opt_state
 
         self.opt = None

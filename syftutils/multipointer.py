@@ -51,6 +51,8 @@ def commulative_avg_models(model_0, model_1, n_models_0):
 
 
 def commulative_avg_model_state_dicts(state_dict_0, state_dict_1, n_states_0):
+    if state_dict_0 is None:
+        return state_dict_1
     final_state_dict = {}
     with th.no_grad():
         for parameter_name in state_dict_0.keys():

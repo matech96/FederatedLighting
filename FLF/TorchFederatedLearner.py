@@ -12,7 +12,10 @@ from pydantic import BaseModel, validator
 import torch as th
 import torch.nn as nn
 
-from syftutils.multipointer import avg_model_state_dicts
+from syftutils.multipointer import (
+    avg_model_state_dicts,
+    commulative_avg_model_state_dicts,
+)
 from mutil.ElapsedTime import ElapsedTime
 
 from FLF.TorchOptRepo import TorchOptRepo
@@ -88,11 +91,11 @@ class TorchFederatedLearner(ABC):
         # TODO create TorchModelOptStateManager(model_cls, self.get_loss(), is_keep_model_on_gpu)
         TorchClient.reset_ID_counter()
         self.clients = [
-            TorchClient( # TODO pass manager
+            TorchClient(  # TODO pass manager
                 self,
-                model_cls, # TODO remove
-                is_keep_model_on_gpu, # TODO remove
-                self.get_loss(), # TODO remove
+                model_cls,  # TODO remove
+                is_keep_model_on_gpu,  # TODO remove
+                self.get_loss(),  # TODO remove
                 loader,
                 self.device,
                 TorchOptRepo.name2cls(self.config.OPT),
@@ -162,24 +165,30 @@ class TorchFederatedLearner(ABC):
         self.model.train()
 
         client_sample = self.__select_clients()
-        for client in client_sample:
-            client.set_model(self.model.state_dict())
+        # for client in client_sample:
+        #     client.set_model(self.model.state_dict())
 
-        model_states = []
-        opt_states = []
-        for client in client_sample:
+        comm_avg_model_state = None
+        comm_avg_opt_state = None
+        for i, client in enumerate(client_sample):
             client.set_model(self.model.state_dict())
             model_state, opt_state = client.train_round(
                 self.config.N_EPOCH_PER_CLIENT, curr_round
             )
-            model_states.append(model_state)
-            opt_states.append(opt_state)
 
-        self.__calculate_avg_model(model_states)
+            comm_avg_model_state = commulative_avg_model_state_dicts(
+                comm_avg_model_state, model_state, i
+            )
+            if self.config.OPT_STRATEGY == "avg":
+                comm_avg_opt_state = [
+                    commulative_avg_model_state_dicts(opt_state[0], opt_state[1], i)
+                    for opt_state in zip(comm_avg_opt_state, opt_state)
+                ]
+
+        self.model.load_state_dict(comm_avg_model_state)
         if self.config.OPT_STRATEGY == "avg":
-            avg_opt_state = self.__get_avg_opt_state(opt_states)
             for client in client_sample:
-                client.set_opt_state(avg_opt_state)
+                client.set_opt_state(comm_avg_opt_state)
 
     def __select_clients(self):
         client_sample = random.sample(
