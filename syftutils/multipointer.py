@@ -37,3 +37,31 @@ def avg_model_state_dicts(state_dicts):
                 dim=0,
             )
     return final_state_dict
+
+
+def commulative_avg_models(model_0, model_1, n_models_0):
+    final_model = model_0.copy()
+
+    final_state_dict = commulative_avg_model_state_dicts(
+        model_0.state_dict(), model_1.state_dict(), n_models_0
+    )
+    final_model.load_state_dict(final_state_dict)
+
+    return final_model
+
+
+def commulative_avg_model_state_dicts(state_dict_0, state_dict_1, n_states_0):
+    final_state_dict = {}
+    with th.no_grad():
+        for parameter_name in state_dict_0.keys():
+            # if (not isinstance(state_dict_1[parameter_name], th.Tensor)) or (
+            #     state_dict_1[parameter_name].dtype == th.int64
+            # ):
+            #     final_state_dict[parameter_name] = state_dict_1[parameter_name]
+            #     # TODO assert equivalnce
+            #     continue
+            final_state_dict[parameter_name] = (
+                (state_dict_0[parameter_name] * n_states_0)
+                + state_dict_1[parameter_name]
+            ) / (n_states_0 + 1)
+    return final_state_dict
