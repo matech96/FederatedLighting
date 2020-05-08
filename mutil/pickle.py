@@ -1,11 +1,11 @@
 import pickle
 
 
-def save(f_name, data):
+def save(data, f_name):
     with open(f_name, "wb") as f:
-        pickle.dump(data, f)
+        pickle.dump({'data': data}, f)
 
 
 def load(f_name):
     with open(f_name, "rb") as f:
-        return pickle.load(f)
+        return pickle.load(f)['data']

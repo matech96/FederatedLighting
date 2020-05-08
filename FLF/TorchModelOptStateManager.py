@@ -5,8 +5,6 @@ import torch as th
 import os
 import shutil
 
-from mutil.pickle import save, load
-
 os.makedirs('tmp', exist_ok=True)
 shutil.rmtree("tmp")
 os.mkdir('tmp')
@@ -48,7 +46,7 @@ class TorchModelOptStateManager:
         self.__log("model saved")
 
     def set_opt_state_to_be_loaded(self, state):
-        save(state, self.__opt_path)
+        th.save(state, self.__opt_path)
         self.__log("opt saved")
 
     def __enter__(self):
@@ -66,19 +64,15 @@ class TorchModelOptStateManager:
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
             self.__log("opt instanciated")
         if self.__opt_path.exists():
-            try:
-                new_state_dict = self.opt.state_dict()
-                new_state_dict["state"].update(
-                    zip(
-                        new_state_dict["param_groups"][0]["params"],
-                        load(self.__opt_path),
-                    )
+            new_state_dict = self.opt.state_dict()
+            new_state_dict["state"].update(
+                zip(
+                    new_state_dict["param_groups"][0]["params"],
+                    th.load(self.__opt_path),
                 )
-                self.opt.load_state_dict(new_state_dict)
-                self.__log("opt state loaded")
-            except Exception as e:
-                print(th.load(self.__opt_path))
-                raise e
+            )
+            self.opt.load_state_dict(new_state_dict)
+            self.__log("opt state loaded")
 
     def __exit__(self, *exc):
         if not self.is_keep_model_on_gpu:

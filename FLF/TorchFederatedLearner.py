@@ -179,11 +179,14 @@ class TorchFederatedLearner(ABC):
             comm_avg_model_state = commulative_avg_model_state_dicts(
                 comm_avg_model_state, model_state, i
             )
-            if (comm_avg_opt_state is not None) and (self.config.OPT_STRATEGY == "avg"):
-                comm_avg_opt_state = [
-                    commulative_avg_model_state_dicts(opt_state[0], opt_state[1], i)
-                    for opt_state in zip(comm_avg_opt_state, opt_state)
-                ]
+            if self.config.OPT_STRATEGY == "avg":
+                if comm_avg_opt_state is not None:
+                    comm_avg_opt_state = [
+                        commulative_avg_model_state_dicts(opt_s[0], opt_s[1], i)
+                        for opt_s in zip(comm_avg_opt_state, opt_state)
+                    ]
+                else:
+                    comm_avg_opt_state = opt_state
 
         self.model.load_state_dict(comm_avg_model_state)
         if self.config.OPT_STRATEGY == "avg":
