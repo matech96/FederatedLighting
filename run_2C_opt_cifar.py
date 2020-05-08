@@ -64,31 +64,31 @@ NC = 500
 E = 1
 B = 50
 is_iid = False
-opt_strategy = "avg"
+opt_strategy = "nothing"
 lr = 0.01
 opt = "Adam"
-for opt_strategy in ["avg", "nothing", "reinit"]:
-    # for lr in [0.1, 0.01, 0.001]:
-    #     for opt in ["Adam", "ASGD", "Adadelta", "SGD"]:
-    name = f"{opt} - {opt_strategy} - {lr} - {E}"
+for opt_strategy in ["avg", "nothing", "reinit"]: 
+    for lr in [0.1, 0.01, 0.001]:
+        for opt in ["Adam", "ASGD", "Adadelta", "SGD"]:
+            name = f"{opt} - {opt_strategy} - {lr} - {E}"
 
-    logging.info(name)
-    experiment = Experiment(
-        workspace="federated-learning", project_name="500C_opt_cifar_new"
-    )
-    experiment.set_name(name)
-    # TODO a paraméterek helytelen nevére nem adott hibát
-    config = TorchFederatedLearnerCIFAR100Config(
-        LEARNING_RATE=lr,
-        OPT=opt,
-        OPT_STRATEGY=opt_strategy,
-        IS_IID_DATA=is_iid,
-        BATCH_SIZE=B,
-        CLIENT_FRACTION=C,
-        N_CLIENTS=NC,
-        N_EPOCH_PER_CLIENT=E,
-        MAX_ROUNDS=100,
-        DL_N_WORKER=0,
-    )
-    learner = TorchFederatedLearnerCIFAR100(experiment, config)
-    learner.train()
+            logging.info(name)
+            experiment = Experiment(
+                workspace="federated-learning", project_name="500C_opt_cifar_new"
+            )
+            experiment.set_name(name)
+            # TODO a paraméterek helytelen nevére nem adott hibát
+            config = TorchFederatedLearnerCIFAR100Config(
+                LEARNING_RATE=lr,
+                OPT=opt,
+                OPT_STRATEGY=opt_strategy,
+                IS_IID_DATA=is_iid,
+                BATCH_SIZE=B,
+                CLIENT_FRACTION=C,
+                N_CLIENTS=NC,
+                N_EPOCH_PER_CLIENT=E,
+                MAX_ROUNDS=2,
+                DL_N_WORKER=0,
+            )
+            learner = TorchFederatedLearnerCIFAR100(experiment, config)
+            learner.train()

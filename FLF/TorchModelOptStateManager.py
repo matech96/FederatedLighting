@@ -48,8 +48,8 @@ class TorchModelOptStateManager:
 
     def set_opt_state_to_be_loaded(self, state, is_preserve=False):
         if is_preserve:
-            th.save(state, self.__opt_path)
-            self.__log("opt saved")
+            th.save(list(state), self.__opt_path)
+            self.__log(f"opt saved: {self.__opt_path}")
         else:
             self.__opt_state_to_be_loaded = state
             self.__log("opt set")
@@ -67,16 +67,19 @@ class TorchModelOptStateManager:
         if self.opt is None:
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)
             self.__log("opt instanciated")
-        new_state_dict = None
+        opt_state = None
         if self.__opt_state_to_be_loaded is not None:
-            new_state_dict = self.__opt_state_to_be_loaded
+            opt_state = self.__opt_state_to_be_loaded
+            self.__log("using preset opt state")
         elif self.__opt_path.exists():
+            opt_state = th.load(self.__opt_path)
+            self.__log(f"opt read from disk: {self.__opt_path}")
+        if opt_state is not None:
             new_state_dict = self.opt.state_dict()
-        if new_state_dict is not None:
             new_state_dict["state"].update(
                 zip(
                     new_state_dict["param_groups"][0]["params"],
-                    th.load(self.__opt_path),
+                    opt_state,
                 )
             )
             self.opt.load_state_dict(new_state_dict)

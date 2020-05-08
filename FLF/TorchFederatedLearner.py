@@ -81,6 +81,7 @@ class TorchFederatedLearner(ABC):
 
         model_cls, is_keep_model_on_gpu = self.get_model_cls()
         self.model = model_cls()
+        self.avg_opt_state = None
 
         self.train_loader_list, self.test_loader = self.load_data()
         self.n_train_batches = int(
@@ -90,7 +91,7 @@ class TorchFederatedLearner(ABC):
 
         TorchClient.reset_ID_counter()
         self.clients = [
-            TorchClient(  
+            TorchClient(
                 self,
                 model_cls,
                 is_keep_model_on_gpu,
@@ -167,15 +168,15 @@ class TorchFederatedLearner(ABC):
 
         comm_avg_model_state = None
         comm_avg_opt_state = None
-        avg_opt_state = None
+
         for i, client in enumerate(client_sample):
             client.set_model(self.model.state_dict())
+            if (self.config.OPT_STRATEGY == "avg") and (self.avg_opt_state is not None):
+                client.set_opt_state(self.avg_opt_state)
+
             model_state, opt_state = client.train_round(
                 self.config.N_EPOCH_PER_CLIENT, curr_round
             )
-
-            if (self.config.OPT_STRATEGY == "avg") and (avg_opt_state is not None):
-                client.set_opt_state(comm_avg_opt_state)
 
             comm_avg_model_state = commulative_avg_model_state_dicts(
                 comm_avg_model_state, model_state, i
@@ -191,7 +192,7 @@ class TorchFederatedLearner(ABC):
                     comm_avg_opt_state = opt_state
 
         self.model.load_state_dict(comm_avg_model_state)
-        avg_opt_state = comm_avg_opt_state
+        self.avg_opt_state = comm_avg_opt_state
         comm_avg_opt_state = None
 
     def __select_clients(self):
