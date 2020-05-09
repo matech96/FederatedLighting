@@ -67,8 +67,8 @@ is_iid = False
 opt_strategy = "nothing"
 lr = 0.01
 opt = "Adam"
-for opt_strategy in ["avg", "nothing", "reinit"]: 
-    for lr in [0.1, 0.01, 0.001]:
+for lr in [0.1, 0.01, 0.001, 0.0001, 1, 0.00001]:
+    for opt_strategy in ["avg", "reinit", "nothing"]: 
         for opt in ["Adam", "ASGD", "Adadelta", "SGD"]:
             name = f"{opt} - {opt_strategy} - {lr} - {E}"
 
@@ -87,7 +87,7 @@ for opt_strategy in ["avg", "nothing", "reinit"]:
                 CLIENT_FRACTION=C,
                 N_CLIENTS=NC,
                 N_EPOCH_PER_CLIENT=E,
-                MAX_ROUNDS=2,
+                MAX_ROUNDS=100,
                 DL_N_WORKER=0,
             )
             learner = TorchFederatedLearnerCIFAR100(experiment, config)

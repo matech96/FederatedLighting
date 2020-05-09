@@ -3,11 +3,8 @@ import logging
 
 import torch as th
 import os
-import shutil
 
-os.makedirs('tmp', exist_ok=True)
-shutil.rmtree("tmp")
-os.mkdir('tmp')
+os.makedirs("tmp", exist_ok=True)
 
 
 class TorchModelOptStateManager:
@@ -32,9 +29,13 @@ class TorchModelOptStateManager:
         self.__model_state_to_be_loaded = None
         self.__opt_state_to_be_loaded = None
         self.__opt_path = self.tmp_dir / f"{self.id}_opt.pt"
+        self.__delete_objects_tmp_files()
 
         self.model = None
         self.opt = None
+
+    def __del__(self):
+        self.__delete_objects_tmp_files()
 
     def get_current_model_state(self):
         return self.model.state_dict()
@@ -77,10 +78,7 @@ class TorchModelOptStateManager:
         if opt_state is not None:
             new_state_dict = self.opt.state_dict()
             new_state_dict["state"].update(
-                zip(
-                    new_state_dict["param_groups"][0]["params"],
-                    opt_state,
-                )
+                zip(new_state_dict["param_groups"][0]["params"], opt_state,)
             )
             self.opt.load_state_dict(new_state_dict)
             self.__log("opt state loaded")
@@ -95,6 +93,10 @@ class TorchModelOptStateManager:
             self.model = None
             self.__opt_state_to_be_loaded = None
             self.__model_state_to_be_loaded = None
+
+    def __delete_objects_tmp_files(self):
+        if self.__opt_path.exists():
+            self.__opt_path.unlink()
 
     def __log(self, m):
         logging.info(f"Client {self.id}: {m}")
