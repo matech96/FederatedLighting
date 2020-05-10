@@ -58,6 +58,20 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+
+def do_training(config: TorchFederatedLearnerCIFAR100Config):
+    name = (
+        name
+    ) = f"{config.OPT} - {config.OPT_STRATEGY} - {config.LEARNING_RATE} - {config.N_EPOCH_PER_CLIENT}"
+    logging.info(name)
+    experiment = Experiment(
+        workspace="federated-learning", project_name="500C_opt_cifar_new_long"
+    )
+    experiment.set_name(name)
+    learner = TorchFederatedLearnerCIFAR100(experiment, config)
+    learner.train()
+
+
 max_round = 1000
 C = 10 / 500
 NC = 500
@@ -103,17 +117,6 @@ config = TorchFederatedLearnerCIFAR100Config(
     DL_N_WORKER=0,
 )
 configs.append(config)
-
-
-def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = name = f"{opt} - {opt_strategy} - {lr} - {E}"
-    logging.info(name)
-    experiment = Experiment(
-        workspace="federated-learning", project_name="500C_opt_cifar_new_long"
-    )
-    experiment.set_name(name)
-    learner = TorchFederatedLearnerCIFAR100(experiment, config)
-    learner.train()
 
 
 for _ in range(3):
