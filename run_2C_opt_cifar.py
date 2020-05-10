@@ -58,37 +58,64 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-
+max_round = 1000
 C = 10 / 500
 NC = 500
 E = 1
 B = 50
 is_iid = False
 opt_strategy = "nothing"
-lr = 0.01
-opt = "Adam"
-for lr in [0.1, 0.01, 0.001, 0.0001, 1, 0.00001]:
-    for opt_strategy in ["avg", "reinit", "nothing"]: 
-        for opt in ["Adam", "ASGD", "Adadelta", "SGD"]:
-            name = f"{opt} - {opt_strategy} - {lr} - {E}"
+lr = 10
+opt = "Adadelta"
+# for lr in [0.1, 0.01, 0.001, 0.0001, 1, 0.00001]:
+configs = []
+for opt_strategy in ["avg", "reinit"]:
+    for opt, lr in zip(["Adam", "ASGD", "Adadelta"], [0.001, 0.100, 1.000]):
+        # TODO a paraméterek helytelen nevére nem adott hibát
+        config = TorchFederatedLearnerCIFAR100Config(
+            LEARNING_RATE=lr,
+            OPT=opt,
+            OPT_STRATEGY=opt_strategy,
+            IS_IID_DATA=is_iid,
+            BATCH_SIZE=B,
+            CLIENT_FRACTION=C,
+            N_CLIENTS=NC,
+            N_EPOCH_PER_CLIENT=E,
+            MAX_ROUNDS=max_round,
+            DL_N_WORKER=0,
+        )
+        configs.append(config)
 
-            logging.info(name)
-            experiment = Experiment(
-                workspace="federated-learning", project_name="500C_opt_cifar_new"
-            )
-            experiment.set_name(name)
-            # TODO a paraméterek helytelen nevére nem adott hibát
-            config = TorchFederatedLearnerCIFAR100Config(
-                LEARNING_RATE=lr,
-                OPT=opt,
-                OPT_STRATEGY=opt_strategy,
-                IS_IID_DATA=is_iid,
-                BATCH_SIZE=B,
-                CLIENT_FRACTION=C,
-                N_CLIENTS=NC,
-                N_EPOCH_PER_CLIENT=E,
-                MAX_ROUNDS=100,
-                DL_N_WORKER=0,
-            )
-            learner = TorchFederatedLearnerCIFAR100(experiment, config)
-            learner.train()
+
+opt_strategy = "reinit"
+opt = "SGD"
+lr = 0.100
+config = TorchFederatedLearnerCIFAR100Config(
+    LEARNING_RATE=lr,
+    OPT=opt,
+    OPT_STRATEGY=opt_strategy,
+    IS_IID_DATA=is_iid,
+    BATCH_SIZE=B,
+    CLIENT_FRACTION=C,
+    N_CLIENTS=NC,
+    N_EPOCH_PER_CLIENT=E,
+    MAX_ROUNDS=max_round,
+    DL_N_WORKER=0,
+)
+configs.append(config)
+
+
+def do_training(config: TorchFederatedLearnerCIFAR100Config):
+    name = name = f"{opt} - {opt_strategy} - {lr} - {E}"
+    logging.info(name)
+    experiment = Experiment(
+        workspace="federated-learning", project_name="500C_opt_cifar_new_long"
+    )
+    experiment.set_name(name)
+    learner = TorchFederatedLearnerCIFAR100(experiment, config)
+    learner.train()
+
+
+for _ in range(3):
+    for config in configs:
+        do_training(config)
