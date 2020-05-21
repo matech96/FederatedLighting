@@ -51,6 +51,7 @@ from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
     TorchFederatedLearnerCIFAR100Config,
 )
+from FLF.TorchOptRepo import TorchOptRepo
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -78,13 +79,16 @@ NC = 500
 E = 1
 B = 50
 is_iid = False
-opt_strategy = "nothing"
-lr = 10
-opt = "Adadelta"
-# for lr in [0.1, 0.01, 0.001, 0.0001, 1, 0.00001]:
+# opt_strategy = "nothing"
+# lr = 10
+# opt = "Adadelta"
 configs = []
-for opt_strategy in ["avg", "reinit"]:
-    for opt, lr in zip(["Adam", "ASGD", "Adadelta"], [0.001, 0.100, 1.000]):
+# for lr in [0.1, 0.01, 0.001, 0.0001, 1, 0.00001]:
+options = {"Adagrad": {"avg": 0.01, "reinit": 0.001}, 
+            "RMSprop": {"avg": 0.001, "reinit": 0.0001}, 
+            "AdamW": {"avg": 0.001, "reinit": 0.001}}
+for opt, d in options.items():
+    for opt_strategy, lr in d.items():
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = TorchFederatedLearnerCIFAR100Config(
             LEARNING_RATE=lr,
@@ -99,24 +103,6 @@ for opt_strategy in ["avg", "reinit"]:
             DL_N_WORKER=0,
         )
         configs.append(config)
-
-
-opt_strategy = "reinit"
-opt = "SGD"
-lr = 0.100
-config = TorchFederatedLearnerCIFAR100Config(
-    LEARNING_RATE=lr,
-    OPT=opt,
-    OPT_STRATEGY=opt_strategy,
-    IS_IID_DATA=is_iid,
-    BATCH_SIZE=B,
-    CLIENT_FRACTION=C,
-    N_CLIENTS=NC,
-    N_EPOCH_PER_CLIENT=E,
-    MAX_ROUNDS=max_round,
-    DL_N_WORKER=0,
-)
-configs.append(config)
 
 
 for _ in range(3):

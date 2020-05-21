@@ -5,3 +5,4 @@ data/*
 *.npy
 notebooks/2c_opt/*
 *.pt
+*.png
