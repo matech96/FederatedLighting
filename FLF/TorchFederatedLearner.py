@@ -35,11 +35,12 @@ class TorchFederatedLearnerConfig(BaseModel):
     LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     SEED: int = None  # The seed.
-    OPT: str = "SGD"  # The optimizer used by the client.
-    OPT_STRATEGY: str = "reinit"  # The optimizer sync strategy. Options are:
+    OPT: str = "SGD"  # The optimizer used by the client. # TODO rename CLIENT_OPT
+    OPT_STRATEGY: str = "reinit"  # The optimizer sync strategy. Options are: # TODO rename CLIENT_OPT_STRATEGY
     # reinit: reinitializes the optimizer in every round
     # nothing: leavs the optimizer intect
     # avg: averages the optimizer states in every round
+    # TODO SERVER_OPT
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -81,6 +82,7 @@ class TorchFederatedLearner(ABC):
 
         model_cls, is_keep_model_on_gpu = self.get_model_cls()
         self.model = model_cls()
+        # TODO create self.server_opt
         self.avg_opt_state = None
 
         self.train_loader_list, self.test_loader = self.load_data()
@@ -191,7 +193,10 @@ class TorchFederatedLearner(ABC):
                 else:
                     comm_avg_opt_state = opt_state
 
-        self.model.load_state_dict(comm_avg_model_state)
+        self.model.load_state_dict(
+            comm_avg_model_state
+        )  # TODO use set_model_state_with_grad
+        # TODO server_opt step
         self.avg_opt_state = comm_avg_opt_state
         comm_avg_opt_state = None
 
@@ -202,15 +207,15 @@ class TorchFederatedLearner(ABC):
         logging.info(f"Selected {len(client_sample)} clients in this round.")
         return client_sample
 
-    def __calculate_avg_model(self, model_states):
-        final_state_dict = avg_model_state_dicts(model_states)
-        self.model.load_state_dict(final_state_dict)
-
-    def __get_avg_opt_state(self, opt_states):
-        return [avg_model_state_dicts(opt_state) for opt_state in zip(*opt_states)]
+    # TODO def set_model_state_with_grad(new_state):
+        # TODO model zero grad
+        # TODO New_model = copy model
+        # TODO New_model.set_state(new_state)
+        # TODO For p, np in zip(model and new_model params):
+            # TODO P.grad = p - np # because we go to the opposite direction of the gradient
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
-        self.model.to(self.device)
+        # self.model.to(self.device)
         self.model.eval()
         test_loss = 0
         correct = 0
@@ -228,7 +233,7 @@ class TorchFederatedLearner(ABC):
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
-        self.model.to("cpu")
+        # self.model.to("cpu")
         return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(
