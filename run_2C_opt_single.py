@@ -22,23 +22,24 @@ client_opt = "SGD"
 client_opt_strategy = "reinit"
 client_lr = 0.1
 configs = []
-
-for server_opt in ["SGD", None]:
-    # TODO a paraméterek helytelen nevére nem adott hibát
-    config = TorchFederatedLearnerCIFAR100Config(
-        CLIENT_LEARNING_RATE=client_lr,
-        CLIENT_OPT=client_opt,
-        CLIENT_OPT_STRATEGY=client_opt_strategy,
-        SERVER_OPT=server_opt,
-        IS_IID_DATA=is_iid,
-        BATCH_SIZE=B,
-        CLIENT_FRACTION=C,
-        N_CLIENTS=NC,
-        N_EPOCH_PER_CLIENT=E,
-        MAX_ROUNDS=100,
-        DL_N_WORKER=0,
-    )
-    configs.append(config)
+server_opt = "SGD"
+for server_lr in [1.0, 0.1, 0.01, 0.001]:
+    for client_lr in [1.0, 0.1, 0.01]:
+        # TODO a paraméterek helytelen nevére nem adott hibát
+        config = TorchFederatedLearnerCIFAR100Config(
+            CLIENT_LEARNING_RATE=client_lr,
+            CLIENT_OPT=client_opt,
+            CLIENT_OPT_STRATEGY=client_opt_strategy,
+            SERVER_OPT=server_opt,
+            IS_IID_DATA=is_iid,
+            BATCH_SIZE=B,
+            CLIENT_FRACTION=C,
+            N_CLIENTS=NC,
+            N_EPOCH_PER_CLIENT=E,
+            MAX_ROUNDS=100,
+            DL_N_WORKER=0,
+        )
+        configs.append(config)
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
