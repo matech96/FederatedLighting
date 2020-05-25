@@ -13,7 +13,7 @@ logging.basicConfig(
 
 project_name = "server_side_opt"
 
-C = 1
+C = 10 / 500
 NC = 500
 E = 5
 B = 64

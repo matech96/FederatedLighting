@@ -110,7 +110,7 @@ class TorchFederatedLearner(ABC):
                 loader,
                 self.device,
                 TorchOptRepo.name2cls(self.config.CLIENT_OPT),
-                {"lr": self.config.LEARNING_RATE},
+                {"lr": self.config.CLIENT_LEARNING_RATE},
                 config.CLIENT_OPT_STRATEGY == "nothing",
             )
             for loader in self.train_loader_list
