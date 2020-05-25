@@ -2,6 +2,7 @@ from comet_ml.exceptions import InterruptedExperiment
 from comet_ml import Experiment
 
 import random
+import copy
 from abc import ABC, abstractmethod
 from typing import Tuple, Dict, List, Callable
 import logging
@@ -12,10 +13,7 @@ from pydantic import BaseModel, validator
 import torch as th
 import torch.nn as nn
 
-from syftutils.multipointer import (
-    avg_model_state_dicts,
-    commulative_avg_model_state_dicts,
-)
+from syftutils.multipointer import commulative_avg_model_state_dicts
 from mutil.ElapsedTime import ElapsedTime
 
 from FLF.TorchOptRepo import TorchOptRepo
@@ -32,15 +30,16 @@ class TorchFederatedLearnerConfig(BaseModel):
     CLIENT_FRACTION: float = 1.0  # The fration of clients to participate in 1 round. Muss be between 0 and 1. 0 means selecting 1 client.
     N_EPOCH_PER_CLIENT: int = 1  # The number of epoch to train on the client before sync.
     BATCH_SIZE: int = 64  # Batch size. If set to sys.maxsize, the epoch is processed in a single batch.
-    LEARNING_RATE: float = 0.01  # Learning rate for the local optimizer
+    CLIENT_LEARNING_RATE: float = 0.01  # Learning rate for the client optimizer.
+    SERVER_LEARNING_RATE: float = None  # Learning rate for the server optimizer. If none, the same value is used as CLIENT_LEARNING_RATE.
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     SEED: int = None  # The seed.
-    OPT: str = "SGD"  # The optimizer used by the client. # TODO rename CLIENT_OPT
-    OPT_STRATEGY: str = "reinit"  # The optimizer sync strategy. Options are: # TODO rename CLIENT_OPT_STRATEGY
+    CLIENT_OPT: str = "SGD"  # The optimizer used by the client.
+    CLIENT_OPT_STRATEGY: str = "reinit"  # The optimizer sync strategy. Options are:
     # reinit: reinitializes the optimizer in every round
     # nothing: leavs the optimizer intect
     # avg: averages the optimizer states in every round
-    # TODO SERVER_OPT
+    SERVER_OPT: str = None  # The optimizer used on the server.
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -55,6 +54,10 @@ class TorchFederatedLearnerConfig(BaseModel):
     _val_TARGET_ACC = validator("TARGET_ACC", allow_reuse=True)(
         __percentage_validator.__func__
     )
+
+    def set_defaults(self):  # TODO make this nicer
+        if self.SERVER_LEARNING_RATE is None:
+            self.SERVER_LEARNING_RATE = self.CLIENT_LEARNING_RATE
 
 
 class TorchFederatedLearner(ABC):
@@ -78,11 +81,17 @@ class TorchFederatedLearner(ABC):
         self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
         self.config = config
+        self.config.set_defaults()
         self.experiment.log_parameters(self.config.__dict__)
 
         model_cls, is_keep_model_on_gpu = self.get_model_cls()
         self.model = model_cls()
-        # TODO create self.server_opt
+        if self.config.SERVER_OPT is not None:
+            self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
+                self.model.parameters(), lr=self.config.SERVER_LEARNING_RATE
+            )
+        else:
+            self.server_opt = None
         self.avg_opt_state = None
 
         self.train_loader_list, self.test_loader = self.load_data()
@@ -100,9 +109,9 @@ class TorchFederatedLearner(ABC):
                 self.get_loss(),
                 loader,
                 self.device,
-                TorchOptRepo.name2cls(self.config.OPT),
+                TorchOptRepo.name2cls(self.config.CLIENT_OPT),
                 {"lr": self.config.LEARNING_RATE},
-                config.OPT_STRATEGY == "nothing",
+                config.CLIENT_OPT_STRATEGY == "nothing",
             )
             for loader in self.train_loader_list
         ]
@@ -173,7 +182,9 @@ class TorchFederatedLearner(ABC):
 
         for i, client in enumerate(client_sample):
             client.set_model(self.model.state_dict())
-            if (self.config.OPT_STRATEGY == "avg") and (self.avg_opt_state is not None):
+            if (self.config.CLIENT_OPT_STRATEGY == "avg") and (
+                self.avg_opt_state is not None
+            ):
                 client.set_opt_state(self.avg_opt_state)
 
             model_state, opt_state = client.train_round(
@@ -184,7 +195,7 @@ class TorchFederatedLearner(ABC):
                 comm_avg_model_state, model_state, i
             )
 
-            if self.config.OPT_STRATEGY == "avg":
+            if self.config.CLIENT_OPT_STRATEGY == "avg":
                 if comm_avg_opt_state is not None:
                     comm_avg_opt_state = [
                         commulative_avg_model_state_dicts(opt_s[0], opt_s[1], i)
@@ -193,10 +204,13 @@ class TorchFederatedLearner(ABC):
                 else:
                     comm_avg_opt_state = opt_state
 
-        self.model.load_state_dict(
-            comm_avg_model_state
-        )  # TODO use set_model_state_with_grad
-        # TODO server_opt step
+        if self.server_opt is not None:
+            self.__log("setting gradients")
+            self.__set_model_grads(comm_avg_model_state)
+            self.server_opt.step()
+        else:
+            self.__log("setting avg model state")
+            self.model.load_state_dict(comm_avg_model_state)
         self.avg_opt_state = comm_avg_opt_state
         comm_avg_opt_state = None
 
@@ -207,12 +221,15 @@ class TorchFederatedLearner(ABC):
         logging.info(f"Selected {len(client_sample)} clients in this round.")
         return client_sample
 
-    # TODO def set_model_state_with_grad(new_state):
-        # TODO model zero grad
-        # TODO New_model = copy model
-        # TODO New_model.set_state(new_state)
-        # TODO For p, np in zip(model and new_model params):
-            # TODO P.grad = p - np # because we go to the opposite direction of the gradient
+    def __set_model_grads(self, new_state):
+        self.server_opt.zero_grad()
+        new_model = copy.deepcopy(self.model)
+        new_model.load_state_dict(new_state)
+        for parameter, new_parameter in zip(
+            self.model.parameters(), new_model.parameters()
+        ):
+            parameter.grad = parameter - new_parameter
+            # because we go to the opposite direction of the gradient
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         # self.model.to(self.device)
@@ -262,3 +279,6 @@ class TorchFederatedLearner(ABC):
         for name, value in metrics.items():
             nice_value = 100 * value if name.endswith("_acc") else value
             self.experiment.log_metric(name, nice_value, step=batch_num)
+
+    def __log(self, m):
+        logging.info(f"Server: {m}")
