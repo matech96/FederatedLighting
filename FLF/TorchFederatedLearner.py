@@ -234,11 +234,11 @@ class TorchFederatedLearner(ABC):
             ):
                 parameter.grad = parameter.data - new_parameter.data
                 # because we go to the opposite direction of the gradient
-        msd = self.model.state_dict()
-        m2sd = new_model.state_dict()
+        model_state_dict = self.model.state_dict()
+        new_model_state_dict = new_model.state_dict()
         for k in dict(self.model.named_parameters()).keys():
-            m2sd[k] = msd[k]
-        self.model.load_state_dict(m2sd)
+            new_model_state_dict[k] = model_state_dict[k]
+        self.model.load_state_dict(new_model_state_dict)
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         test_model = copy.deepcopy(self.model)
