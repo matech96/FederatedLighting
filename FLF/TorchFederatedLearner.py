@@ -208,7 +208,6 @@ class TorchFederatedLearner(ABC):
             self.__log("setting gradients")
             self.__set_model_grads(comm_avg_model_state)
             self.server_opt.step()
-            print(list(self.model.parameters())[0][0][0])
         else:
             self.__log("setting avg model state")
             self.model.load_state_dict(comm_avg_model_state)
@@ -226,8 +225,6 @@ class TorchFederatedLearner(ABC):
         self.server_opt.zero_grad()
         new_model = copy.deepcopy(self.model)
         new_model.load_state_dict(new_state)
-        # self.model = new_model
-        print(list(new_model.parameters())[0][0][0])
         with th.no_grad():
             for parameter, new_parameter in zip(
                 self.model.parameters(), new_model.parameters()
@@ -244,7 +241,6 @@ class TorchFederatedLearner(ABC):
         test_model = copy.deepcopy(self.model)
         test_model.to(self.device)
         test_model.eval()
-        print(list(test_model.parameters())[0][0][0])
         test_loss = 0
         correct = 0
         with th.no_grad():
