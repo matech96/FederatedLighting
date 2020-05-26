@@ -208,6 +208,7 @@ class TorchFederatedLearner(ABC):
             self.__log("setting gradients")
             self.__set_model_grads(comm_avg_model_state)
             self.server_opt.step()
+            print(list(self.model.parameters())[0][0][0])
         else:
             self.__log("setting avg model state")
             self.model.load_state_dict(comm_avg_model_state)
@@ -225,16 +226,25 @@ class TorchFederatedLearner(ABC):
         self.server_opt.zero_grad()
         new_model = copy.deepcopy(self.model)
         new_model.load_state_dict(new_state)
-        for parameter, new_parameter in zip(
-            self.model.parameters(), new_model.parameters()
-        ):
-            parameter.grad = parameter - new_parameter
-            # because we go to the opposite direction of the gradient
+        # self.model = new_model
+        print(list(new_model.parameters())[0][0][0])
+        with th.no_grad():
+            for parameter, new_parameter in zip(
+                self.model.parameters(), new_model.parameters()
+            ):
+                parameter.grad = parameter.data - new_parameter.data
+                # because we go to the opposite direction of the gradient
+        msd = self.model.state_dict()
+        m2sd = new_model.state_dict()
+        for k in dict(self.model.named_parameters()).keys():
+            m2sd[k] = msd[k]
+        self.model.load_state_dict(m2sd)
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         test_model = copy.deepcopy(self.model)
         test_model.to(self.device)
         test_model.eval()
+        print(list(test_model.parameters())[0][0][0])
         test_loss = 0
         correct = 0
         with th.no_grad():
@@ -279,6 +289,7 @@ class TorchFederatedLearner(ABC):
         for name, value in metrics.items():
             nice_value = 100 * value if name.endswith("_acc") else value
             self.experiment.log_metric(name, nice_value, step=batch_num)
+            logging.info(f"{name}: {nice_value}")
 
     def __log(self, m):
         logging.info(f"Server: {m}")

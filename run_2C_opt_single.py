@@ -23,20 +23,21 @@ client_opt_strategy = "reinit"
 client_lr = 0.1
 configs = []
 server_opt = "SGD"
-for server_lr in [1.0, 0.1, 0.01, 0.001]:
-    for client_lr in [1.0, 0.1, 0.01]:
+for server_lr in [1]:#, 0.1, 0.01, 0.001]:
+    for client_lr in [0.1]:# [1.0, 0.1, 0.01]:
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = TorchFederatedLearnerCIFAR100Config(
             CLIENT_LEARNING_RATE=client_lr,
             CLIENT_OPT=client_opt,
             CLIENT_OPT_STRATEGY=client_opt_strategy,
             SERVER_OPT=server_opt,
+            SERVER_LEARNING_RATE=server_lr,
             IS_IID_DATA=is_iid,
             BATCH_SIZE=B,
             CLIENT_FRACTION=C,
             N_CLIENTS=NC,
             N_EPOCH_PER_CLIENT=E,
-            MAX_ROUNDS=100,
+            MAX_ROUNDS=10,
             DL_N_WORKER=0,
         )
         configs.append(config)
