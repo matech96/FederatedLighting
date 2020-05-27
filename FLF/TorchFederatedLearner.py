@@ -238,7 +238,7 @@ class TorchFederatedLearner(ABC):
         self.model.load_state_dict(new_model_state_dict)
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
-        test_model = copy.deepcopy(self.model)
+        test_model = self.model#copy.deepcopy(self.model)
         test_model.to(self.device)
         test_model.eval()
         test_loss = 0
