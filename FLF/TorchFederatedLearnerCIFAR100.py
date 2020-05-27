@@ -92,6 +92,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
                 dataset=ds,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config.DL_N_WORKER,
+                pin_memory=True,
             )
             train_loader_list.append(loader)
         logging.info("Non IID loaded")
@@ -99,27 +100,6 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
         return models.resnet18, False
-        # return Net
 
     def get_loss(self):
         return nn.CrossEntropyLoss()
-
-
-# class Net(nn.Module):
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = nn.Conv2d(3, 6, 5)
-#         self.pool = nn.MaxPool2d(2, 2)
-#         self.conv2 = nn.Conv2d(6, 16, 5)
-#         self.fc1 = nn.Linear(16 * 5 * 5, 120)
-#         self.fc2 = nn.Linear(120, 120)
-#         self.fc3 = nn.Linear(120, 100)
-
-#     def forward(self, x):
-#         x = self.pool(F.relu(self.conv1(x)))
-#         x = self.pool(F.relu(self.conv2(x)))
-#         x = x.view(-1, 16 * 5 * 5)
-#         x = F.relu(self.fc1(x))
-#         x = F.relu(self.fc2(x))
-#         x = self.fc3(x)
-#         return x
