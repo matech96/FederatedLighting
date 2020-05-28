@@ -11,7 +11,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "server_side_opt"
+project_name = "server-side-opt"
 
 max_rounds = 100
 C = 10 / 500
