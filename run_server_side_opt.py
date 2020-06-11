@@ -45,7 +45,7 @@ for server_opt in ["Adam", "Adagrad"]:
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"beta2: 0.99, {config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
+    name = f"groupnorm {config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
     experiment.set_name(name)

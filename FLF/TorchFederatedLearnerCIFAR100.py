@@ -99,7 +99,9 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         return train_loader_list
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        return models.resnet18, False
+        make_group_norm = lambda x: th.nn.BatchNorm2d(2, x)
+        make_model = lambda: models.resnet18(norm_layer=make_group_norm)
+        return make_model, False
 
     def get_loss(self):
         return nn.CrossEntropyLoss()
