@@ -24,8 +24,8 @@ client_opt_strategy = "reinit"
 configs = []
 
 for server_opt in ["Adam", "Adagrad"]:
-    for server_lr in [0.001, 0.01, 0.1, 1, 10]:
-        for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
+    for server_lr in [0.00001, 0.0001, 0.001]:
+        for client_lr in [0.00001, 0.0001]:
             # TODO a paraméterek helytelen nevére nem adott hibát
             config = TorchFederatedLearnerCIFAR100Config(
                 CLIENT_LEARNING_RATE=client_lr,
@@ -45,7 +45,7 @@ for server_opt in ["Adam", "Adagrad"]:
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"groupnorm {config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
+    name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
     experiment.set_name(name)
