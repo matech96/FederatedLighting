@@ -24,8 +24,8 @@ client_opt_strategy = "reinit"
 configs = []
 
 for server_opt in ["Adam", "Adagrad"]:
-    for server_lr in [0.00001, 0.0001, 0.001]:
-        for client_lr in [0.00001, 0.0001]:
+    for server_lr in [0.0001]:
+        for client_lr in [0.001, 0.01, 0.1, 1]:
             # TODO a paraméterek helytelen nevére nem adott hibát
             config = TorchFederatedLearnerCIFAR100Config(
                 CLIENT_LEARNING_RATE=client_lr,
