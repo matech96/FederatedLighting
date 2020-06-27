@@ -40,7 +40,7 @@ class TorchFederatedLearnerConfig(BaseModel):
     # nothing: leavs the optimizer intect
     # avg: averages the optimizer states in every round
     SERVER_OPT: str = None  # The optimizer used on the server.
-    SERVER_OPT_ARGS: Tuple = {}  # Extra arguments for the server optimizer
+    SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
