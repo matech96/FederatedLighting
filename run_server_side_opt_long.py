@@ -32,7 +32,7 @@ for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
         CLIENT_OPT=client_opt,
         CLIENT_OPT_STRATEGY=client_opt_strategy,
         SERVER_OPT=server_opt,
-        SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
+        # SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
         SERVER_LEARNING_RATE=server_lr,
         IS_IID_DATA=is_iid,
         BATCH_SIZE=B,
