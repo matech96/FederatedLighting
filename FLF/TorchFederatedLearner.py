@@ -3,6 +3,7 @@ from comet_ml import Experiment
 
 import random
 import copy
+from collections import Iterable
 from abc import ABC, abstractmethod
 from typing import Tuple, Dict, List, Callable
 import logging
@@ -67,11 +68,11 @@ class TorchFederatedLearnerConfig(BaseModel):
             poped = res.pop(k)
             for pk, pv in poped.items():
                 new_key = f"{k[:-5]}_{pk}".upper()
-                if len(pv) == 0:
-                    res[new_key] = pv
-                else:
+                if isinstance(pv, Iterable):
                     for i, pvi in enumerate(pv):
                         res[f"{new_key}_{i}"] = pvi
+                else:
+                    res[new_key] = pv
         return res
 
 
