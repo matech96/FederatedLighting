@@ -60,6 +60,20 @@ class TorchFederatedLearnerConfig(BaseModel):
         if self.SERVER_LEARNING_RATE is None:
             self.SERVER_LEARNING_RATE = self.CLIENT_LEARNING_RATE
 
+    def flatten(self):
+        res = copy(self.__dict__)
+        to_flatten = [k for k in res.keys() if k.endswith("_ARGS")]
+        for k in to_flatten:
+            poped = res.pop(k)
+            for pk, pv in poped.items():
+                new_key = f"{k[:-5]}_{pk}".upper()
+                if len(pv) == 0:
+                    res[new_key] = pv
+                else:
+                    for i, pvi in enumerate(pv):
+                        res[f"{new_key}_{i}"] = pvi
+        return res
+
 
 class TorchFederatedLearner(ABC):
     def __init__(
@@ -89,7 +103,9 @@ class TorchFederatedLearner(ABC):
         self.model = model_cls()
         if self.config.SERVER_OPT is not None:
             self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
-                self.model.parameters(), lr=self.config.SERVER_LEARNING_RATE, **self.config.SERVER_OPT_ARGS
+                self.model.parameters(),
+                lr=self.config.SERVER_LEARNING_RATE,
+                **self.config.SERVER_OPT_ARGS,
             )
         else:
             self.server_opt = None

@@ -19,27 +19,19 @@ NC = 500
 E = 1
 B = 20
 is_iid = False
-server_opt = "Adagrad"
+server_opt = "Adam"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 configs = []
 
 for server_lr, client_lr in [
-    (0.1, 0.0001),
-    (0.1, 0.001),
-    (0.1, 0.01),
-    (0.1, 1),
-    # (0.01, 0.0001),
-    # (0.01, 0.001),
-    # (0.01, 0.01),
-    (0.01, 0.1),
+    (0.001, 0.001),
+    (0.001, 0.01),
     (0.001, 0.00001),
-    # (0.001, 0.0001),
-    # (0.001, 0.001),
-    # (0.001, 0.01),
-    (0.0001, 0.00001),
-    (0.0001, 0.0001),
+    (0.001, 0.0001),
     (0.0001, 0.001),
+    (0.0001, 0.0001),
+    (0.0001, 0.00001),
 ]:
     # TODO a paraméterek helytelen nevére nem adott hibát
     config = TorchFederatedLearnerCIFAR100Config(
@@ -47,6 +39,7 @@ for server_lr, client_lr in [
         CLIENT_OPT=client_opt,
         CLIENT_OPT_STRATEGY=client_opt_strategy,
         SERVER_OPT=server_opt,
+        SERVER_OPT_ARGS={"betas": (0.0, 0.999)},
         SERVER_LEARNING_RATE=server_lr,
         IS_IID_DATA=is_iid,
         BATCH_SIZE=B,
@@ -60,7 +53,7 @@ for server_lr, client_lr in [
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
+    name = f"noB1 {config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
     experiment.set_name(name)
