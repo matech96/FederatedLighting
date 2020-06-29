@@ -11,7 +11,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "server-side-opt-long"
+project_name = "reproduce-FedAvg-CIFAR100"
 
 max_rounds = 1500
 C = 10 / 500
@@ -19,27 +19,20 @@ NC = 500
 E = 1
 B = 20
 is_iid = False
-server_opt = "Adam"
+server_lr = 1
+server_opt = "SGD"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 configs = []
 
-for server_lr, client_lr in [
-    (0.001, 0.001),
-    (0.001, 0.01),
-    (0.001, 0.00001),
-    (0.001, 0.0001),
-    (0.0001, 0.001),
-    (0.0001, 0.0001),
-    (0.0001, 0.00001),
-]:
+for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
     # TODO a paraméterek helytelen nevére nem adott hibát
     config = TorchFederatedLearnerCIFAR100Config(
         CLIENT_LEARNING_RATE=client_lr,
         CLIENT_OPT=client_opt,
         CLIENT_OPT_STRATEGY=client_opt_strategy,
         SERVER_OPT=server_opt,
-        SERVER_OPT_ARGS={"betas": (0.0, 0.999)},
+        SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
         SERVER_LEARNING_RATE=server_lr,
         IS_IID_DATA=is_iid,
         BATCH_SIZE=B,
