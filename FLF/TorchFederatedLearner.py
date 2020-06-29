@@ -61,7 +61,7 @@ class TorchFederatedLearnerConfig(BaseModel):
             self.SERVER_LEARNING_RATE = self.CLIENT_LEARNING_RATE
 
     def flatten(self):
-        res = copy(self.__dict__)
+        res = copy.copy(self.__dict__)
         to_flatten = [k for k in res.keys() if k.endswith("_ARGS")]
         for k in to_flatten:
             poped = res.pop(k)
@@ -97,7 +97,7 @@ class TorchFederatedLearner(ABC):
         self.experiment = experiment
         self.config = config
         self.config.set_defaults()
-        self.experiment.log_parameters(self.config.__dict__)
+        self.experiment.log_parameters(self.config.flatten())
 
         model_cls, is_keep_model_on_gpu = self.get_model_cls()
         self.model = model_cls()
