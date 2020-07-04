@@ -15,6 +15,7 @@ from FLF.data.TorchCIFAR100Fed import TorchCIFAR100Fed
 
 class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
+    NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
 
 
 class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
@@ -99,10 +100,14 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         return train_loader_list
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        # make_group_norm = lambda x: th.nn.GroupNorm(2, x)
-        # make_model = lambda: models.resnet18(norm_layer=make_group_norm)
-        # return make_model, False
-        return models.resnet18, False
+        if self.config.NORM == "batch":
+            return models.resnet18, False
+        elif self.config.NORM == "group":
+            make_group_norm = lambda x: th.nn.GroupNorm(2, x)
+            make_model = lambda: models.resnet18(norm_layer=make_group_norm)
+            return make_model, False
+        else:
+            raise Exception("NORM is not supported!")
 
     def get_loss(self):
         return nn.CrossEntropyLoss()
