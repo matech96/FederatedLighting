@@ -10,7 +10,7 @@ class TorchResNetFactory:
     def __call__(self):
         if self.norm == "batch":
             model = models.resnet18()
-        elif self.config.NORM == "group":
+        elif self.norm == "group":
             make_group_norm = lambda x: nn.GroupNorm(2, x)
             model = models.resnet18(norm_layer=make_group_norm)
         else:
