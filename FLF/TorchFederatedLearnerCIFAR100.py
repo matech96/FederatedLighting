@@ -7,10 +7,10 @@ import numpy as np
 import torch as th
 import torch.nn as nn
 from torchvision import datasets, transforms
-import torchvision.models as models
 
 from FLF.TorchFederatedLearner import TorchFederatedLearner, TorchFederatedLearnerConfig
 from FLF.data.TorchCIFAR100Fed import TorchCIFAR100Fed
+from FLF.model.TorchResNetFactory import TorchResNetFactory
 
 
 class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
@@ -101,30 +101,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         return train_loader_list
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        def make_model():
-            if self.config.NORM == "batch":
-                model = models.resnet18()
-            elif self.config.NORM == "group":
-                make_group_norm = lambda x: th.nn.GroupNorm(2, x)
-                model = models.resnet18(norm_layer=make_group_norm)
-            else:
-                raise Exception("NORM is not supported!")
-
-            if self.config.INIT is not None:
-                if self.config.INIT == "keras":
-                    model = model.apply(__keras_like_init)
-                else:
-                    raise Exception("INIT is not supported!")
-            return model
-
-        return make_model, False
+        return TorchResNetFactory(self.config.NORM, self.config.INIT), False
 
     def get_loss(self):
         return nn.CrossEntropyLoss()
-
-
-def __keras_like_init(m):
-    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
-        th.nn.init.xavier_uniform_(m.weight)
-    if isinstance(m, nn.Linear):
-        th.nn.init.zeros_(m.bias)
