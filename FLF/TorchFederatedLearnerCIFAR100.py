@@ -16,6 +16,7 @@ from FLF.data.TorchCIFAR100Fed import TorchCIFAR100Fed
 class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
     NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
+    INIT: str = None  # Initialization of ResNet weights. Options: "keras"
 
 
 class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
@@ -100,14 +101,30 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         return train_loader_list
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        if self.config.NORM == "batch":
-            return models.resnet18, False
-        elif self.config.NORM == "group":
-            make_group_norm = lambda x: th.nn.GroupNorm(2, x)
-            make_model = lambda: models.resnet18(norm_layer=make_group_norm)
-            return make_model, False
-        else:
-            raise Exception("NORM is not supported!")
+        def make_model():
+            if self.config.NORM == "batch":
+                model = models.resnet18()
+            elif self.config.NORM == "group":
+                make_group_norm = lambda x: th.nn.GroupNorm(2, x)
+                model = models.resnet18(norm_layer=make_group_norm)
+            else:
+                raise Exception("NORM is not supported!")
+
+            if self.config.INIT is not None:
+                if self.config.INIT == "keras":
+                    model = model.apply(__keras_like_init)
+                else:
+                    raise Exception("INIT is not supported!")
+            return model
+
+        return make_model, False
 
     def get_loss(self):
         return nn.CrossEntropyLoss()
+
+
+def __keras_like_init(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        th.nn.init.xavier_uniform_(m.weight)
+    if isinstance(m, nn.Linear):
+        th.nn.init.zeros_(m.bias)

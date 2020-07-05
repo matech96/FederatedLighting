@@ -25,7 +25,7 @@ client_opt = "SGD"
 client_opt_strategy = "reinit"
 configs = []
 
-for client_lr in [0.001, 0.01, 0.1, 1, 10]:
+for client_lr in [0.1]:
     # TODO a paraméterek helytelen nevére nem adott hibát
     config = TorchFederatedLearnerCIFAR100Config(
         CLIENT_LEARNING_RATE=client_lr,
@@ -43,6 +43,7 @@ for client_lr in [0.001, 0.01, 0.1, 1, 10]:
         MAX_ROUNDS=max_rounds,
         DL_N_WORKER=0,
         NORM="group",
+        INIT="keras",
     )
     configs.append(config)
 
