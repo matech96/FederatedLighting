@@ -34,7 +34,7 @@ server_lr = 0.1
 server_opt = "Adam"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
-wrong_lrs = []
+wrong_lrs = [(0.001, 0.0001)]
 
 for server_lr in [0.001, 0.01, 1, 10]:
     for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
@@ -42,7 +42,7 @@ for server_lr in [0.001, 0.01, 1, 10]:
         if any(
             [(wslr <= server_lr) and (wclr <= client_lr) for wslr, wclr in wrong_lrs]
         ):
-            break
+            continue
 
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = TorchFederatedLearnerCIFAR100Config(

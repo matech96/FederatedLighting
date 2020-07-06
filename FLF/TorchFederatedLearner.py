@@ -199,7 +199,8 @@ class TorchFederatedLearner(ABC):
         except InterruptedExperiment:
             pass
 
-        # th.save(model.state_dict(), "mnist_cnn.pt")
+        th.save(self.model.state_dict(), "state_dict.pt")
+        self.experiment.log_model(type(self).__name__, "state_dict.pt", )
 
     def __train_one_round(self, curr_round: int):
         self.model.train()
