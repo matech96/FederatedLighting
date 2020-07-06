@@ -288,14 +288,15 @@ class TorchFederatedLearner(ABC):
                     1, keepdim=True
                 )  # get the index of the max log-probability
                 correct += pred.eq(target.view_as(pred)).sum().item()
+                cm = confusion_matrix(target.cpu(), pred.cpu())
                 if total_confusion_matrix is None:
-                    total_confusion_matrix = confusion_matrix(target, pred)
+                    total_confusion_matrix = cm
                 else:
-                    total_confusion_matrix += confusion_matrix(target, pred)
+                    total_confusion_matrix += cm
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
-        self.experiment.log_confusion_matrix(matrix=total_confusion_matrix.cpu())
+        self.experiment.log_confusion_matrix(matrix=total_confusion_matrix)
         return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(
