@@ -19,13 +19,15 @@ from mutil.ElapsedTime import ElapsedTime
 
 from FLF.TorchOptRepo import TorchOptRepo
 from FLF.TorchClient import TorchClient
+from FLF.BreakedTrainingExcpetion import BreakedTrainingExcpetion
 
 
 class TorchFederatedLearnerConfig(BaseModel):
     class Config:
         validate_assignment = True
 
-    TARGET_ACC: float = 0.99  # The training stopps when the test accuracy is higher, than this value.
+    TARGET_ACC: float = None  # The training stopps when the test accuracy is higher, than this value.
+    BREAK_ROUND: int = None  # If the prediction is still random at this point the training is stooped.
     MAX_ROUNDS: int = 10  # The maximum number of round for training.
     N_CLIENTS: int = 2  # The number of clients to participate in a round.
     CLIENT_FRACTION: float = 1.0  # The fration of clients to participate in 1 round. Muss be between 0 and 1. 0 means selecting 1 client.
@@ -112,7 +114,7 @@ class TorchFederatedLearner(ABC):
             self.server_opt = None
         self.avg_opt_state = None
 
-        self.train_loader_list, self.test_loader = self.load_data()
+        self.train_loader_list, self.test_loader, self.random_acc = self.load_data()
         self.n_train_batches = int(
             len(self.train_loader_list) / self.config.N_CLIENTS
         )  # TODO batch per client
@@ -181,10 +183,18 @@ class TorchFederatedLearner(ABC):
                         metrics,
                         round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
                     )
-                    logging.info(f'Test accuracy: {metrics["test_acc"]}')
 
-                    if metrics["test_acc"] > self.config.TARGET_ACC:
+                    test_acc = metrics["test_acc"]
+                    if (self.config.TARGET_ACC is not None) and (
+                        test_acc > self.config.TARGET_ACC
+                    ):
                         break
+                    if (
+                        (self.config.BREAK_ROUND is not None)
+                        and (self.config.BREAK_ROUND > round)
+                        and (test_acc < (self.random_acc * 1.1))
+                    ):
+                        raise BreakedTrainingExcpetion()
         except InterruptedExperiment:
             pass
 

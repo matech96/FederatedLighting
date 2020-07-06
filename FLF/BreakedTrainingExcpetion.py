@@ -1,0 +1,2 @@
+class BreakedTrainingExcpetion(Exception):
+    pass

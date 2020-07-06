@@ -64,7 +64,7 @@ class TorchFederatedLearnerMNIST(TorchFederatedLearner):
             mnist_test_ds, batch_size=64, num_workers=self.config.DL_N_WORKER,
         )
 
-        return train_loader_list, test_loader
+        return train_loader_list, test_loader, 0.1
 
     def __get_mnist(self):
         minist_train_ds = datasets.MNIST(

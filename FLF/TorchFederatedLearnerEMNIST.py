@@ -1,5 +1,3 @@
-from comet_ml import Experiment
-
 import os
 from typing import Tuple, List, Callable
 import logging
@@ -9,11 +7,10 @@ import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision import datasets, transforms
 
 from FLF.TorchFederatedLearner import TorchFederatedLearner
 
-
+# TODO
 class TorchFederatedLearnerEMNIST(TorchFederatedLearner):
     def load_data(
         self,
@@ -48,7 +45,7 @@ class TorchFederatedLearnerEMNIST(TorchFederatedLearner):
             mnist_test_ds, batch_size=64, num_workers=self.config.DL_N_WORKER,
         )
 
-        return train_loader_list, test_loader
+        return train_loader_list, test_loader, 0.1
 
     def __get_emnist_filenames(self):
         base_dir = Path('data')

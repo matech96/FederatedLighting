@@ -6,3 +6,4 @@ data/*
 notebooks/2c_opt/*
 *.pt
 *.png
+.vscode/*

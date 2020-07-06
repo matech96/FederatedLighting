@@ -55,7 +55,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             num_workers=self.config.DL_N_WORKER,
         )
 
-        return train_loader_list, test_loader
+        return train_loader_list, test_loader, 0.01
 
     def get_iid_data(self, transform):
         logging.info("Torch CIFAR100 loading ...")
