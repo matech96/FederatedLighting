@@ -299,8 +299,7 @@ class TorchFederatedLearner(ABC):
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
-        self.experiment.log_confusion_matrix(matrix=total_confusion_matrix)
-        return {"test_loss": test_loss, "test_acc": test_acc}
+        return {"test_loss": test_loss, "test_acc": test_acc, "confusion_matrix": total_confusion_matrix}
 
     def log_client_step(
         self,
@@ -325,6 +324,8 @@ class TorchFederatedLearner(ABC):
             * batch_num
             / (self.config.N_EPOCH_PER_CLIENT * self.n_train_batches),
         )
+        
+        self.experiment.log_confusion_matrix(matrix=metrics.pop("confusion_matrix"), step=batch_num)
         for name, value in metrics.items():
             nice_value = 100 * value if name.endswith("_acc") else value
             self.experiment.log_metric(name, nice_value, step=batch_num)
