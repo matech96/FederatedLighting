@@ -290,7 +290,7 @@ class TorchFederatedLearner(ABC):
                     1, keepdim=True
                 )  # get the index of the max log-probability
                 correct += pred.eq(target.view_as(pred)).sum().item()
-                cm.compute_matrix(target.cpu(), pred.cpu())
+                cm.compute_matrix(target.cpu().numpy(), pred.cpu().numpy())
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
