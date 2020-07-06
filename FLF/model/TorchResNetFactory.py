@@ -10,15 +10,15 @@ class TorchResNetFactory:
         self.init = init
 
     def __call__(self):
+        kwargs = {"num_classes": 100}
         if self.norm == "batch":
-            model = models.resnet18()
             logging.info("ResNet keras batchnorm")
         elif self.norm == "group":
-            make_group_norm = lambda x: nn.GroupNorm(2, x)
-            model = models.resnet18(norm_layer=make_group_norm)
+            kwargs["norm_layer"] = lambda x: nn.GroupNorm(2, x)
             logging.info("ResNet keras groupnorm")
         else:
             raise Exception("NORM is not supported!")
+        model = models.resnet18(**kwargs)
 
         if self.init is not None:
             if self.init == "keras":
