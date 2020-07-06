@@ -175,6 +175,7 @@ class TorchFederatedLearner(ABC):
         """
         try:
             with ElapsedTime("Training"):
+                break_acc = self.random_acc * 1.1
                 for round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", round)
                     self.__train_one_round(round)
@@ -191,8 +192,8 @@ class TorchFederatedLearner(ABC):
                         break
                     if (
                         (self.config.BREAK_ROUND is not None)
-                        and (self.config.BREAK_ROUND > round)
-                        and (test_acc < (self.random_acc * 1.1))
+                        and (self.config.BREAK_ROUND < round)
+                        and (test_acc < (break_acc))
                     ):
                         raise BreakedTrainingExcpetion()
         except InterruptedExperiment:

@@ -39,11 +39,14 @@ wrong_lrs = []
 for server_lr in [0.001, 0.01, 1, 10]:
     for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
 
-        if any([(wslr <= server_lr) and (wclr <= client_lr) for wslr, wclr in wrong_lrs]):
+        if any(
+            [(wslr <= server_lr) and (wclr <= client_lr) for wslr, wclr in wrong_lrs]
+        ):
             break
 
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = TorchFederatedLearnerCIFAR100Config(
+            BREAK_ROUND=800,
             CLIENT_LEARNING_RATE=client_lr,
             CLIENT_OPT=client_opt,
             CLIENT_OPT_STRATEGY=client_opt_strategy,
@@ -64,4 +67,4 @@ for server_lr in [0.001, 0.01, 1, 10]:
         try:
             do_training(config)
         except BreakedTrainingExcpetion:
-            wrong_lrs.append(server_lr, client_lr)
+            wrong_lrs.append((server_lr, client_lr))
