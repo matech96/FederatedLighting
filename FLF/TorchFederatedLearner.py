@@ -9,6 +9,7 @@ from typing import Tuple, Dict, List, Callable
 import logging
 
 import numpy as np
+from sklearn.metrics import confusion_matrix
 from pydantic import BaseModel, validator
 
 import torch as th
@@ -200,7 +201,9 @@ class TorchFederatedLearner(ABC):
             pass
 
         th.save(self.model.state_dict(), "state_dict.pt")
-        self.experiment.log_model(type(self).__name__, "state_dict.pt", )
+        self.experiment.log_model(
+            type(self).__name__, "state_dict.pt",
+        )
 
     def __train_one_round(self, curr_round: int):
         self.model.train()
@@ -273,6 +276,7 @@ class TorchFederatedLearner(ABC):
         test_model.eval()
         test_loss = 0
         correct = 0
+        total_confusion_matrix = None
         with th.no_grad():
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
@@ -284,9 +288,14 @@ class TorchFederatedLearner(ABC):
                     1, keepdim=True
                 )  # get the index of the max log-probability
                 correct += pred.eq(target.view_as(pred)).sum().item()
+                if total_confusion_matrix is None:
+                    total_confusion_matrix = confusion_matrix(target, pred)
+                else:
+                    total_confusion_matrix += confusion_matrix(target, pred)
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
+        self.experiment.log_confusion_matrix(matrix=total_confusion_matrix)
         return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(

@@ -46,7 +46,7 @@ for server_lr in [0.001, 0.01, 1, 10]:
 
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = TorchFederatedLearnerCIFAR100Config(
-            BREAK_ROUND=800,
+            # BREAK_ROUND=800,
             CLIENT_LEARNING_RATE=client_lr,
             CLIENT_OPT=client_opt,
             CLIENT_OPT_STRATEGY=client_opt_strategy,
