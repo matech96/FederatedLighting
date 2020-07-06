@@ -1,5 +1,6 @@
 from comet_ml.exceptions import InterruptedExperiment
 from comet_ml import Experiment
+from comet_ml import ConfusionMatrix
 
 import random
 import copy
@@ -276,7 +277,8 @@ class TorchFederatedLearner(ABC):
         test_model.eval()
         test_loss = 0
         correct = 0
-        total_confusion_matrix = None
+        cm = ConfusionMatrix()
+
         with th.no_grad():
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
@@ -288,17 +290,11 @@ class TorchFederatedLearner(ABC):
                     1, keepdim=True
                 )  # get the index of the max log-probability
                 correct += pred.eq(target.view_as(pred)).sum().item()
-                cm = confusion_matrix(
-                    target.cpu(), pred.cpu(), labels=range(output.shape[1])
-                )
-                if total_confusion_matrix is None:
-                    total_confusion_matrix = cm
-                else:
-                    total_confusion_matrix += cm
+                cm.compute_matrix(target.cpu(), pred.cpu())
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
-        self.experiment.log_confusion_matrix(matrix=total_confusion_matrix)
+        self.experiment.log_confusion_matrix(matrix=cm)
         return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(
