@@ -1,4 +1,5 @@
 from comet_ml import Experiment
+
 import logging
 from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
@@ -34,7 +35,7 @@ server_lr = 0.1
 server_opt = "Adam"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
-wrong_lrs = [(0.001, 0.0001)]
+wrong_lrs = []
 
 for server_lr in [0.001, 0.01, 1, 10]:
     for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:

@@ -295,7 +295,7 @@ class TorchFederatedLearner(ABC):
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
-        self.experiment.log_confusion_matrix(matrix=total_confusion_matrix)
+        self.experiment.log_confusion_matrix(matrix=total_confusion_matrix.cpu())
         return {"test_loss": test_loss, "test_acc": test_acc}
 
     def log_client_step(
