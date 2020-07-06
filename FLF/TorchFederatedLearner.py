@@ -288,7 +288,9 @@ class TorchFederatedLearner(ABC):
                     1, keepdim=True
                 )  # get the index of the max log-probability
                 correct += pred.eq(target.view_as(pred)).sum().item()
-                cm = confusion_matrix(target.cpu(), pred.cpu())
+                cm = confusion_matrix(
+                    target.cpu(), pred.cpu(), labels=range(output.shape[1])
+                )
                 if total_confusion_matrix is None:
                     total_confusion_matrix = cm
                 else:
