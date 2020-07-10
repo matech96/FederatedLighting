@@ -15,6 +15,7 @@ from FLF.model.TorchResNetFactory import TorchResNetFactory
 
 class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
+    IMAGE_NORM: str = "thlike"  # The way to normalize the images. Options: "tflike", "thlike"
     NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
     INIT: str = None  # Initialization of ResNet weights. Options: "keras"
 
@@ -37,12 +38,19 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
     def load_data(
         self,
     ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            ]
-        )
+        if self.config.IMAGE_NORM == "thlike":
+            norm = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        elif self.config.IMAGE_NORM == "tflike":
+            norm = transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
+        else:
+            raise Exception("IMAGE_NORM not supported!")
+
+        trfs = [
+            transforms.ToTensor(),
+            norm,
+        ]
+
+        transform = transforms.Compose(trfs)
 
         if self.config.IS_IID_DATA:
             train_loader_list = self.get_iid_data(transform)
