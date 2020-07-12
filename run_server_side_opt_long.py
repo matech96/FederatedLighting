@@ -35,41 +35,39 @@ is_iid = False
 server_opt = "Adam"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
-for image_norm in ["thlike", "tflike"]:
-    wrong_lrs = []
-    for server_lr in [0.1]:
-        for client_lr in [0.01, 0.1]:
+wrong_lrs = []
+for server_lr in [0.1]:
+    for client_lr in [0.01, 0.1]:
 
-            if any(
-                [
-                    (wslr <= server_lr) and (wclr <= client_lr)
-                    for wslr, wclr in wrong_lrs
-                ]
-            ):
-                continue
+        if any(
+            [
+                (wslr <= server_lr) and (wclr <= client_lr)
+                for wslr, wclr in wrong_lrs
+            ]
+        ):
+            continue
 
-            # TODO a paraméterek helytelen nevére nem adott hibát
-            config = TorchFederatedLearnerCIFAR100Config(
-                BREAK_ROUND=800,
-                CLIENT_LEARNING_RATE=client_lr,
-                CLIENT_OPT=client_opt,
-                CLIENT_OPT_STRATEGY=client_opt_strategy,
-                SERVER_OPT=server_opt,
-                SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
-                # SERVER_OPT_ARGS={"momentum": 0.9},
-                SERVER_LEARNING_RATE=server_lr,
-                IS_IID_DATA=is_iid,
-                BATCH_SIZE=B,
-                CLIENT_FRACTION=C,
-                N_CLIENTS=NC,
-                N_EPOCH_PER_CLIENT=E,
-                MAX_ROUNDS=max_rounds,
-                DL_N_WORKER=0,
-                NORM="group",
-                IMAGE_NORM="tflike",
-                INIT="keras"
-            )
-            try:
-                do_training(config)
-            except BreakedTrainingExcpetion:
-                wrong_lrs.append((server_lr, client_lr))
+        # TODO a paraméterek helytelen nevére nem adott hibát
+        config = TorchFederatedLearnerCIFAR100Config(
+            BREAK_ROUND=800,
+            CLIENT_LEARNING_RATE=client_lr,
+            CLIENT_OPT=client_opt,
+            CLIENT_OPT_STRATEGY=client_opt_strategy,
+            SERVER_OPT=server_opt,
+            SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
+            # SERVER_OPT_ARGS={"momentum": 0.9},
+            SERVER_LEARNING_RATE=server_lr,
+            IS_IID_DATA=is_iid,
+            BATCH_SIZE=B,
+            CLIENT_FRACTION=C,
+            N_CLIENTS=NC,
+            N_EPOCH_PER_CLIENT=E,
+            MAX_ROUNDS=max_rounds,
+            DL_N_WORKER=0,
+            NORM="group",
+            INIT="keras"
+        )
+        try:
+            do_training(config)
+        except BreakedTrainingExcpetion:
+            wrong_lrs.append((server_lr, client_lr))
