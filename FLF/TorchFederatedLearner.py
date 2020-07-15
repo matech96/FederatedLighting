@@ -39,6 +39,7 @@ class TorchFederatedLearnerConfig(BaseModel):
     DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     SEED: int = None  # The seed.
     CLIENT_OPT: str = "SGD"  # The optimizer used by the client.
+    CLIENT_OPT_L2: float = 0  # Weight decay used by the client.
     CLIENT_OPT_STRATEGY: str = "reinit"  # The optimizer sync strategy. Options are:
     # reinit: reinitializes the optimizer in every round
     # nothing: leavs the optimizer intect
@@ -131,7 +132,7 @@ class TorchFederatedLearner(ABC):
                 loader,
                 self.device,
                 TorchOptRepo.name2cls(self.config.CLIENT_OPT),
-                {"lr": self.config.CLIENT_LEARNING_RATE},
+                {"lr": self.config.CLIENT_LEARNING_RATE, "weight_decay": self.config.CLIENT_OPT_L2},
                 config.CLIENT_OPT_STRATEGY == "nothing",
             )
             for loader in self.train_loader_list
@@ -277,7 +278,7 @@ class TorchFederatedLearner(ABC):
         test_loss = 0
         correct = 0
         total_confusion_matrix = None
-        
+
         with th.no_grad():
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
@@ -299,7 +300,11 @@ class TorchFederatedLearner(ABC):
 
         test_loss /= len(test_loader.dataset)
         test_acc = correct / len(test_loader.dataset)
-        return {"test_loss": test_loss, "test_acc": test_acc, "confusion_matrix": total_confusion_matrix}
+        return {
+            "test_loss": test_loss,
+            "test_acc": test_acc,
+            "confusion_matrix": total_confusion_matrix,
+        }
 
     def log_client_step(
         self,
@@ -324,8 +329,10 @@ class TorchFederatedLearner(ABC):
             * batch_num
             / (self.config.N_EPOCH_PER_CLIENT * self.n_train_batches),
         )
-        
-        self.experiment.log_confusion_matrix(matrix=metrics.pop("confusion_matrix"), step=batch_num)
+
+        self.experiment.log_confusion_matrix(
+            matrix=metrics.pop("confusion_matrix"), step=batch_num
+        )
         for name, value in metrics.items():
             nice_value = 100 * value if name.endswith("_acc") else value
             self.experiment.log_metric(name, nice_value, step=batch_num)

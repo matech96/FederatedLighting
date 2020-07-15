@@ -9,7 +9,7 @@ from FLF.BreakedTrainingExcpetion import BreakedTrainingExcpetion
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"FedAdam {config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
+    name = f"FedAdam L2 {config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
     experiment.set_name(name)
@@ -35,15 +35,12 @@ is_iid = False
 server_opt = "Adam"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
+# image_norm = "tflike"
 wrong_lrs = []
-for server_lr in [0.1]:
-    for client_lr in [0.01, 0.1]:
-
+for server_lr in [0.01, 0.1]:  # 0.001,
+    for client_lr in [0.01, 0.1]:  # 0.001,
         if any(
-            [
-                (wslr <= server_lr) and (wclr <= client_lr)
-                for wslr, wclr in wrong_lrs
-            ]
+            [(wslr <= server_lr) and (wclr <= client_lr) for wslr, wclr in wrong_lrs]
         ):
             continue
 
@@ -52,6 +49,7 @@ for server_lr in [0.1]:
             BREAK_ROUND=800,
             CLIENT_LEARNING_RATE=client_lr,
             CLIENT_OPT=client_opt,
+            CLIENT_OPT_L2=1e-4,
             CLIENT_OPT_STRATEGY=client_opt_strategy,
             SERVER_OPT=server_opt,
             SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
@@ -65,7 +63,8 @@ for server_lr in [0.1]:
             MAX_ROUNDS=max_rounds,
             DL_N_WORKER=0,
             NORM="group",
-            INIT="keras"
+            # IMAGE_NORM=image_norm,
+            INIT="keras",
         )
         try:
             do_training(config)
