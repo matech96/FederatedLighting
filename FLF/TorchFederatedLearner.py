@@ -40,6 +40,7 @@ class TorchFederatedLearnerConfig(BaseModel):
     SEED: int = None  # The seed.
     CLIENT_OPT: str = "SGD"  # The optimizer used by the client.
     CLIENT_OPT_L2: float = 0  # Weight decay used by the client.
+    CLIENT_OPT_ARGS: Dict = {}  # Extra arguments for the client optimizer
     CLIENT_OPT_STRATEGY: str = "reinit"  # The optimizer sync strategy. Options are:
     # reinit: reinitializes the optimizer in every round
     # nothing: leavs the optimizer intect
@@ -72,7 +73,7 @@ class TorchFederatedLearnerConfig(BaseModel):
             poped = res.pop(k)
             for pk, pv in poped.items():
                 new_key = f"{k[:-5]}_{pk}".upper()
-                if isinstance(pv, Iterable):
+                if isinstance(pv, Iterable) and not isinstance(pv, str):
                     for i, pvi in enumerate(pv):
                         res[f"{new_key}_{i}"] = pvi
                 else:

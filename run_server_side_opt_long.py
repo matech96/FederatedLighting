@@ -9,7 +9,7 @@ from FLF.BreakedTrainingExcpetion import BreakedTrainingExcpetion
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
-    name = f"FedAdam L2 {config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
+    name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
     experiment.set_name(name)
@@ -32,13 +32,13 @@ E = 1
 B = 20
 is_iid = False
 # server_lr = 0.1
-server_opt = "Adam"
+server_opt = "SGD"
 client_opt = "SGD"
-client_opt_strategy = "reinit"
+client_opt_strategy = "avg"
 # image_norm = "tflike"
 wrong_lrs = []
-for server_lr in [0.01, 0.1]:  # 0.001,
-    for client_lr in [0.01, 0.1]:  # 0.001,
+for server_lr in [0.001, 0.01, 0.1, 1, 10]:
+    for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
         if any(
             [(wslr <= server_lr) and (wclr <= client_lr) for wslr, wclr in wrong_lrs]
         ):
@@ -46,14 +46,15 @@ for server_lr in [0.01, 0.1]:  # 0.001,
 
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = TorchFederatedLearnerCIFAR100Config(
-            BREAK_ROUND=800,
+            BREAK_ROUND=300,
             CLIENT_LEARNING_RATE=client_lr,
             CLIENT_OPT=client_opt,
-            CLIENT_OPT_L2=1e-4,
+            # CLIENT_OPT_L2=1e-4,
+            CLIENT_OPT_ARGS={"momentum": 0.9},
             CLIENT_OPT_STRATEGY=client_opt_strategy,
             SERVER_OPT=server_opt,
-            SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
-            # SERVER_OPT_ARGS={"momentum": 0.9},
+            # SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
+            SERVER_OPT_ARGS={"momentum": 0.9},
             SERVER_LEARNING_RATE=server_lr,
             IS_IID_DATA=is_iid,
             BATCH_SIZE=B,
