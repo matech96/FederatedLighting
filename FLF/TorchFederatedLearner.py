@@ -196,7 +196,7 @@ class TorchFederatedLearner(ABC):
                     if (
                         (self.config.BREAK_ROUND is not None)
                         and (self.config.BREAK_ROUND < round)
-                        and (test_acc < (break_acc))
+                        and (test_acc < (self.random_acc * 1.1)) and (test_acc > (self.random_acc * 0.95))
                     ):
                         raise BreakedTrainingExcpetion()
         except InterruptedExperiment:
