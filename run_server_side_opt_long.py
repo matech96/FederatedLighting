@@ -5,7 +5,7 @@ from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
     TorchFederatedLearnerCIFAR100Config,
 )
-from FLF.BreakedTrainingExcpetion import BreakedTrainingExcpetion
+from FLF.BreakedTrainingExcpetion import ToLargeLearningRateExcpetion
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
@@ -69,5 +69,5 @@ for server_lr in [0.001, 0.01, 0.1, 1, 10]:
         )
         try:
             do_training(config)
-        except BreakedTrainingExcpetion:
+        except ToLargeLearningRateExcpetion:
             wrong_lrs.append((server_lr, client_lr))

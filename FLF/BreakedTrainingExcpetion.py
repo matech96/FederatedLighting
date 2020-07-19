@@ -1,2 +1,2 @@
-class BreakedTrainingExcpetion(Exception):
+class ToLargeLearningRateExcpetion(Exception):
     pass

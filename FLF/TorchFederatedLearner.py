@@ -3,11 +3,12 @@ from comet_ml import Experiment
 
 import random
 import copy
-from collections import Iterable
+from collections import Iterable, deque
 from abc import ABC, abstractmethod
 from typing import Tuple, Dict, List, Callable
 import logging
 
+from statistics import mean
 import numpy as np
 from sklearn.metrics import confusion_matrix
 from pydantic import BaseModel, validator
@@ -20,7 +21,7 @@ from mutil.ElapsedTime import ElapsedTime
 
 from FLF.TorchOptRepo import TorchOptRepo
 from FLF.TorchClient import TorchClient
-from FLF.BreakedTrainingExcpetion import BreakedTrainingExcpetion
+from FLF.BreakedTrainingExcpetion import ToLargeLearningRateExcpetion
 
 
 class TorchFederatedLearnerConfig(BaseModel):
@@ -133,7 +134,10 @@ class TorchFederatedLearner(ABC):
                 loader,
                 self.device,
                 TorchOptRepo.name2cls(self.config.CLIENT_OPT),
-                {"lr": self.config.CLIENT_LEARNING_RATE, "weight_decay": self.config.CLIENT_OPT_L2},
+                {
+                    "lr": self.config.CLIENT_LEARNING_RATE,
+                    "weight_decay": self.config.CLIENT_OPT_L2,
+                },
                 config.CLIENT_OPT_STRATEGY == "nothing",
             )
             for loader in self.train_loader_list
@@ -176,29 +180,27 @@ class TorchFederatedLearner(ABC):
         Returns:
             None -- No return value.
         """
+        last100acc = deque(maxlen=100)
         try:
             with ElapsedTime("Training"):
-                break_acc = self.random_acc * 1.1
                 for round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", round)
                     self.__train_one_round(round)
                     metrics = self.test(self.test_loader)
+                    last100_avg_acc = mean(last100acc)
+                    metrics["last100_avg_acc"] = last100_avg_acc
+
                     self.log_test_metric(
                         metrics,
                         round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
                     )
 
                     test_acc = metrics["test_acc"]
-                    if (self.config.TARGET_ACC is not None) and (
-                        test_acc > self.config.TARGET_ACC
-                    ):
+                    last100acc.append(test_acc)
+                    if self.__is_achieved_target(test_acc):
                         break
-                    if (
-                        (self.config.BREAK_ROUND is not None)
-                        and (self.config.BREAK_ROUND < round)
-                        and (test_acc < (self.random_acc * 1.1)) and (test_acc > (self.random_acc * 0.95))
-                    ):
-                        raise BreakedTrainingExcpetion()
+                    if self.__is_unable_to_learn(round, last100_avg_acc):
+                        raise BToLargeLearningRateExcpetionreakedTrainingExcpetion()
         except InterruptedExperiment:
             pass
 
@@ -271,6 +273,18 @@ class TorchFederatedLearner(ABC):
         for k in dict(self.model.named_parameters()).keys():
             new_model_state_dict[k] = model_state_dict[k]
         self.model.load_state_dict(new_model_state_dict)
+
+    def __is_unable_to_learn(self, round, last100_avg_acc):
+        return (
+            (self.config.BREAK_ROUND is not None)
+            and (self.config.BREAK_ROUND < round)
+            and (abs(last100_avg_acc - self.random_acc) < 1e-3)
+        )
+
+    def __is_achieved_target(self, test_acc):
+        return (self.config.TARGET_ACC is not None) and (
+            test_acc > self.config.TARGET_ACC
+        )
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
         test_model = copy.deepcopy(self.model)
