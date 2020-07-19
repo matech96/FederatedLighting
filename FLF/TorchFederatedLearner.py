@@ -200,7 +200,7 @@ class TorchFederatedLearner(ABC):
                     if self.__is_achieved_target(test_acc):
                         break
                     if self.__is_unable_to_learn(round, last100_avg_acc):
-                        raise BToLargeLearningRateExcpetionreakedTrainingExcpetion()
+                        raise ToLargeLearningRateExcpetion()
         except InterruptedExperiment:
             pass
 
