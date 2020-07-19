@@ -190,7 +190,7 @@ class TorchFederatedLearner(ABC):
                     self.experiment.log_parameter("curr_round", round)
                     self.__train_one_round(round)
                     metrics = self.test(self.test_loader)
-                    last100_avg_acc = mean(last100acc)
+                    last100_avg_acc = mean(last100acc) if round > 0 else 0
                     metrics["last100_avg_acc"] = last100_avg_acc
 
                     self.log_test_metric(
