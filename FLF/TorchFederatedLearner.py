@@ -177,6 +177,9 @@ class TorchFederatedLearner(ABC):
     def train(self) -> None:
         """Runs the federated training, reports to comet.ml and runs an evaluations.
 
+        Raises:
+            ToLargeLearningRateExcpetion: Raised, when the learning rate is probably too high.
+
         Returns:
             None -- No return value.
         """
@@ -287,6 +290,14 @@ class TorchFederatedLearner(ABC):
         )
 
     def test(self, test_loader: th.utils.data.DataLoader) -> Dict[str, float]:
+        """Tests the model on the provided dataset.
+
+        Arguments:
+            test_loader {th.utils.data.DataLoader} -- Provides the test dataset
+
+        Returns:
+            Dict[str, float] -- The meassured metrics
+        """
         test_model = copy.deepcopy(self.model)
         test_model.to(self.device)
         test_model.eval()
@@ -329,6 +340,15 @@ class TorchFederatedLearner(ABC):
         curr_epoch: int,
         curr_batch: int,
     ):
+        """A client can call this to log it's progress.
+
+        Arguments:
+            loss {float} -- The training loss
+            client_id {str} -- The id of the client
+            curr_round {int} -- Current round of the training
+            curr_epoch {int} -- Current epoch on the client
+            curr_batch {int} -- Current batch on the client
+        """
         step = (
             (curr_round * self.config.N_EPOCH_PER_CLIENT) + curr_epoch
         ) * self.n_train_batches + curr_batch
