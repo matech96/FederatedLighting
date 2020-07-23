@@ -37,16 +37,19 @@ client_opt = "SGD"
 client_opt_strategy = "avg"
 # image_norm = "tflike"
 wrong_lrs = []
-for server_lr in [0.001, 0.01, 0.1, 1, 10]:
-    for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
+for server_lr in [0.01, 0.1, 1, 10]:
+    for client_lr in [0.001, 0.0001]:
+        if (server_lr != 10) and (client_lr == 0.001):
+            continue
+
         if any(
-            [(wslr <= server_lr) and (wclr <= client_lr) for wslr, wclr in wrong_lrs]
+            [((wslr <= server_lr) and (wclr <= client_lr)) for wslr, wclr in wrong_lrs]
         ):
             continue
 
         # TODO a paraméterek helytelen nevére nem adott hibát
         config = TorchFederatedLearnerCIFAR100Config(
-            BREAK_ROUND=300,
+            BREAK_ROUND=100,
             CLIENT_LEARNING_RATE=client_lr,
             CLIENT_OPT=client_opt,
             # CLIENT_OPT_L2=1e-4,
