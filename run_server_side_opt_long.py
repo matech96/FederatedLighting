@@ -43,53 +43,47 @@ E = 1
 B = 20
 is_iid = False
 # server_lr = 0.1
-# server_opt = "AdamW"
-# client_opt = "AdamW"
+server_opt = "Adam"
+client_opt = "SGD"
 client_opt_strategy = "avg"
 # image_norm = "tflike"
-for server_opt in ["Adagrad", "Adam", "SGD"]:
-    client_opt = "SGD"  # ["Adagrad", "Adam", "SGD"]
-    if client_opt == server_opt:
-        continue
+wrong_lrs = []
+for server_lr in [0.01, 0.1, 1, 10]:
+    for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
+        if server_lr == 0.01 and client_lr < 0.1:
+            continue
 
-    wrong_lrs = []
-    for server_lr in [0.001, 0.01, 0.1, 1, 10]:
-        for client_lr in [0.0001, 0.001, 0.01, 0.1, 1]:
-            if any(
-                [
-                    (wslr <= server_lr) and (wclr <= client_lr)
-                    for wslr, wclr in wrong_lrs
-                ]
-            ):
-                continue
+        if any(
+            [
+                (wslr <= server_lr) and (wclr <= client_lr)
+                for wslr, wclr in wrong_lrs
+            ]
+        ):
+            continue
 
-            # TODO a paraméterek helytelen nevére nem adott hibát
-            config = TorchFederatedLearnerCIFAR100Config(
-                BREAK_ROUND=300,
-                CLIENT_LEARNING_RATE=client_lr,
-                CLIENT_OPT=client_opt,
-                CLIENT_OPT_ARGS=get_args(client_opt),
-                # CLIENT_OPT_L2=1e-4,
-                # CLIENT_OPT_ARGS={"momentum": 0.9},
-                # CLIENT_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
-                CLIENT_OPT_STRATEGY=client_opt_strategy,
-                SERVER_OPT=server_opt,
-                SERVER_OPT_ARGS=get_args(server_opt),
-                # SERVER_OPT_ARGS={"betas": (0.0, 0.99), "eps": 0.01},
-                # SERVER_OPT_ARGS={"momentum": 0.9},
-                SERVER_LEARNING_RATE=server_lr,
-                IS_IID_DATA=is_iid,
-                BATCH_SIZE=B,
-                CLIENT_FRACTION=C,
-                N_CLIENTS=NC,
-                N_EPOCH_PER_CLIENT=E,
-                MAX_ROUNDS=max_rounds,
-                DL_N_WORKER=0,
-                NORM="group",
-                # IMAGE_NORM=image_norm,
-                INIT="keras",
-            )
-            try:
-                do_training(config)
-            except ToLargeLearningRateExcpetion:
-                wrong_lrs.append((server_lr, client_lr))
+        # TODO a paraméterek helytelen nevére nem adott hibát
+        config = TorchFederatedLearnerCIFAR100Config(
+            BREAK_ROUND=300,
+            CLIENT_LEARNING_RATE=client_lr,
+            CLIENT_OPT=client_opt,
+            CLIENT_OPT_ARGS=get_args(client_opt),
+            # CLIENT_OPT_L2=1e-4,
+            CLIENT_OPT_STRATEGY=client_opt_strategy,
+            SERVER_OPT=server_opt,
+            SERVER_OPT_ARGS=get_args(server_opt),
+            SERVER_LEARNING_RATE=server_lr,
+            IS_IID_DATA=is_iid,
+            BATCH_SIZE=B,
+            CLIENT_FRACTION=C,
+            N_CLIENTS=NC,
+            N_EPOCH_PER_CLIENT=E,
+            MAX_ROUNDS=max_rounds,
+            DL_N_WORKER=0,
+            NORM="group",
+            # IMAGE_NORM=image_norm,
+            INIT="keras",
+        )
+        try:
+            do_training(config)
+        except ToLargeLearningRateExcpetion:
+            wrong_lrs.append((server_lr, client_lr))
