@@ -86,7 +86,7 @@ class TorchModelOptStateManager:
     def __exit__(self, *exc):
         if not self.is_keep_model_on_gpu:
             self.model.cpu()
-            self.opt.cpu()
+            self.opt = None
             self.__log("model is on CPU")
 
         if self.is_store_on_disk:
