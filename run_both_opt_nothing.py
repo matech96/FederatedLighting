@@ -81,7 +81,6 @@ for server_lr in [0.001, 0.01, 0.1, 1, 10]:
             # IMAGE_NORM=image_norm,
             INIT="keras",
             STORE_OPT_ON_DISK=False,
-            STORE_MODEL_IN_RAM=False,
         )
         try:
             do_training(config)
