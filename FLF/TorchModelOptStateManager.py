@@ -48,7 +48,7 @@ class TorchModelOptStateManager:
         self.__log("model set")
 
     def set_opt_state_to_be_loaded(self, state, is_preserve=False):
-        if is_preserve:
+        if is_preserve and self.is_store_on_disk:
             th.save(list(state), self.__opt_path)
             self.__log(f"opt saved: {self.__opt_path}")
         else:
