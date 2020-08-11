@@ -19,6 +19,7 @@ class TorchClient:
         trainer,
         model_cls: Callable[[], th.nn.Module],
         is_keep_model_on_gpu: bool,
+        is_store_opt_on_disk: bool,
         loss: nn.Module,
         dataloader: th.utils.data.DataLoader,
         device: str,
@@ -33,7 +34,9 @@ class TorchClient:
         self.loss = loss
         self.dataloader = dataloader
         self.device = device
-        self.state_man = TorchModelOptStateManager(model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, True, self.id)
+        self.state_man = TorchModelOptStateManager(
+            model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, is_store_opt_on_disk, self.id
+        )
         self.is_maintaine_opt_state = is_maintaine_opt_state
 
         self.opt = None
@@ -67,9 +70,14 @@ class TorchClient:
                         )
 
             if self.is_maintaine_opt_state:
-                self.state_man.set_opt_state_to_be_loaded(self.state_man.get_current_opt_state(), True)
+                self.state_man.set_opt_state_to_be_loaded(
+                    self.state_man.get_current_opt_state(), True
+                )
 
-            return self.state_man.get_current_model_state(), self.state_man.get_current_opt_state()
+            return (
+                self.state_man.get_current_model_state(),
+                self.state_man.get_current_opt_state(),
+            )
 
     def __log(self, m):
         logging.info(f"Client {self.id}: {m}")

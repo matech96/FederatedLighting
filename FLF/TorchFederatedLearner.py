@@ -48,6 +48,8 @@ class TorchFederatedLearnerConfig(BaseModel):
     # avg: averages the optimizer states in every round
     SERVER_OPT: str = None  # The optimizer used on the server.
     SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
+    STORE_OPT_ON_DISK: bool = True  # If true the optimization parameters are stored on the disk between training for CLIENT_OPT_STRATEGY "nothing". This increases training time, but reduces RAM requirement. If false, it's in the RAM.
+    STORE_MODEL_IN_RAM: bool = None  # If true the model is removed from the VRAM after the client has finished training. This increases training time, but reduces VRAM requirement. If false, it's kept there for the hole training.
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -106,7 +108,7 @@ class TorchFederatedLearner(ABC):
         self.config.set_defaults()
         self.experiment.log_parameters(self.config.flatten())
 
-        model_cls, is_keep_model_on_gpu = self.get_model_cls()
+        model_cls = self.get_model_cls()
         self.model = model_cls()
         if self.config.SERVER_OPT is not None:
             self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
@@ -128,17 +130,18 @@ class TorchFederatedLearner(ABC):
         self.clients = [
             TorchClient(
                 self,
-                model_cls,
-                is_keep_model_on_gpu,
-                self.get_loss(),
-                loader,
-                self.device,
-                TorchOptRepo.name2cls(self.config.CLIENT_OPT),
-                {
+                model_cls=model_cls,
+                is_keep_model_on_gpu=self.config.STORE_MODEL_IN_RAM,
+                is_store_opt_on_disk=self.config.STORE_OPT_ON_DISK,
+                loss=self.get_loss(),
+                dataloader=loader,
+                device=self.device,
+                opt_cls=TorchOptRepo.name2cls(self.config.CLIENT_OPT),
+                opt_cls_param={
                     "lr": self.config.CLIENT_LEARNING_RATE,
                     "weight_decay": self.config.CLIENT_OPT_L2,
                 },
-                config.CLIENT_OPT_STRATEGY == "nothing",
+                is_maintaine_opt_state=config.CLIENT_OPT_STRATEGY == "nothing",
             )
             for loader in self.train_loader_list
         ]
@@ -159,9 +162,7 @@ class TorchFederatedLearner(ABC):
         """Returns the model to be trained.
 
         Returns:
-            nn.Module -- The instance of the model.
-            bool -- If false the model will only be allocated on the gpu if the client, that it belongs to is beeing trained.
-            This increases training time, but reduces GPU memory requirement.
+            nn.Module -- The instance of the model.            
         """
         pass
 

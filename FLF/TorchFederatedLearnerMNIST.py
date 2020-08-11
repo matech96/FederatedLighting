@@ -97,7 +97,7 @@ class TorchFederatedLearnerMNIST(TorchFederatedLearner):
         return indices
 
     def get_model_cls(self) -> Callable[[], nn.Module]:
-        return Net, True
+        return Net
 
     def get_loss(self) -> nn.Module:
         return F.nll_loss
