@@ -28,7 +28,6 @@ def do_training(config: TorchFederatedLearnerCIFAR100Config):
 
 
 th.cuda.set_device(2)
-th.cuda.set_device(free_gpu[run_id])
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
     level=logging.INFO,
