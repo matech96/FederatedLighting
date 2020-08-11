@@ -52,7 +52,7 @@ class TorchModelOptStateManager:
             th.save(list(state), self.__opt_path)
             self.__log(f"opt saved: {self.__opt_path}")
         else:
-            self.__opt_state_to_be_loaded = state
+            self.__opt_state_to_be_loaded = list(state)
             self.__log("opt set")
 
     def __enter__(self):
