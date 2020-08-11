@@ -131,7 +131,7 @@ class TorchFederatedLearner(ABC):
             TorchClient(
                 self,
                 model_cls=model_cls,
-                is_keep_model_on_gpu=self.config.STORE_MODEL_IN_RAM,
+                is_keep_model_on_gpu=not self.config.STORE_MODEL_IN_RAM,
                 is_store_opt_on_disk=self.config.STORE_OPT_ON_DISK,
                 loss=self.get_loss(),
                 dataloader=loader,
