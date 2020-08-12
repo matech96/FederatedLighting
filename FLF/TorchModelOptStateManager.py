@@ -18,6 +18,7 @@ class TorchModelOptStateManager:
         is_keep_model_on_gpu,
         is_store_on_disk,
         id,
+        exp_id,
     ):
         self.model_cls = model_cls
         self.opt_cls = opt_cls
@@ -28,7 +29,7 @@ class TorchModelOptStateManager:
 
         self.__model_state_to_be_loaded = None
         self.__opt_state_to_be_loaded = None
-        self.__opt_path = self.tmp_dir / f"{self.id}_opt.pt"
+        self.__opt_path = self.tmp_dir / f"{exp_id}_{self.id}_opt.pt"
         self.__delete_objects_tmp_files()
 
         self.model = None

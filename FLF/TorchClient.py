@@ -26,6 +26,7 @@ class TorchClient:
         opt_cls: Callable[..., th.optim.Optimizer],
         opt_cls_param: Dict,
         is_maintaine_opt_state: bool,
+        exp_id: str,
     ):
         self.id = TorchClient.__next_ID
         TorchClient.__next_ID += 1
@@ -35,7 +36,7 @@ class TorchClient:
         self.dataloader = dataloader
         self.device = device
         self.state_man = TorchModelOptStateManager(
-            model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, is_store_opt_on_disk, self.id
+            model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, is_store_opt_on_disk, self.id, exp_id
         )
         self.is_maintaine_opt_state = is_maintaine_opt_state
 

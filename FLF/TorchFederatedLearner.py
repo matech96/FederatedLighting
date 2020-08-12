@@ -142,6 +142,7 @@ class TorchFederatedLearner(ABC):
                     "weight_decay": self.config.CLIENT_OPT_L2,
                 },
                 is_maintaine_opt_state=config.CLIENT_OPT_STRATEGY == "nothing",
+                exp_id=experiment.id,
             )
             for loader in self.train_loader_list
         ]
