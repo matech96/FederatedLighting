@@ -34,7 +34,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "both-side-opt"
+project_name = "10-clients"
 
 max_rounds = 1500
 C = 1
@@ -49,8 +49,8 @@ client_opt_strategy = "reinit"
 # image_norm = "tflike"
 wrong_lrs = []
 server_opt = "Adam"
-for client_lr in [0.01]:  # , 0.1, 0.001]:
-    for server_lr in [0.01]:  # , 0.1, 0.001]:
+for client_lr in [0.01, 0.1, 0.001]:
+    for server_lr in [0.01, 0.1, 0.001]:
         if any(
             [
                 (wslr <= server_lr) and (wclr <= client_lr)
