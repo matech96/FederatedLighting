@@ -38,7 +38,7 @@ def get_args(opt):
         return {}
 
 
-th.cuda.set_device(0)
+th.cuda.set_device(2)
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
     level=logging.INFO,
