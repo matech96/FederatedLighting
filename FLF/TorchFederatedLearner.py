@@ -24,7 +24,23 @@ from FLF.TorchClient import TorchClient
 from FLF.BreakedTrainingExcpetion import ToLargeLearningRateExcpetion
 
 
-class TorchFederatedLearnerConfig(BaseModel):
+class FLFConfig(BaseModel):
+    def flatten(self):
+        res = copy.copy(self.__dict__)
+        to_flatten = [k for k in res.keys() if k.endswith("_ARGS")]
+        for k in to_flatten:
+            poped = res.pop(k)
+            for pk, pv in poped.items():
+                new_key = f"{k[:-5]}_{pk}".upper()
+                if isinstance(pv, Iterable) and not isinstance(pv, str):
+                    for i, pvi in enumerate(pv):
+                        res[f"{new_key}_{i}"] = pvi
+                else:
+                    res[new_key] = pv
+        return res
+
+
+class TorchFederatedLearnerConfig(FLFConfig):
     class Config:
         validate_assignment = True
 
@@ -37,7 +53,6 @@ class TorchFederatedLearnerConfig(BaseModel):
     BATCH_SIZE: int = 64  # Batch size. If set to sys.maxsize, the epoch is processed in a single batch.
     CLIENT_LEARNING_RATE: float = 0.01  # Learning rate for the client optimizer.
     SERVER_LEARNING_RATE: float = None  # Learning rate for the server optimizer. If none, the same value is used as CLIENT_LEARNING_RATE.
-    DL_N_WORKER: int = 4  # Syft.FederatedDataLoader: number of workers
     SEED: int = None  # The seed.
     CLIENT_OPT: str = "SGD"  # The optimizer used by the client.
     CLIENT_OPT_L2: float = 0  # Weight decay used by the client.
@@ -48,8 +63,6 @@ class TorchFederatedLearnerConfig(BaseModel):
     # avg: averages the optimizer states in every round
     SERVER_OPT: str = None  # The optimizer used on the server.
     SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
-    STORE_OPT_ON_DISK: bool = True  # If true the optimization parameters are stored on the disk between training for CLIENT_OPT_STRATEGY "nothing". This increases training time, but reduces RAM requirement. If false, it's in the RAM.
-    STORE_MODEL_IN_RAM: bool = True  # If true the model is removed from the VRAM after the client has finished training. This increases training time, but reduces VRAM requirement. If false, it's kept there for the hole training.
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -69,24 +82,16 @@ class TorchFederatedLearnerConfig(BaseModel):
         if self.SERVER_LEARNING_RATE is None:
             self.SERVER_LEARNING_RATE = self.CLIENT_LEARNING_RATE
 
-    def flatten(self):
-        res = copy.copy(self.__dict__)
-        to_flatten = [k for k in res.keys() if k.endswith("_ARGS")]
-        for k in to_flatten:
-            poped = res.pop(k)
-            for pk, pv in poped.items():
-                new_key = f"{k[:-5]}_{pk}".upper()
-                if isinstance(pv, Iterable) and not isinstance(pv, str):
-                    for i, pvi in enumerate(pv):
-                        res[f"{new_key}_{i}"] = pvi
-                else:
-                    res[new_key] = pv
-        return res
+
+class TorchFederatedLearnerTechnicalConfig(FLFConfig):
+    STORE_OPT_ON_DISK: bool = True  # If true the optimization parameters are stored on the disk between training for CLIENT_OPT_STRATEGY "nothing". This increases training time, but reduces RAM requirement. If false, it's in the RAM.
+    STORE_MODEL_IN_RAM: bool = True  # If true the model is removed from the VRAM after the client has finished training. This increases training time, but reduces VRAM requirement. If false, it's kept there for the hole training.
+    DL_N_WORKER: int = 4  # DataLoader: number of workers
 
 
 class TorchFederatedLearner(ABC):
     def __init__(
-        self, experiment: Experiment, config: TorchFederatedLearnerConfig
+        self, experiment: Experiment, config: TorchFederatedLearnerConfig, config_technical: TorchFederatedLearnerTechnicalConfig
     ) -> None:
         """Initialises the training.
 
@@ -107,6 +112,8 @@ class TorchFederatedLearner(ABC):
         self.config = config
         self.config.set_defaults()
         self.experiment.log_parameters(self.config.flatten())
+        self.config_technical = config_technical
+        self.experiment.log_parameters(self.config_technical.flatten())
 
         model_cls = self.get_model_cls()
         self.model = model_cls()
@@ -131,8 +138,8 @@ class TorchFederatedLearner(ABC):
             TorchClient(
                 self,
                 model_cls=model_cls,
-                is_keep_model_on_gpu=not self.config.STORE_MODEL_IN_RAM,
-                is_store_opt_on_disk=self.config.STORE_OPT_ON_DISK,
+                is_keep_model_on_gpu=not self.config_technical.STORE_MODEL_IN_RAM,
+                is_store_opt_on_disk=self.config_technical.STORE_OPT_ON_DISK,
                 loss=self.get_loss(),
                 dataloader=loader,
                 device=self.device,

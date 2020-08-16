@@ -2,6 +2,7 @@ from comet_ml import Experiment
 import torch as th
 
 import logging
+from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
     TorchFederatedLearnerCIFAR100Config,
@@ -19,11 +20,16 @@ def get_args(opt):
 
 
 def do_training(config: TorchFederatedLearnerCIFAR100Config):
+    config_technical = TorchFederatedLearnerTechnicalConfig(
+        STORE_OPT_ON_DISK=False,
+        STORE_MODEL_IN_RAM=False,
+    )
+
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
     experiment.set_name(name)
-    learner = TorchFederatedLearnerCIFAR100(experiment, config)
+    learner = TorchFederatedLearnerCIFAR100(experiment, config, config_technical)
     learner.train()
 
 
@@ -52,10 +58,7 @@ server_opt = "Adam"
 for client_lr in [0.01, 0.1, 0.001]:
     for server_lr in [0.01, 0.1, 0.001]:
         if any(
-            [
-                (wslr <= server_lr) and (wclr <= client_lr)
-                for wslr, wclr in wrong_lrs
-            ]
+            [(wslr <= server_lr) and (wclr <= client_lr) for wslr, wclr in wrong_lrs]
         ):
             continue
 
@@ -79,8 +82,6 @@ for client_lr in [0.01, 0.1, 0.001]:
             NORM="group",
             # IMAGE_NORM=image_norm,
             INIT="keras",
-            STORE_OPT_ON_DISK=False,
-            STORE_MODEL_IN_RAM=False
         )
         try:
             do_training(config)

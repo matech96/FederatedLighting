@@ -35,14 +35,14 @@ class TorchFederatedLearnerEMNIST(TorchFederatedLearner):
             loader = th.utils.data.DataLoader(
                 dataset=minist_train_ds,
                 batch_size=self.config.BATCH_SIZE,
-                num_workers=self.config.DL_N_WORKER,
+                num_workers=self.config_technical.DL_N_WORKER,
                 sampler=sampler,
             )
             train_loader_list.append(loader)
         logging.info("Data for client is sampled.")
 
         test_loader = th.utils.data.DataLoader(
-            mnist_test_ds, batch_size=64, num_workers=self.config.DL_N_WORKER,
+            mnist_test_ds, batch_size=64, num_workers=self.config_technical.DL_N_WORKER,
         )
 
         return train_loader_list, test_loader, 0.1

@@ -1,16 +1,19 @@
-from comet_ml import Experiment
-
 import logging
-from typing import Tuple, List, Callable
+from typing import Callable, List, Tuple
 
 import numpy as np
 import torch as th
 import torch.nn as nn
+from comet_ml import Experiment
 from torchvision import datasets, transforms
 
-from FLF.TorchFederatedLearner import TorchFederatedLearner, TorchFederatedLearnerConfig
 from FLF.data.TorchCIFAR100Fed import TorchCIFAR100Fed
 from FLF.model.TorchResNetFactory import TorchResNetFactory
+from FLF.TorchFederatedLearner import (
+    TorchFederatedLearner,
+    TorchFederatedLearnerConfig,
+    TorchFederatedLearnerTechnicalConfig,
+)
 
 
 class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
@@ -24,7 +27,10 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
     N_TRAINING_CLIENTS = 500
 
     def __init__(
-        self, experiment: Experiment, config: TorchFederatedLearnerCIFAR100Config
+        self,
+        experiment: Experiment,
+        config: TorchFederatedLearnerCIFAR100Config,
+        config_technical: TorchFederatedLearnerTechnicalConfig,
     ) -> None:
         """Initialises the training.
 
@@ -32,7 +38,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             experiment {Experiment} -- Comet.ml experiment object for online logging.
             config {TorchFederatedLearnerCIFAR100Config} -- Training configuration description.
         """
-        super().__init__(experiment, config)
+        super().__init__(experiment, config, config_technical)
         self.config = config  # Purly to help intellisense
 
     def load_data(
@@ -60,7 +66,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         test_loader = th.utils.data.DataLoader(
             TorchCIFAR100Fed("test", transform),
             batch_size=64,
-            num_workers=self.config.DL_N_WORKER,
+            num_workers=self.config_technical.DL_N_WORKER,
         )
 
         return train_loader_list, test_loader, 0.01
@@ -83,7 +89,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             loader = th.utils.data.DataLoader(
                 dataset=cifar100_train_ds,
                 batch_size=self.config.BATCH_SIZE,
-                num_workers=self.config.DL_N_WORKER,
+                num_workers=self.config_technical.DL_N_WORKER,
                 pin_memory=True,
                 sampler=sampler,
             )
@@ -101,7 +107,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             loader = th.utils.data.DataLoader(
                 dataset=ds,
                 batch_size=self.config.BATCH_SIZE,
-                num_workers=self.config.DL_N_WORKER,
+                num_workers=self.config_technical.DL_N_WORKER,
                 pin_memory=True,
             )
             train_loader_list.append(loader)
