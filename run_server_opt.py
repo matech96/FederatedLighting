@@ -36,7 +36,7 @@ logging.basicConfig(
 
 project_name = "10-clients"
 
-max_rounds = 1500
+max_rounds = 30
 C = 1
 NC = 10
 E = 1
