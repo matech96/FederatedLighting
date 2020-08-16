@@ -37,19 +37,20 @@ logging.basicConfig(
 project_name = "both-side-opt"
 
 max_rounds = 1500
-C = 10 / 500
-NC = 500
+C = 1
+NC = 10
 E = 1
 B = 20
 is_iid = False
 # server_lr = 0.01
-client_lr = 1
+
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 # image_norm = "tflike"
 wrong_lrs = []
-for server_opt in ["Adam", "SGD"]:
-    for server_lr in [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]:
+server_opt = "Adam"
+for client_lr in [0.01]:  # , 0.1, 0.001]:
+    for server_lr in [0.01]:  # , 0.1, 0.001]:
         if any(
             [
                 (wslr <= server_lr) and (wclr <= client_lr)
@@ -78,6 +79,8 @@ for server_opt in ["Adam", "SGD"]:
             NORM="group",
             # IMAGE_NORM=image_norm,
             INIT="keras",
+            STORE_OPT_ON_DISK=False,
+            STORE_MODEL_IN_RAM=False
         )
         try:
             do_training(config)

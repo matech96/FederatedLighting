@@ -34,11 +34,11 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "both-side-opt"
+project_name = "speed-meassure"
 
 max_rounds = 1500
 C = 1# 10 / 500
-NC = 500
+NC = 10
 E = 1
 B = 20
 is_iid = False

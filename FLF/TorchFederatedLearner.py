@@ -261,7 +261,7 @@ class TorchFederatedLearner(ABC):
             self.clients, max(1, int(len(self.clients) * self.config.CLIENT_FRACTION))
         )
         logging.info(f"Selected {len(client_sample)} clients in this round.")
-        return self.clients  # client_sample
+        return client_sample
 
     def __set_model_grads(self, new_state):
         self.server_opt.zero_grad()
