@@ -82,7 +82,7 @@ class AdvancedGridLearningRate:
         ]
         query = functools.reduce(operator.and_, parameter_list,)
         exps = self.comet_api.query("federated-learning", self.project_name, query)
-        self.df = __get_df(exps)
+        self.df = _get_df(exps)
 
     def __iter__(self):
         return self
@@ -123,7 +123,7 @@ class AdvancedGridLearningRate:
             )
 
 
-def __get_df(exps):
+def _get_df(exps):
     c_lr = exp_params2list(exps, "CLIENT_LEARNING_RATE", float)
     s_lr = exp_params2list(exps, "SERVER_LEARNING_RATE", float)
     teas = exp_metrics2list(exps, "test_acc", float)
