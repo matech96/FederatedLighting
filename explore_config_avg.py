@@ -14,7 +14,7 @@ server_lr = 0.01
 client_lr = 0.0001
 server_opt = "Adam"
 client_opt = "Adam"
-client_opt_strategy = "nothing"
+client_opt_strategy = "reinit"
 project_name = "10-clients"
 
 max_rounds = 30
