@@ -1,8 +1,10 @@
 from comet_ml.exceptions import InterruptedExperiment
 from comet_ml import Experiment
 
+import os
 import random
 import copy
+from pathlib import Path
 from collections import Iterable, deque
 from abc import ABC, abstractmethod
 from typing import Tuple, Dict, List, Callable
@@ -86,10 +88,13 @@ class TorchFederatedLearnerConfig(FLFConfig):
 class TorchFederatedLearnerTechnicalConfig(FLFConfig):
     STORE_OPT_ON_DISK: bool = True  # If true the optimization parameters are stored on the disk between training for CLIENT_OPT_STRATEGY "nothing". This increases training time, but reduces RAM requirement. If false, it's in the RAM.
     STORE_MODEL_IN_RAM: bool = True  # If true the model is removed from the VRAM after the client has finished training. This increases training time, but reduces VRAM requirement. If false, it's kept there for the hole training.
-    DL_N_WORKER: int = 4  # DataLoader: number of workers
+    DL_N_WORKER: int = 0  # DataLoader: number of workers
+    HIST_SAMPLE: int = 5000  # Number of sample per layer for weight histogram.
 
 
 class TorchFederatedLearner(ABC):
+    tmp_dir = Path("tmp")
+
     def __init__(
         self, experiment: Experiment, config: TorchFederatedLearnerConfig, config_technical: TorchFederatedLearnerTechnicalConfig
     ) -> None:
@@ -114,6 +119,8 @@ class TorchFederatedLearner(ABC):
         self.experiment.log_parameters(self.config.flatten())
         self.config_technical = config_technical
         self.experiment.log_parameters(self.config_technical.flatten())
+        self.PATH = self.tmp_dir / f"{self.experiment.id}_checkpoints"
+        os.makedirs(self.PATH, exist_ok=True)
 
         model_cls = self.get_model_cls()
         self.model = model_cls()
@@ -195,24 +202,27 @@ class TorchFederatedLearner(ABC):
         last100acc = deque(maxlen=100)
         try:
             with ElapsedTime("Training"):
-                for round in range(self.config.MAX_ROUNDS):
-                    self.experiment.log_parameter("curr_round", round)
-                    self.__train_one_round(round)
+                for curr_round in range(self.config.MAX_ROUNDS):
+                    self.experiment.log_parameter("curr_round", curr_round)
+                    self.__train_one_round(curr_round)
                     metrics = self.test(self.test_loader)
-                    last100_avg_acc = mean(last100acc) if round > 0 else 0
+                    last100_avg_acc = mean(last100acc) if curr_round > 0 else 0
                     metrics["last100_avg_acc"] = last100_avg_acc
 
+                    curr_step = curr_round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches
                     self.log_test_metric(
                         metrics,
-                        round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches,
+                        curr_step,
                     )
+                    self.log_hist(curr_round)
 
                     test_acc = metrics["test_acc"]
                     last100acc.append(test_acc)
                     if self.__is_achieved_target(test_acc):
                         break
-                    if self.__is_unable_to_learn(round, last100_avg_acc):
+                    if self.__is_unable_to_learn(curr_round, last100_avg_acc):
                         raise ToLargeLearningRateExcpetion()
+                    th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
         except InterruptedExperiment:
             pass
 
@@ -381,6 +391,13 @@ class TorchFederatedLearner(ABC):
             nice_value = 100 * value if name.endswith("_acc") else value
             self.experiment.log_metric(name, nice_value, step=batch_num)
             logging.info(f"{name}: {nice_value}")
+
+    def log_hist(self, batch_num: int):
+        sample = self.config_technical.HIST_SAMPLE
+        for k, v in self.model.state_dict().items():
+            if th.numel(v) > sample:
+                v = np.random.choice(v.flatten(), sample)
+            self.experiment.log_histogram_3d(v, k, step=batch_num)
 
     def __log(self, m):
         logging.info(f"Server: {m}")

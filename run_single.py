@@ -36,7 +36,7 @@ logging.basicConfig(
 
 project_name = "server-side-opt-long"
 
-max_rounds = 1500
+max_rounds = 200
 C = 10 / 500
 NC = 500
 E = 1
@@ -66,9 +66,9 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
     DL_N_WORKER=0,
-    NORM="group",
+    # NORM="group",
     # IMAGE_NORM=image_norm,
-    INIT=None,  # "keras",
+    INIT="tffed",  # "keras",
 )
 config_technical = TorchFederatedLearnerTechnicalConfig()
 

@@ -20,7 +20,7 @@ class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
     IMAGE_NORM: str = "thlike"  # The way to normalize the images. Options: "tflike", "thlike"
     NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
-    INIT: str = None  # Initialization of ResNet weights. Options: "keras"
+    INIT: str = None  # Initialization of ResNet weights. Options: "keras", "tffed", "fcdebug"
 
 
 class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
