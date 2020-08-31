@@ -34,23 +34,3 @@ class TorchResNetFactory:
                 raise Exception("INIT is not supported!")
             model = model.apply(init_fn)
         return model
-
-    def __keras_like_init(self, m):
-        if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
-            nn.init.xavier_uniform_(m.weight)
-        if isinstance(m, nn.Linear):
-            nn.init.zeros_(m.bias)
-
-    def __tffed_like_init(self, m):
-        if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
-        if isinstance(m, nn.Linear):
-            nn.init.zeros_(m.bias)
-            nn.init.normal_(m.weight, std=0.01)
-
-    def __fcdebug_init(self, m):
-        if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
-        if isinstance(m, nn.Linear):
-            nn.init.normal_(m.bias, std=0.03)
-            nn.init.normal_(m.weight, std=0.03)

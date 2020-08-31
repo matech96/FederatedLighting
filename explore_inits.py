@@ -18,10 +18,7 @@ def get_args(opt):
         return {}
 
 
-def do_training(
-    config: TorchFederatedLearnerCIFAR100Config,
-    config_technical: TorchFederatedLearnerTechnicalConfig,
-):
+def do_training(config: TorchFederatedLearnerCIFAR100Config, config_technical: TorchFederatedLearnerTechnicalConfig):
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
@@ -37,7 +34,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "server-side-opt-long"
+project_name = "adam_init"
 
 max_rounds = 200
 C = 10 / 500
@@ -56,7 +53,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     BREAK_ROUND=300,
     CLIENT_LEARNING_RATE=client_lr,
     CLIENT_OPT=client_opt,
-    # CLIENT_OPT_ARGS=get_args(client_opt),
+    CLIENT_OPT_ARGS=get_args(client_opt),
     # CLIENT_OPT_L2=1e-4,
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     SERVER_OPT=server_opt,
@@ -69,9 +66,9 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
     DL_N_WORKER=0,
-    # NORM="group",
+    NORM="group",
     # IMAGE_NORM=image_norm,
-    # INIT="tffed",  # "keras",
+    INIT="tffed",  # "keras",
 )
 config_technical = TorchFederatedLearnerTechnicalConfig()
 
