@@ -1,23 +1,10 @@
 import math
 import torch as th
 from torch import nn
-from inspect import getmembers, isfunction
+import inspect
 from typing import List
 
 from FLF.model import torchinit
-
-
-class TorchInitRepo:
-    repo = {f[0]: f[1] for f in getmembers(torchinit) if isfunction(f[1])}
-
-    @classmethod
-    def get_opt_names(cls) -> List:
-        res = list(cls.repo.keys())
-        return res
-
-    @classmethod
-    def name2fn(cls, name) -> th.optim.Optimizer:
-        return cls.repo[name]
 
 
 def keras(m):
@@ -108,3 +95,18 @@ def normal(m):
 
 def uniform(m):
     nn.init.uniform_(m.weight)
+
+
+class TorchInitRepo:
+    repo = {
+        f[0]: f[1] for f in inspect.getmembers(torchinit) if inspect.isfunction(f[1])
+    }
+
+    @classmethod
+    def get_opt_names(cls) -> List:
+        res = list(cls.repo.keys())
+        return res
+
+    @classmethod
+    def name2fn(cls, name) -> th.optim.Optimizer:
+        return cls.repo[name]

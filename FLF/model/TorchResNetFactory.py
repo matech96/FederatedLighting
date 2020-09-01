@@ -3,6 +3,8 @@ import torchvision.models as models
 
 import logging
 
+from FLF.model.torchinit import TorchInitRepo
+
 
 class TorchResNetFactory:
     def __init__(self, norm="batch", init=None):
@@ -21,16 +23,6 @@ class TorchResNetFactory:
         model = models.resnet18(**kwargs)
 
         if self.init is not None:
-            if self.init == "keras":
-                init_fn = self.__keras_like_init
-                logging.info("ResNet keras initialized")
-            elif self.init == "tffed":
-                init_fn = self.__tffed_like_init
-                logging.info("ResNet tffed initialized")
-            elif self.init == "fcdebug":
-                init_fn = self.__fcdebug_init
-                logging.info("ResNet fcdebug initialized")
-            else:
-                raise Exception("INIT is not supported!")
+            init_fn = TorchInitRepo.name2fn(self.init)
             model = model.apply(init_fn)
         return model

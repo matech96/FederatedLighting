@@ -7,6 +7,7 @@ from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100Config,
 )
 from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
+from FLF.model.torchinit import TorchInitRepo
 
 
 def get_args(opt):
@@ -42,34 +43,36 @@ NC = 500
 E = 1
 B = 20
 is_iid = False
-server_lr = 1.0
+server_lr = 0.1
 client_lr = 0.1
-server_opt = "SGD"
+server_opt = "Adam"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
-config = TorchFederatedLearnerCIFAR100Config(
-    BREAK_ROUND=300,
-    CLIENT_LEARNING_RATE=client_lr,
-    CLIENT_OPT=client_opt,
-    CLIENT_OPT_ARGS=get_args(client_opt),
-    # CLIENT_OPT_L2=1e-4,
-    CLIENT_OPT_STRATEGY=client_opt_strategy,
-    SERVER_OPT=server_opt,
-    # SERVER_OPT_ARGS=get_args(server_opt),
-    SERVER_LEARNING_RATE=server_lr,
-    IS_IID_DATA=is_iid,
-    BATCH_SIZE=B,
-    CLIENT_FRACTION=C,
-    N_CLIENTS=NC,
-    N_EPOCH_PER_CLIENT=E,
-    MAX_ROUNDS=max_rounds,
-    DL_N_WORKER=0,
-    NORM="group",
-    # IMAGE_NORM=image_norm,
-    INIT="tffed",  # "keras",
-)
-config_technical = TorchFederatedLearnerTechnicalConfig()
 
-do_training(config, config_technical)
+for init in TorchInitRepo.get_opt_names():
+    config = TorchFederatedLearnerCIFAR100Config(
+        BREAK_ROUND=300,
+        CLIENT_LEARNING_RATE=client_lr,
+        CLIENT_OPT=client_opt,
+        CLIENT_OPT_ARGS=get_args(client_opt),
+        # CLIENT_OPT_L2=1e-4,
+        CLIENT_OPT_STRATEGY=client_opt_strategy,
+        SERVER_OPT=server_opt,
+        # SERVER_OPT_ARGS=get_args(server_opt),
+        SERVER_LEARNING_RATE=server_lr,
+        IS_IID_DATA=is_iid,
+        BATCH_SIZE=B,
+        CLIENT_FRACTION=C,
+        N_CLIENTS=NC,
+        N_EPOCH_PER_CLIENT=E,
+        MAX_ROUNDS=max_rounds,
+        DL_N_WORKER=0,
+        NORM="group",
+        # IMAGE_NORM=image_norm,
+        INIT=init
+    )
+    config_technical = TorchFederatedLearnerTechnicalConfig()
+
+    do_training(config, config_technical)

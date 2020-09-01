@@ -1,4 +1,4 @@
-from comet_ml import Experiment
+from comet_ml import Experiment, OfflineExperiment
 import torch as th
 
 import logging
@@ -24,7 +24,7 @@ def do_training(
 ):
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
-    experiment = Experiment(workspace="federated-learning", project_name=project_name)
+    experiment = OfflineExperiment(workspace="federated-learning", project_name=project_name, offline_directory="tmp")
     experiment.set_name(name)
     learner = TorchFederatedLearnerCIFAR100(experiment, config, config_technical)
     learner.train()
@@ -37,7 +37,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "server-side-opt-long"
+project_name = "sgd-init-check"
 
 max_rounds = 200
 C = 10 / 500

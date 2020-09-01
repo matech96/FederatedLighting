@@ -290,11 +290,11 @@ class TorchFederatedLearner(ABC):
             ):
                 parameter.grad = parameter.data - new_parameter.data
                 # because we go to the opposite direction of the gradient
-        # model_state_dict = self.model.state_dict()
-        # new_model_state_dict = new_model.state_dict()
-        # for k in dict(self.model.named_parameters()).keys():
-        #     new_model_state_dict[k] = model_state_dict[k]
-        # self.model.load_state_dict(new_model_state_dict)
+        model_state_dict = self.model.state_dict()
+        new_model_state_dict = new_model.state_dict()
+        for k in dict(self.model.named_parameters()).keys():
+            new_model_state_dict[k] = model_state_dict[k]
+        self.model.load_state_dict(new_model_state_dict)
 
     def __is_unable_to_learn(self, round, last100_avg_acc):
         return (
