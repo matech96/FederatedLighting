@@ -5,6 +5,7 @@ import numpy as np
 from pathlib import Path
 from typing import Union, List, Callable
 
+from PIL import Image
 import tensorflow as tf
 import torch as th
 from torch.utils.data import Dataset

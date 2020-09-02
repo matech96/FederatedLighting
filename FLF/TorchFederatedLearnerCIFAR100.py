@@ -18,7 +18,7 @@ from FLF.TorchFederatedLearner import (
 
 class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
-    IMAGE_NORM: str = "thlike"  # The way to normalize the images. Options: "tflike", "thlike"
+    IMAGE_NORM: str = "thlike"  # The way to normalize the images. Options: "tflike", "thlike", "recordwise"
     NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
     INIT: str = None  # Initialization of ResNet weights. Options: None, "keras", "tffed", "fcdebug"
     AUG: str = None  # Data augmentation. Options: None, "basic"
@@ -65,6 +65,8 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             norm = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         elif self.config.IMAGE_NORM == "tflike":
             norm = transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
+        elif self.config.IMAGE_NORM == "recordwise":            
+            norm = transforms.Lambda(lambda x: transforms.functional.normalize(x, x.view(3, -1).mean(dim=1), x.view(3, -1).std(dim=1)))
         else:
             raise Exception("IMAGE_NORM not supported!")
 
@@ -75,6 +77,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         if self.config.AUG is not None:
             if self.config.AUG == "basic":
                 trfs = [
+                    transforms.ToPILImage(),
                     transforms.RandomCrop(24),
                     transforms.RandomHorizontalFlip(),
                 ] + trfs

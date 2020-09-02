@@ -37,7 +37,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "data_aug"
+project_name = "data_aug_norm"
 
 max_rounds = 1500
 C = 10 / 500
@@ -69,6 +69,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
     DL_N_WORKER=0,
+    # IMAGE_NORM="recordwise",
     NORM="group",
     INIT="keras",
     AUG="basic"
