@@ -20,7 +20,8 @@ class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
     IMAGE_NORM: str = "thlike"  # The way to normalize the images. Options: "tflike", "thlike"
     NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
-    INIT: str = None  # Initialization of ResNet weights. Options: "keras", "tffed", "fcdebug"
+    INIT: str = None  # Initialization of ResNet weights. Options: None, "keras", "tffed", "fcdebug"
+    AUG: str = None  # Data augmentation. Options: None, "basic"
 
 
 class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
@@ -43,20 +44,8 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
 
     def load_data(
         self,
-    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
-        if self.config.IMAGE_NORM == "thlike":
-            norm = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        elif self.config.IMAGE_NORM == "tflike":
-            norm = transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
-        else:
-            raise Exception("IMAGE_NORM not supported!")
-
-        trfs = [
-            transforms.ToTensor(),
-            norm,
-        ]
-
-        transform = transforms.Compose(trfs)
+    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader, float]:
+        transform = self.__get_transformations()
 
         if self.config.IS_IID_DATA:
             train_loader_list = self.get_iid_data(transform)
@@ -70,6 +59,27 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         )
 
         return train_loader_list, test_loader, 0.01
+
+    def __get_transformations(self):
+        if self.config.IMAGE_NORM == "thlike":
+            norm = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        elif self.config.IMAGE_NORM == "tflike":
+            norm = transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
+        else:
+            raise Exception("IMAGE_NORM not supported!")
+
+        trfs = [
+            transforms.ToTensor(),
+            norm,
+        ]
+        if self.config.AUG is not None:
+            if self.config.AUG == "basic":
+                trfs = [
+                    transforms.RandomCrop(24),
+                    transforms.RandomHorizontalFlip(),
+                ] + trfs
+
+        return transforms.Compose(trfs)
 
     def get_iid_data(self, transform):
         logging.info("Torch CIFAR100 loading ...")

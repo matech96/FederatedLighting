@@ -90,11 +90,19 @@ def kaiming_uniform_fan_out(m):
 
 
 def normal(m):
-    nn.init.normal_(m.weight)
+    if isinstance(m, nn.Conv2d):
+        nn.init.normal_(m.weight)
+    if isinstance(m, nn.Linear):
+        nn.init.zeros_(m.bias)
+        nn.init.normal_(m.weight)
 
 
 def uniform(m):
-    nn.init.uniform_(m.weight)
+    if isinstance(m, nn.Conv2d):
+        nn.init.uniform_(m.weight)
+    if isinstance(m, nn.Linear):
+        nn.init.zeros_(m.bias)
+        nn.init.uniform_(m.weight)
 
 
 class TorchInitRepo:

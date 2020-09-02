@@ -96,7 +96,10 @@ class TorchFederatedLearner(ABC):
     tmp_dir = Path("tmp")
 
     def __init__(
-        self, experiment: Experiment, config: TorchFederatedLearnerConfig, config_technical: TorchFederatedLearnerTechnicalConfig
+        self,
+        experiment: Experiment,
+        config: TorchFederatedLearnerConfig,
+        config_technical: TorchFederatedLearnerTechnicalConfig,
     ) -> None:
         """Initialises the training.
 
@@ -164,11 +167,11 @@ class TorchFederatedLearner(ABC):
     @abstractmethod
     def load_data(
         self,
-    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
+    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader, float]:
         """Loads the data.
 
         Returns:
-            Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader] -- [The first element is the training set, the second is the test set]
+            Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader] -- [The first element is the training set, the second is the test set, the third is the accuracy form random predictor]
         """
         pass
 
@@ -209,10 +212,13 @@ class TorchFederatedLearner(ABC):
                     last100_avg_acc = mean(last100acc) if curr_round > 0 else 0
                     metrics["last100_avg_acc"] = last100_avg_acc
 
-                    curr_step = curr_round * self.config.N_EPOCH_PER_CLIENT * self.n_train_batches
+                    curr_step = (
+                        curr_round
+                        * self.config.N_EPOCH_PER_CLIENT
+                        * self.n_train_batches
+                    )
                     self.log_test_metric(
-                        metrics,
-                        curr_step,
+                        metrics, curr_step,
                     )
                     self.log_hist(curr_round)
 

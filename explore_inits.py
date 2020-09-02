@@ -51,7 +51,7 @@ client_opt_strategy = "reinit"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
 
-for init in TorchInitRepo.get_opt_names():
+for init in ["normal", "uniform"]:
     config = TorchFederatedLearnerCIFAR100Config(
         BREAK_ROUND=300,
         CLIENT_LEARNING_RATE=client_lr,

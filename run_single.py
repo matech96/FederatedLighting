@@ -1,4 +1,4 @@
-from comet_ml import Experiment, OfflineExperiment
+from comet_ml import Experiment
 import torch as th
 
 import logging
@@ -24,7 +24,7 @@ def do_training(
 ):
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     logging.info(name)
-    experiment = OfflineExperiment(workspace="federated-learning", project_name=project_name, offline_directory="tmp")
+    experiment = Experiment(workspace="federated-learning", project_name=project_name)
     experiment.set_name(name)
     learner = TorchFederatedLearnerCIFAR100(experiment, config, config_technical)
     learner.train()
@@ -37,17 +37,17 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-project_name = "sgd-init-check"
+project_name = "data_aug"
 
-max_rounds = 200
+max_rounds = 1500
 C = 10 / 500
 NC = 500
 E = 1
 B = 20
 is_iid = False
-server_lr = 1.0
-client_lr = 0.1
-server_opt = "SGD"
+server_lr = 0.01
+client_lr = 0.01
+server_opt = "Adam"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 # image_norm = "tflike"
@@ -60,7 +60,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     # CLIENT_OPT_L2=1e-4,
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     SERVER_OPT=server_opt,
-    # SERVER_OPT_ARGS=get_args(server_opt),
+    SERVER_OPT_ARGS=get_args(server_opt),
     SERVER_LEARNING_RATE=server_lr,
     IS_IID_DATA=is_iid,
     BATCH_SIZE=B,
@@ -69,9 +69,9 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
     DL_N_WORKER=0,
-    # NORM="group",
-    # IMAGE_NORM=image_norm,
-    # INIT="tffed",  # "keras",
+    NORM="group",
+    INIT="keras",
+    AUG="basic"
 )
 config_technical = TorchFederatedLearnerTechnicalConfig()
 
