@@ -39,7 +39,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     DL_N_WORKER=0,
     # IMAGE_NORM="recordwise",
     NORM="group",
-    INIT="keras",
+    # INIT="keras",
     AUG="basic"
 )
 config_technical = TorchFederatedLearnerTechnicalConfig()
