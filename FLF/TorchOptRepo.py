@@ -1,6 +1,7 @@
 from typing import List, Union
 
 import torch as th
+import torch_optimizer  # Because of th.optim.Optimizer.__subclasses__()
 
 
 class TorchOptRepo:
@@ -29,3 +30,6 @@ class TorchOptRepo:
         res.remove("self")
         res.remove("params")
         return res
+
+
+

@@ -45,15 +45,15 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
     def load_data(
         self,
     ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader, float]:
-        transform = self.__get_transformations()
+        train_transform, test_transform = self.__get_transformations()
 
         if self.config.IS_IID_DATA:
-            train_loader_list = self.get_iid_data(transform)
+            train_loader_list = self.get_iid_data(train_transform)
         else:
-            train_loader_list = self.get_non_iid_data(transform)
+            train_loader_list = self.get_non_iid_data(train_transform)
 
         test_loader = th.utils.data.DataLoader(
-            TorchCIFAR100Fed("test", transform),
+            TorchCIFAR100Fed("test", test_transform),
             batch_size=64,
             num_workers=self.config_technical.DL_N_WORKER,
         )
@@ -65,8 +65,12 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             norm = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         elif self.config.IMAGE_NORM == "tflike":
             norm = transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
-        elif self.config.IMAGE_NORM == "recordwise":            
-            norm = transforms.Lambda(lambda x: transforms.functional.normalize(x, x.view(3, -1).mean(dim=1), x.view(3, -1).std(dim=1)))
+        elif self.config.IMAGE_NORM == "recordwise":
+            norm = transforms.Lambda(
+                lambda x: transforms.functional.normalize(
+                    x, x.view(3, -1).mean(dim=1), x.view(3, -1).std(dim=1)
+                )
+            )
         else:
             raise Exception("IMAGE_NORM not supported!")
 
@@ -76,13 +80,17 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         ]
         if self.config.AUG is not None:
             if self.config.AUG == "basic":
-                trfs = [
+                train_trfs = [
                     transforms.ToPILImage(),
                     transforms.RandomCrop(24),
                     transforms.RandomHorizontalFlip(),
                 ] + trfs
+                test_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
+            else:
+                train_trfs = trfs
+                test_trfs = trfs
 
-        return transforms.Compose(trfs)
+        return transforms.Compose(train_trfs), transforms.Compose(test_trfs)
 
     def get_iid_data(self, transform):
         logging.info("Torch CIFAR100 loading ...")
