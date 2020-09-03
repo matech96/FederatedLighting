@@ -1,3 +1,4 @@
+import comet_ml
 from FLF.TorchFederatedLearnerCIFAR100 import TorchFederatedLearnerCIFAR100Config
 from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 
