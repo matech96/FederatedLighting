@@ -87,8 +87,10 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
                 ] + trfs
                 test_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
             else:
-                train_trfs = trfs
-                test_trfs = trfs
+                raise Exception("AUG not supported!")
+        else:
+            train_trfs = trfs
+            test_trfs = trfs
 
         return transforms.Compose(train_trfs), transforms.Compose(test_trfs)
 
