@@ -400,6 +400,9 @@ class TorchFederatedLearner(ABC):
 
     def log_hist(self, batch_num: int):
         sample = self.config_technical.HIST_SAMPLE
+        if sample == 0:
+            return
+            
         for k, v in self.model.state_dict().items():
             if th.numel(v) > sample:
                 v = np.random.choice(v.flatten(), sample)

@@ -22,6 +22,7 @@ class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
     INIT: str = None  # Initialization of ResNet weights. Options: None, "keras", "tffed", "fcdebug"
     AUG: str = None  # Data augmentation. Options: None, "basic"
+    SHUFFLE: str = True  # Data shuffeling
 
 
 class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
@@ -129,6 +130,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             ds = TorchCIFAR100Fed(indice, transform)
             loader = th.utils.data.DataLoader(
                 dataset=ds,
+                shuffle=True,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config_technical.DL_N_WORKER,
                 pin_memory=True,
