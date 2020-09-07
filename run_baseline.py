@@ -5,7 +5,7 @@ from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 import common
 
 
-project_name = "data_aug_norm"
+project_name = "server-side-opt-long"
 
 max_rounds = 1500
 C = 10 / 500
@@ -13,9 +13,9 @@ NC = 500
 E = 1
 B = 20
 is_iid = False
-server_lr = 0.01
-client_lr = 0.01
-server_opt = "Adam"
+server_lr = 0.0316
+client_lr = 0.0316
+server_opt = "Yogi"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 # image_norm = "tflike"
@@ -39,7 +39,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     DL_N_WORKER=0,
     # IMAGE_NORM="recordwise",
     NORM="group",
-    # INIT="keras",
+    INIT="keras",
     # AUG="basic"
 )
 config_technical = TorchFederatedLearnerTechnicalConfig()
