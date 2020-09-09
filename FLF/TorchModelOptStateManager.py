@@ -2,6 +2,7 @@ from pathlib import Path
 import logging
 
 import torch as th
+import copy
 import os
 
 os.makedirs("tmp", exist_ok=True)
@@ -39,13 +40,13 @@ class TorchModelOptStateManager:
         self.__delete_objects_tmp_files()
 
     def get_current_model_state(self):
-        return self.model.state_dict()
+        return copy.deepcopy(self.model.state_dict())
 
     def get_current_opt_state(self):
         return self.opt.state_dict()["state"].values()
 
     def set_model_state_to_be_loaded(self, state):
-        self.__model_state_to_be_loaded = state
+        self.__model_state_to_be_loaded = copy.deepcopy(state)
         self.__log("model set")
 
     def set_opt_state_to_be_loaded(self, state, is_preserve=False):
