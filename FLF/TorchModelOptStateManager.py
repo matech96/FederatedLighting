@@ -63,6 +63,7 @@ class TorchModelOptStateManager:
         if self.__model_state_to_be_loaded is not None:
             self.model.load_state_dict(self.__model_state_to_be_loaded)
             self.__log("model state loaded")
+        self.model.train()
         self.model.cuda()
         self.__log("model is on GPU")
 

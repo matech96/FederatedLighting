@@ -28,7 +28,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     CLIENT_OPT_L2=1e-4,
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     SERVER_OPT=server_opt,
-    # SERVER_OPT_ARGS=common.get_args(server_opt),
+    # SERVER_OPT_ARGS=common.get_args(server_opt) if s else None,
     SERVER_LEARNING_RATE=server_lr,
     IS_IID_DATA=is_iid,
     BATCH_SIZE=B,
@@ -37,10 +37,10 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
     DL_N_WORKER=0,
-    # IMAGE_NORM="recordwise",
-    NORM="group",
+    IMAGE_NORM="recordwise",
+    NORM="group-3",
     INIT="tffed",
-    # AUG="basic"
+    AUG="basic"
 )
 config_technical = TorchFederatedLearnerTechnicalConfig(HIST_SAMPLE=0)
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"

@@ -90,6 +90,7 @@ class TorchFederatedLearnerTechnicalConfig(FLFConfig):
     STORE_MODEL_IN_RAM: bool = True  # If true the model is removed from the VRAM after the client has finished training. This increases training time, but reduces VRAM requirement. If false, it's kept there for the hole training.
     DL_N_WORKER: int = 0  # DataLoader: number of workers
     HIST_SAMPLE: int = 5000  # Number of sample per layer for weight histogram.
+    SAVE_CHP_INTERVALL: int = None  # Save the weights of the model to disk after this many rounds.
 
 
 class TorchFederatedLearner(ABC):
@@ -185,7 +186,7 @@ class TorchFederatedLearner(ABC):
         pass
 
     @abstractmethod
-    def get_loss(self) -> nn.Module:
+    def get_loss(self, **kwargs) -> nn.Module:
         """Returns the loss function.
 
         Returns:
@@ -228,7 +229,10 @@ class TorchFederatedLearner(ABC):
                         break
                     if self.__is_unable_to_learn(curr_round, last100_avg_acc):
                         raise ToLargeLearningRateExcpetion()
-                    th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
+                    if (self.config_technical.SAVE_CHP_INTERVALL is not None) and (
+                        self.config_technical.SAVE_CHP_INTERVALL % curr_round == 0
+                    ):
+                        th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
         except InterruptedExperiment:
             pass
 
@@ -334,8 +338,8 @@ class TorchFederatedLearner(ABC):
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 output = test_model(data)
-                test_loss += self.get_loss()(
-                    output, target  # , reduction="sum"
+                test_loss += self.get_loss(reduction="sum")(
+                    output, target
                 ).item()  # sum up batch loss
                 pred = output.argmax(
                     1, keepdim=True
@@ -402,7 +406,7 @@ class TorchFederatedLearner(ABC):
         sample = self.config_technical.HIST_SAMPLE
         if sample == 0:
             return
-            
+
         for k, v in self.model.state_dict().items():
             if th.numel(v) > sample:
                 v = np.random.choice(v.flatten(), sample)

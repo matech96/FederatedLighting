@@ -18,6 +18,9 @@ class TorchResNetFactory:
         elif self.norm == "group":
             kwargs["norm_layer"] = lambda x: nn.GroupNorm(2, x)
             logging.info("ResNet keras groupnorm")
+        elif self.norm == "group-3":
+            kwargs["norm_layer"] = lambda x: nn.GroupNorm(2, x, eps=0.001)
+            logging.info("ResNet keras groupnorm 1e-3")            
         else:
             raise Exception("NORM is not supported!")
         model = models.resnet18(**kwargs)

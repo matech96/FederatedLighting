@@ -1,4 +1,3 @@
-from comet_ml import Experiment
 import logging
 
 from FLF.TorchFederatedLearnerCIFAR100 import (
@@ -16,9 +15,9 @@ logging.basicConfig(
 
 def get_args(opt):
     if opt == "Adam":
-        return {"betas": (0.0, 0.99), "eps": 0.01}
+        return {"betas": (0.9, 0.999), "eps": 0.001}
     elif opt == "Yogi":
-        return {"betas": (0.0, 0.99), "eps": 0.01, "initial_accumulator": 0.0}
+        return {"betas": (0.9, 0.999), "eps": 0.001, "initial_accumulator": 0.0}
     elif opt == "SGD":
         return {"momentum": 0.9}
     else:
@@ -26,13 +25,12 @@ def get_args(opt):
 
 
 def do_training(
+    experiment,
     name,
-    project_name,
     config: TorchFederatedLearnerCIFAR100Config,
     config_technical: TorchFederatedLearnerTechnicalConfig,
 ):
-    logging.info(name)
-    experiment = Experiment(workspace="federated-learning", project_name=project_name)
+    logging.info(name)    
     experiment.set_name(name)
     learner = TorchFederatedLearnerCIFAR100(experiment, config, config_technical)
     learner.train()
