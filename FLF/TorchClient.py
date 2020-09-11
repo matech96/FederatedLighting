@@ -5,6 +5,7 @@ import copy
 import torch as th
 import torch.nn as nn
 
+from FLF.TorchFederatedLearner import TorchFederatedLearner
 from FLF.TorchModelOptStateManager import TorchModelOptStateManager
 
 
@@ -17,7 +18,7 @@ class TorchClient:
 
     def __init__(
         self,
-        trainer,
+        trainer: TorchFederatedLearner,
         model_cls: Callable[[], th.nn.Module],
         is_keep_model_on_gpu: bool,
         is_store_opt_on_disk: bool,

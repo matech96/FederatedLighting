@@ -177,7 +177,7 @@ class TorchFederatedLearner(ABC):
         pass
 
     @abstractmethod
-    def get_model_cls(self) -> Tuple[Callable[[], nn.Module], bool]:
+    def get_model_cls(self) -> Callable[[], nn.Module]:
         """Returns the model to be trained.
 
         Returns:

@@ -1,5 +1,6 @@
 from pathlib import Path
 import logging
+from typing import Callable, Dict
 
 import torch as th
 import copy
@@ -13,13 +14,13 @@ class TorchModelOptStateManager:
 
     def __init__(
         self,
-        model_cls,
-        opt_cls,
-        opt_cls_param,
-        is_keep_model_on_gpu,
-        is_store_on_disk,
-        id,
-        exp_id,
+        model_cls: Callable[[], th.nn.Module],
+        opt_cls: Callable[..., th.optim.Optimizer],
+        opt_cls_param: Dict,
+        is_keep_model_on_gpu: bool,
+        is_store_on_disk: bool,
+        id: int,
+        exp_id: str,
     ):
         self.model_cls = model_cls
         self.opt_cls = opt_cls
