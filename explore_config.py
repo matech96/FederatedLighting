@@ -8,51 +8,33 @@ from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100Config,
 )
 from FLF.hyperopt.AdvancedGridLearningRate import explore_lr
+import common
 
 
 server_lr = 0.01
-client_lr = 0.0001
-server_opt = "Adam"
-client_opt = "Adam"
-client_opt_strategy = "nothing"
-project_name = "10-clients"
+client_lr = 0.01
+server_opt = "Yogi"
+client_opt = "Yogi"
+client_opt_strategy = "avg"
+project_name = f"S_{server_opt}_C_{client_opt}"
 
-max_rounds = 30
-C = 1
-NC = 10
+max_rounds = 1500
+C = 10 / 500
+NC = 500
 E = 1
 B = 20
 is_iid = False
 
-config_technical = TorchFederatedLearnerTechnicalConfig(
-    STORE_OPT_ON_DISK=False, STORE_MODEL_IN_RAM=False, DL_N_WORKER=0,
-)
-
-
-def get_args(opt):
-    if opt == "Adam":
-        return {"betas": (0.0, 0.99), "eps": 0.01}
-    elif opt == "SGD":
-        return {"momentum": 0.9}
-    else:
-        return {}
-
-
-th.cuda.set_device(0)
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+config_technical = TorchFederatedLearnerTechnicalConfig()
 
 config = TorchFederatedLearnerCIFAR100Config(
     BREAK_ROUND=300,
     CLIENT_LEARNING_RATE=client_lr,
     CLIENT_OPT=client_opt,
-    # CLIENT_OPT_L2=1e-4,
+    CLIENT_OPT_L2=1e-4,
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     SERVER_OPT=server_opt,
-    SERVER_OPT_ARGS=get_args(server_opt),
+    SERVER_OPT_ARGS=common.get_args(server_opt),
     SERVER_LEARNING_RATE=server_lr,
     IS_IID_DATA=is_iid,
     BATCH_SIZE=B,
@@ -61,7 +43,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
     NORM="group",
-    INIT="keras",
+    INIT="tffed",
 )
 
 explore_lr(project_name, TorchFederatedLearnerCIFAR100, config, config_technical)
