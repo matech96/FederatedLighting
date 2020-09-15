@@ -1,7 +1,6 @@
 import logging
 from typing import Callable, Dict
 import copy
-from sklearn.metrics import confusion_matrix
 
 import torch as th
 import torch.nn as nn
@@ -66,7 +65,6 @@ class TorchClient:
         with self.state_man:
             for curr_epoch in range(n_epochs):
                 correct = 0
-                total_confusion_matrix = None
                 for curr_batch, (data, target) in enumerate(self.dataloader):
                     data, target = data.to(self.device), target.to(self.device)
                     self.state_man.opt.zero_grad()
