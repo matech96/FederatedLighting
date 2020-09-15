@@ -12,15 +12,15 @@ import common
 
 server_lr = 0.01
 client_lr = 0.01
-server_opt = "Yogi"
-client_opt = "Yogi"
-client_opt_strategy = "avg"
-project_name = f"10c2-s-{server_opt}-c-{client_opt}"
+server_opt = "SGD"
+client_opt = "SGD"
+client_opt_strategy = "reinit"
+project_name = f"10c5e-s-{server_opt}-c-{client_opt}"
 
 max_rounds = 30  # 1500
 C = 0.5  # 10 / 500
 NC = 10  # 500
-E = 1
+E = 5
 B = 20
 is_iid = False
 
@@ -30,11 +30,11 @@ config = TorchFederatedLearnerCIFAR100Config(
     BREAK_ROUND=300,
     CLIENT_LEARNING_RATE=client_lr,
     CLIENT_OPT=client_opt,
-    CLIENT_OPT_ARGS=common.get_args(client_opt),
+    # CLIENT_OPT_ARGS=common.get_args(client_opt),
     CLIENT_OPT_L2=1e-4,
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     SERVER_OPT=server_opt,
-    SERVER_OPT_ARGS=common.get_args(server_opt),
+    # SERVER_OPT_ARGS=common.get_args(server_opt),
     SERVER_LEARNING_RATE=server_lr,
     IS_IID_DATA=is_iid,
     BATCH_SIZE=B,
