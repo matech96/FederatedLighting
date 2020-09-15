@@ -401,9 +401,10 @@ class TorchFederatedLearner(ABC):
             / (self.config.N_EPOCH_PER_CLIENT * self.n_train_batches),
         )
 
-        self.experiment.log_confusion_matrix(
-            matrix=metrics.pop("confusion_matrix"), step=batch_num
-        )
+        if "confusion_matrix" in metrics.keys():
+            self.experiment.log_confusion_matrix(
+                matrix=metrics.pop("confusion_matrix"), step=batch_num
+            )
         for name, value in metrics.items():
             nice_value = 100 * value if name.endswith("_acc") else value
             self.experiment.log_metric(name, nice_value, step=batch_num)

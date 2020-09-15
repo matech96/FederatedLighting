@@ -79,13 +79,6 @@ class TorchClient:
                         1, keepdim=True
                     )  # get the index of the max log-probability
                     correct += pred.eq(target.view_as(pred)).sum().item()
-                    cm = confusion_matrix(
-                        target.cpu(), pred.cpu(), labels=range(output.shape[1])
-                    )
-                    if total_confusion_matrix is None:
-                        total_confusion_matrix = cm
-                    else:
-                        total_confusion_matrix += cm
 
                     if (curr_batch == 0) or (curr_batch % 10 == 0):
                         self.trainer.log_client_step(
@@ -94,7 +87,7 @@ class TorchClient:
                 train_acc = correct / len(self.dataloader.dataset)
 
             self.trainer.log_metric(
-                {"train_acc": train_acc, "confusion_matrix": total_confusion_matrix},
+                {f"{self.id}_train_acc": train_acc},
                 curr_round,
             )
 

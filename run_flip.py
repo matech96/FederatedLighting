@@ -21,7 +21,6 @@ client_opt_strategy = "reinit"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
 s_opt_args = common.get_args(server_opt)
-s_opt_args["weight_decay"] = 1e-4
 config = TorchFederatedLearnerCIFAR100Config(
     BREAK_ROUND=1500,
     CLIENT_LEARNING_RATE=client_lr,
@@ -41,7 +40,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     # IMAGE_NORM="recordwise",
     NORM="group",
     INIT="tffed",
-    # AUG="24"
+    AUG="flip"
 )
 config_technical = TorchFederatedLearnerTechnicalConfig(HIST_SAMPLE=0)
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"

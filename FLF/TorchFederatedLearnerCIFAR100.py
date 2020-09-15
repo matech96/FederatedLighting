@@ -90,6 +90,12 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             elif self.config.AUG == "24":
                 train_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
                 test_trfs = train_trfs
+            elif self.config.AUG == "flip":
+                train_trfs = [
+                    transforms.ToPILImage(),
+                    transforms.RandomHorizontalFlip(),
+                ] + trfs
+                test_trfs = trfs
             else:
                 raise Exception("AUG not supported!")
         else:
