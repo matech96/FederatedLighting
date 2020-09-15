@@ -16,8 +16,6 @@ logging.basicConfig(
 def get_args(opt):
     if opt == "Adam":
         return {"betas": (0.9, 0.999), "eps": 0.001}
-    elif opt == "Yogi":
-        return {"betas": (0.9, 0.999), "eps": 0.001}
     elif opt == "SGD":
         return {"momentum": 0.9}
     else:

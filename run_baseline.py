@@ -40,7 +40,7 @@ for s in [False, True]:
         # IMAGE_NORM="recordwise",
         NORM="group",
         INIT="tffed",
-        AUG="24"
+        # AUG="24"
     )
     config_technical = TorchFederatedLearnerTechnicalConfig(HIST_SAMPLE=0)
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"

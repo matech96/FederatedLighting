@@ -89,8 +89,8 @@ class TorchFederatedLearnerTechnicalConfig(FLFConfig):
     STORE_OPT_ON_DISK: bool = True  # If true the optimization parameters are stored on the disk between training for CLIENT_OPT_STRATEGY "nothing". This increases training time, but reduces RAM requirement. If false, it's in the RAM.
     STORE_MODEL_IN_RAM: bool = True  # If true the model is removed from the VRAM after the client has finished training. This increases training time, but reduces VRAM requirement. If false, it's kept there for the hole training.
     DL_N_WORKER: int = 0  # DataLoader: number of workers
-    HIST_SAMPLE: int = 5000  # Number of sample per layer for weight histogram.
-    SAVE_CHP_INTERVALL: int = None  # Save the weights of the model to disk after this many rounds.
+    HIST_SAMPLE: int = 0  # Number of sample per layer for weight histogram.
+    SAVE_CHP_INTERVALL: int = 100  # Save the weights of the model to disk after this many rounds.
 
 
 class TorchFederatedLearner(ABC):
@@ -218,7 +218,7 @@ class TorchFederatedLearner(ABC):
                         * self.config.N_EPOCH_PER_CLIENT
                         * self.n_train_batches
                     )
-                    self.log_test_metric(
+                    self.log_metric(
                         metrics, curr_step,
                     )
                     self.log_hist(curr_round)
@@ -230,7 +230,7 @@ class TorchFederatedLearner(ABC):
                     if self.__is_unable_to_learn(curr_round, last100_avg_acc):
                         raise ToLargeLearningRateExcpetion()
                     if (self.config_technical.SAVE_CHP_INTERVALL is not None) and (
-                        self.config_technical.SAVE_CHP_INTERVALL % curr_round == 0
+                        self.config_technical.SAVE_CHP_INTERVALL % (curr_round + 1) == 0
                     ):
                         th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
         except InterruptedExperiment:
@@ -393,7 +393,7 @@ class TorchFederatedLearner(ABC):
         )
         self.experiment.log_metric(f"{client_id}_train_loss", loss, step=step)
 
-    def log_test_metric(self, metrics: Dict[str, float], batch_num: int):
+    def log_metric(self, metrics: Dict[str, float], batch_num: int):
         self.experiment.log_parameter(
             "TOTAL_EPOCH",
             self.config.N_EPOCH_PER_CLIENT

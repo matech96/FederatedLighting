@@ -1,6 +1,7 @@
 import logging
 from typing import Callable, Dict
 import copy
+from sklearn.metrics import confusion_matrix
 
 import torch as th
 import torch.nn as nn
@@ -37,7 +38,13 @@ class TorchClient:
         self.dataloader = dataloader
         self.device = device
         self.state_man = TorchModelOptStateManager(
-            model_cls, opt_cls, opt_cls_param, is_keep_model_on_gpu, is_store_opt_on_disk, self.id, exp_id
+            model_cls,
+            opt_cls,
+            opt_cls_param,
+            is_keep_model_on_gpu,
+            is_store_opt_on_disk,
+            self.id,
+            exp_id,
         )
         self.is_maintaine_opt_state = is_maintaine_opt_state
 
@@ -58,6 +65,8 @@ class TorchClient:
     ):  # TODO DOC: curr_round for logging purpuses.
         with self.state_man:
             for curr_epoch in range(n_epochs):
+                correct = 0
+                total_confusion_matrix = None
                 for curr_batch, (data, target) in enumerate(self.dataloader):
                     data, target = data.to(self.device), target.to(self.device)
                     self.state_man.opt.zero_grad()
@@ -66,10 +75,28 @@ class TorchClient:
                     loss.backward()
                     self.state_man.opt.step()
 
+                    pred = output.argmax(
+                        1, keepdim=True
+                    )  # get the index of the max log-probability
+                    correct += pred.eq(target.view_as(pred)).sum().item()
+                    cm = confusion_matrix(
+                        target.cpu(), pred.cpu(), labels=range(output.shape[1])
+                    )
+                    if total_confusion_matrix is None:
+                        total_confusion_matrix = cm
+                    else:
+                        total_confusion_matrix += cm
+
                     if (curr_batch == 0) or (curr_batch % 10 == 0):
                         self.trainer.log_client_step(
                             loss.item(), self.id, curr_round, curr_epoch, curr_batch
                         )
+                train_acc = correct / len(self.dataloader.dataset)
+
+            self.trainer.log_metric(
+                {"train_acc": train_acc, "confusion_matrix": total_confusion_matrix},
+                curr_round,
+            )
 
             if self.is_maintaine_opt_state:
                 self.state_man.set_opt_state_to_be_loaded(
