@@ -21,7 +21,7 @@ class TorchFederatedLearnerCIFAR100Config(TorchFederatedLearnerConfig):
     IMAGE_NORM: str = "thlike"  # The way to normalize the images. Options: "tflike", "thlike", "recordwise"
     NORM: str = "batch"  # Normalization layer of ResNet. Options: "batch", "group"
     INIT: str = None  # Initialization of ResNet weights. Options: None, "keras", "tffed", "fcdebug"
-    AUG: str = None  # Data augmentation. Options: None, "basic"
+    AUG: str = None  # Data augmentation. Options: None, "basic", "24f", "24rf", "flipf"
     SHUFFLE: str = True  # Data shuffeling
 
 
@@ -49,9 +49,9 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         train_transform, test_transform = self.__get_transformations()
 
         if self.config.IS_IID_DATA:
-            train_loader_list = self.get_iid_data(train_transform)
+            train_loader_list = self.get_iid_data(train_transform, pin_memory=self.config_technical.PIN_MEMORY)
         else:
-            train_loader_list = self.get_non_iid_data(train_transform)
+            train_loader_list = self.get_non_iid_data(train_transform, pin_memory=self.config_technical.PIN_MEMORY)
 
         test_loader = th.utils.data.DataLoader(
             TorchCIFAR100Fed("test", test_transform),
@@ -80,20 +80,20 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             norm,
         ]
         if self.config.AUG is not None:
-            if self.config.AUG == "basic":
+            if self.config.AUG == "basicf":
                 train_trfs = [
                     transforms.ToPILImage(),
                     transforms.RandomCrop(24),
                     transforms.RandomHorizontalFlip(),
                 ] + trfs
                 test_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
-            elif self.config.AUG == "24":
+            elif self.config.AUG == "24f":
                 train_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
                 test_trfs = train_trfs
-            elif self.config.AUG == "24r":
+            elif self.config.AUG == "24rf":
                 train_trfs = [transforms.ToPILImage(), transforms.RandomCrop(24)] + trfs
                 test_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
-            elif self.config.AUG == "flip":
+            elif self.config.AUG == "flipf":
                 train_trfs = [
                     transforms.ToPILImage(),
                     transforms.RandomHorizontalFlip(),
@@ -107,7 +107,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
 
         return transforms.Compose(train_trfs), transforms.Compose(test_trfs)
 
-    def get_iid_data(self, transform):
+    def get_iid_data(self, transform, pin_memory):
         logging.info("Torch CIFAR100 loading ...")
         cifar100_train_ds = datasets.CIFAR10(
             "data/cifar10", download=True, transform=transform,
@@ -126,14 +126,14 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
                 dataset=cifar100_train_ds,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config_technical.DL_N_WORKER,
-                pin_memory=True,
+                pin_memory=pin_memory,
                 sampler=sampler,
             )
             train_loader_list.append(loader)
         logging.info("IID distributed")
         return train_loader_list
 
-    def get_non_iid_data(self, transform):
+    def get_non_iid_data(self, transform, pin_memory):
         logging.info("Non IID loading ...")
         clients = [str(x) for x in np.arange(self.N_TRAINING_CLIENTS)]
         indices = np.array_split(clients, self.config.N_CLIENTS)
@@ -145,7 +145,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
                 shuffle=True,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config_technical.DL_N_WORKER,
-                pin_memory=True,
+                pin_memory=pin_memory,
             )
             train_loader_list.append(loader)
         logging.info("Non IID loaded")

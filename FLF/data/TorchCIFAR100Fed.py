@@ -19,19 +19,16 @@ class TorchCIFAR100Fed(Dataset):
         self.images, self.labels = get_data(split)
         self.transform = transform
 
-        if self.transform is not None:
-            self.images = np.stack(
-                [self.transform(self.images[i,]) for i in range(self.images.shape[0])]
-            )
-
-        self.images = th.tensor(self.images)
-        self.labels = th.tensor(self.labels)
-
     def __len__(self):
         return self.images.shape[0]
 
     def __getitem__(self, idx):
-        return self.images[idx,], self.labels[idx,]
+        if self.transform is not None:
+            img = self.transform(self.images[idx, ])
+        else:
+            img = th.tensor(self.images[idx, ])
+
+        return img, th.tensor(self.labels[idx, ])
 
 
 def download_all_data():

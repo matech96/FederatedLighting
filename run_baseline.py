@@ -5,9 +5,9 @@ from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 import common
 
 
-project_name = "server-yogi-l2"
+project_name = "speed-test"
 
-max_rounds = 1500
+max_rounds = 10 # 1500
 C = 10 / 500
 NC = 500
 E = 1
@@ -28,7 +28,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     CLIENT_OPT_L2=1e-4,
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     SERVER_OPT=server_opt,
-    SERVER_OPT_ARGS=common.get_args(server_opt)
+    SERVER_OPT_ARGS=common.get_args(server_opt),
     SERVER_LEARNING_RATE=server_lr,
     IS_IID_DATA=is_iid,
     BATCH_SIZE=B,
@@ -39,9 +39,9 @@ config = TorchFederatedLearnerCIFAR100Config(
     # IMAGE_NORM="recordwise",
     NORM="group",
     INIT="tffed",
-    # AUG="24"
+    AUG="basicf"
 )
-config_technical = TorchFederatedLearnerTechnicalConfig(HIST_SAMPLE=0)
+config_technical = TorchFederatedLearnerTechnicalConfig()
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
 experiment = Experiment(workspace="federated-learning", project_name=project_name)
 common.do_training(experiment, name, config, config_technical)

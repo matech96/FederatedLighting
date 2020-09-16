@@ -88,7 +88,8 @@ class TorchFederatedLearnerConfig(FLFConfig):
 class TorchFederatedLearnerTechnicalConfig(FLFConfig):
     STORE_OPT_ON_DISK: bool = True  # If true the optimization parameters are stored on the disk between training for CLIENT_OPT_STRATEGY "nothing". This increases training time, but reduces RAM requirement. If false, it's in the RAM.
     STORE_MODEL_IN_RAM: bool = True  # If true the model is removed from the VRAM after the client has finished training. This increases training time, but reduces VRAM requirement. If false, it's kept there for the hole training.
-    DL_N_WORKER: int = 0  # DataLoader: number of workers
+    DL_N_WORKER: int = 2  # DataLoader: number of workers
+    PIN_MEMORY: bool = False  # DataLoader: pin_memory
     HIST_SAMPLE: int = 0  # Number of sample per layer for weight histogram.
     SAVE_CHP_INTERVALL: int = 100  # Save the weights of the model to disk after this many rounds.
 
