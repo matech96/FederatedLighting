@@ -49,9 +49,13 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
         train_transform, test_transform = self.__get_transformations()
 
         if self.config.IS_IID_DATA:
-            train_loader_list = self.get_iid_data(train_transform, pin_memory=self.config_technical.PIN_MEMORY)
+            train_loader_list = self.get_iid_data(
+                train_transform, pin_memory=self.config_technical.PIN_MEMORY
+            )
         else:
-            train_loader_list = self.get_non_iid_data(train_transform, pin_memory=self.config_technical.PIN_MEMORY)
+            train_loader_list = self.get_non_iid_data(
+                train_transform, pin_memory=self.config_technical.PIN_MEMORY
+            )
 
         test_loader = th.utils.data.DataLoader(
             TorchCIFAR100Fed("test", test_transform),
@@ -71,6 +75,10 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
                 lambda x: transforms.functional.normalize(
                     x, x.view(3, -1).mean(dim=1), x.view(3, -1).std(dim=1)
                 )
+            )
+        elif self.config.IMAGE_NORM == "calculated":
+            norm = transforms.Normalize(
+                (0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)
             )
         else:
             raise Exception("IMAGE_NORM not supported!")
