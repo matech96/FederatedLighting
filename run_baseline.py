@@ -7,7 +7,7 @@ import common
 
 project_name = "speed-test"
 
-max_rounds = 10 # 1500
+max_rounds = 1500
 C = 10 / 500
 NC = 500
 E = 1
@@ -39,7 +39,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     # IMAGE_NORM="recordwise",
     NORM="group",
     INIT="tffed",
-    AUG="basicf"
+    # AUG="basicf"
 )
 config_technical = TorchFederatedLearnerTechnicalConfig()
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"

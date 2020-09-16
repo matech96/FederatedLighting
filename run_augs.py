@@ -41,7 +41,7 @@ for aug in ["basicf", "flipf", "24f", "24rf"]:
         # IMAGE_NORM="recordwise",
         NORM="group",
         INIT="tffed",
-        AUG="basic"
+        AUG=aug
     )
     config_technical = TorchFederatedLearnerTechnicalConfig(HIST_SAMPLE=0)
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
