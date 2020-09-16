@@ -36,10 +36,10 @@ config = TorchFederatedLearnerCIFAR100Config(
     N_CLIENTS=NC,
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
-    # IMAGE_NORM="recordwise",
+    IMAGE_NORM="recordwisefull",
     NORM="group",
     INIT="tffed",
-    # AUG="basicf"
+    AUG="basicf"
 )
 config_technical = TorchFederatedLearnerTechnicalConfig()
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"

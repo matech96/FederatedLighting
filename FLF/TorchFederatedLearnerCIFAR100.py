@@ -80,6 +80,12 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             norm = transforms.Normalize(
                 (0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)
             )
+        elif self.config.IMAGE_NORM == "recordwisefull":
+            norm = transforms.Lambda(
+                lambda x: transforms.functional.normalize(
+                    x, x.mean().expand(3), x.std().expand(3)
+                )
+            )
         else:
             raise Exception("IMAGE_NORM not supported!")
 
