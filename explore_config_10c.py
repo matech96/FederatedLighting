@@ -14,8 +14,8 @@ server_lr = 0.01
 client_lr = 0.01
 server_opt = "Yogi"
 client_opt = "Yogi"
-client_opt_strategy = "avg"
-project_name = f"10c2-s-{server_opt}-c-{client_opt}"
+client_opt_strategy = "nothing"
+project_name = f"10c2n-s-{server_opt}-c-{client_opt}"
 
 max_rounds = 30  # 1500
 C = 0.5  # 10 / 500
@@ -24,7 +24,7 @@ E = 1
 B = 20
 is_iid = False
 
-config_technical = TorchFederatedLearnerTechnicalConfig()
+config_technical = TorchFederatedLearnerTechnicalConfig(STORE_OPT_ON_DISK=False, STORE_MODEL_IN_RAM=False)
 
 config = TorchFederatedLearnerCIFAR100Config(
     BREAK_ROUND=300,

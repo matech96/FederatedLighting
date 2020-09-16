@@ -90,6 +90,9 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             elif self.config.AUG == "24":
                 train_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
                 test_trfs = train_trfs
+            elif self.config.AUG == "24r":
+                train_trfs = [transforms.ToPILImage(), transforms.RandomCrop(24)] + trfs
+                test_trfs = [transforms.ToPILImage(), transforms.CenterCrop(24)] + trfs
             elif self.config.AUG == "flip":
                 train_trfs = [
                     transforms.ToPILImage(),
