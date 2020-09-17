@@ -7,9 +7,9 @@ import common
 
 project_name = "10c2-compare"
 
-max_rounds = 1500
-C = 10 / 500
-NC = 500
+max_rounds = 30
+C = 1
+NC = 10
 E = 1
 B = 20
 is_iid = False
@@ -46,7 +46,7 @@ for values in config_changes:
     )
     for k, v in zip(param_names, values):
         setattr(config, k, v)
-    config_technical = TorchFederatedLearnerTechnicalConfig()
+    config_technical = TorchFederatedLearnerTechnicalConfig(SAVE_CHP_INTERVALL=5)
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     experiment = Experiment(workspace="federated-learning", project_name=project_name)
     common.do_training(experiment, name, config, config_technical)
