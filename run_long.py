@@ -7,7 +7,7 @@ import common
 
 project_name = "speed-test"
 
-max_rounds = 3000
+max_rounds = 5 # 3000
 C = 10 / 500
 NC = 500
 E = 1
@@ -39,9 +39,9 @@ config = TorchFederatedLearnerCIFAR100Config(
     IMAGE_NORM="recordwisefull",
     NORM="group",
     INIT="tffed",
-    AUG="basicf"
+    # AUG="basicf"
 )
-config_technical = TorchFederatedLearnerTechnicalConfig(DL_N_WORKER=4)
-name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
+config_technical = TorchFederatedLearnerTechnicalConfig(DL_N_WORKER=0, PIN_MEMORY=False)
+name = f"no aug" # f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
 experiment = Experiment(workspace="federated-learning", project_name=project_name)
 common.do_training(experiment, name, config, config_technical)

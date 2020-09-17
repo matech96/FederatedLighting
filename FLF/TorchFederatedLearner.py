@@ -206,7 +206,8 @@ class TorchFederatedLearner(ABC):
         """
         last100acc = deque(maxlen=100)
         try:
-            with ElapsedTime("Training"):
+            timer = ElapsedTime("Training")
+            with timer:
                 for curr_round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", curr_round)
                     self.__train_one_round(curr_round)
@@ -234,6 +235,7 @@ class TorchFederatedLearner(ABC):
                         self.config_technical.SAVE_CHP_INTERVALL % (curr_round + 1) == 0
                     ):
                         th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
+            self.experiment.log_metric('elapsed_time_ms', timer.elapsed_time_ms)
         except InterruptedExperiment:
             pass
 
