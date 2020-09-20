@@ -1,18 +1,22 @@
+import argparse
+
 from comet_ml import Experiment
 from FLF.TorchFederatedLearnerCIFAR100 import TorchFederatedLearnerCIFAR100Config
 from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 
 import common
 
-
-project_name = "10c2-compare"
+parser = argparse.ArgumentParser()
+parser.add_argument("E", type=int)
+args = parser.parse_args()
 
 max_rounds = 30
 C = 1
 NC = 10
-E = 1
+E = args.E
 B = 20
 is_iid = False
+project_name = f"{NC}c{E}e-compare"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
 param_names = [
@@ -42,7 +46,7 @@ for values in config_changes:
         IMAGE_NORM="recordwisefull",
         NORM="group",
         INIT="tffed",
-        AUG="basicf",
+        AUG="flipf",
     )
     for k, v in zip(param_names, values):
         setattr(config, k, v)

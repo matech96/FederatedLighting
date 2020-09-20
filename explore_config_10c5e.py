@@ -15,12 +15,12 @@ client_lr = 0.01
 server_opt = "SGD"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
-project_name = f"10c5e-s-{server_opt}-c-{client_opt}"
+project_name = f"10c40e-s-{server_opt}-c-{client_opt}"
 
 max_rounds = 30  # 1500
 C = 0.5  # 10 / 500
 NC = 10  # 500
-E = 5
+E = 40
 B = 20
 is_iid = False
 
