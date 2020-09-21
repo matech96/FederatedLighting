@@ -17,7 +17,6 @@ NC = 10
 E = args.E
 B = 20
 is_iid = False
-project_name = f"{NC}c{E}e-compare"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
 param_names = [
@@ -35,6 +34,7 @@ config_changes = [
     ("Yogi", "Yogi", 0.1, 0.0001, "nothing"),
 ]
 for values in config_changes:
+    project_name = f"{NC}c{E}e-{values[0]}-{values[4]}-{values[1]}"
     config = TorchFederatedLearnerCIFAR100Config(
         BREAK_ROUND=1500,
         CLIENT_OPT_L2=1e-4,
@@ -51,5 +51,5 @@ for values in config_changes:
     )
     for k, v in zip(param_names, values):
         setattr(config, k, v)
-    config_technical = TorchFederatedLearnerTechnicalConfig(SAVE_CHP_INTERVALL=5)
+    config_technical = TorchFederatedLearnerTechnicalConfig(SAVE_CHP_INTERVALL=5, STORE_OPT_ON_DISK=False, STORE_MODEL_IN_RAM=False)
     explore_lr(project_name, TorchFederatedLearnerCIFAR100, config, config_technical)
