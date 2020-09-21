@@ -47,7 +47,6 @@ class TorchFederatedLearnerConfig(FLFConfig):
         validate_assignment = True
 
     TARGET_ACC: float = None  # The training stopps when the test accuracy is higher, than this value.
-    BREAK_ROUND: int = None  # If the prediction is still random at this point the training is stooped.
     MAX_ROUNDS: int = 10  # The maximum number of round for training.
     N_CLIENTS: int = 2  # The number of clients to participate in a round.
     CLIENT_FRACTION: float = 1.0  # The fration of clients to participate in 1 round. Muss be between 0 and 1. 0 means selecting 1 client.
@@ -92,6 +91,7 @@ class TorchFederatedLearnerTechnicalConfig(FLFConfig):
     PIN_MEMORY: bool = True  # DataLoader: pin_memory
     HIST_SAMPLE: int = 0  # Number of sample per layer for weight histogram.
     SAVE_CHP_INTERVALL: int = 100  # Save the weights of the model to disk after this many rounds.
+    BREAK_ROUND: int = None  # If the prediction is still random at this point the training is stooped.
 
 
 class TorchFederatedLearner(ABC):
@@ -318,7 +318,7 @@ class TorchFederatedLearner(ABC):
 
     def __is_unable_to_learn(self, round, last100_avg_acc):
         return (
-            (self.config.BREAK_ROUND is not None)
+            (self.config_technical.BREAK_ROUND is not None)
             and (self.config.BREAK_ROUND == round)
             and (abs(last100_avg_acc - self.random_acc) < 1e-6)
         )

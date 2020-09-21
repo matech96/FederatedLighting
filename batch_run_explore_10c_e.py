@@ -27,8 +27,8 @@ param_names = [
     "CLIENT_OPT_STRATEGY",
 ]
 config_changes = [
-    ("SGD", "SGD", 1, 0.1, "nothing"),
-    ("Yogi", "SGD", 0.1, 0.01, "nothing"),
+    ("SGD", "SGD", 1, 0.1, "reinit"),
+    ("Yogi", "SGD", 0.1, 0.01, "reinit"),
     ("Yogi", "Yogi", 0.1, 0.0001, "avg"),
     ("Yogi", "Yogi", 0.1, 0.0001, "reinit"),
     ("Yogi", "Yogi", 0.1, 0.0001, "nothing"),
@@ -36,7 +36,7 @@ config_changes = [
 for values in config_changes:
     project_name = f"{NC}c{E}e-{values[0]}-{values[4]}-{values[1]}"
     config = TorchFederatedLearnerCIFAR100Config(
-        BREAK_ROUND=1500,
+        BREAK_ROUND=5,
         CLIENT_OPT_L2=1e-4,
         IS_IID_DATA=is_iid,
         BATCH_SIZE=B,
