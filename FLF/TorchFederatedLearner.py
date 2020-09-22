@@ -319,7 +319,7 @@ class TorchFederatedLearner(ABC):
     def __is_unable_to_learn(self, round, last100_avg_acc):
         return (
             (self.config_technical.BREAK_ROUND is not None)
-            and (self.config.BREAK_ROUND == round)
+            and (self.config_technical.BREAK_ROUND == round)
             and (abs(last100_avg_acc - self.random_acc) < 1e-6)
         )
 

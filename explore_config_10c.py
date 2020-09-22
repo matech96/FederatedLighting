@@ -13,7 +13,7 @@ server_lr = 0.1
 client_lr = 0.0001
 server_opt = "Yogi"
 client_opt = "Yogi"
-client_opt_strategy = "avg"
+client_opt_strategy = "reinit"
 
 max_rounds = 30  # 1500
 C = 1  # 10 / 500
