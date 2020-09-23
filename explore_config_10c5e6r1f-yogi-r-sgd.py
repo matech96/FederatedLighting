@@ -1,4 +1,4 @@
-import comet_ml  # Comet.ml needs to be imported before PyTorch
+import comet_ml # Comet.ml needs to be imported before PyTorch
 import torch as th
 
 from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
@@ -16,18 +16,18 @@ server_opt = "Yogi"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 
-max_rounds = 1500
+max_rounds = 6
 n_clients_per_round = 10
-NC = 500
+NC = 10
 C = n_clients_per_round / NC
-E = 1
+E = 5
 B = 20
 is_iid = False
 project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 
-config_technical = TorchFederatedLearnerTechnicalConfig(BREAK_ROUND=300)
+config_technical = TorchFederatedLearnerTechnicalConfig(BREAK_ROUND=3)
 
-config = TorchFederatedLearnerCIFAR100Config(
+config = TorchFederatedLearnerCIFAR100Config(    
     CLIENT_LEARNING_RATE=client_lr,
     CLIENT_OPT=common.get_name(client_opt),
     CLIENT_OPT_ARGS=common.get_args(client_opt),
@@ -48,11 +48,4 @@ config = TorchFederatedLearnerCIFAR100Config(
     AUG="basicf",
 )
 
-explore_lr(
-    project_name,
-    TorchFederatedLearnerCIFAR100,
-    config,
-    config_technical,
-    "federated-learning-hpopt",
-    True
-)
+explore_lr(project_name, TorchFederatedLearnerCIFAR100, config, config_technical, "federated-learning-hpopt")

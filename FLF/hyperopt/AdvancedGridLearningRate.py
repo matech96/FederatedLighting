@@ -29,9 +29,10 @@ def explore_lr(
     ],
     config: TorchFederatedLearnerConfig,
     config_technical: TorchFederatedLearnerTechnicalConfig,
-    workspace: str = "federated-learning-hpopt"
+    workspace: str = "federated-learning-hpopt",
+    is_continue: bool = False
 ):
-    db = AdvancedGridLearningRate(project_name, Learner, config, config_technical, workspace)
+    db = AdvancedGridLearningRate(project_name, Learner, config, config_technical, workspace, is_continue)
     for c_lr, s_lr in db:
         db.train(c_lr, s_lr)
 
@@ -50,7 +51,8 @@ class AdvancedGridLearningRate:
         ],
         config: TorchFederatedLearnerConfig,
         config_technical: TorchFederatedLearnerTechnicalConfig,
-        workspace: str
+        workspace: str,
+        is_continue: bool = False
     ):
         self.comet_api = comet_ml.api.API()
         self.df = pd.DataFrame(columns=["c_lr", "s_lr", "acc"])
@@ -60,7 +62,10 @@ class AdvancedGridLearningRate:
         self.config = config
         self.config_technical = config_technical
 
-        self.__train_config()
+        if not is_continue:
+            self.__train_config()
+        else:
+            self.__refresh_df()
 
     def __train_config(self):
         name = f"{self.config.SERVER_OPT}: {self.config.SERVER_LEARNING_RATE} - {self.config.CLIENT_OPT_STRATEGY} - {self.config.CLIENT_OPT}: {self.config.CLIENT_LEARNING_RATE}"
@@ -84,7 +89,7 @@ class AdvancedGridLearningRate:
             if not k.endswith("LEARNING_RATE")
         ]
         query = functools.reduce(operator.and_, parameter_list,)
-        exps = self.comet_api.query("federated-learning", self.project_name, query)
+        exps = self.comet_api.query(self.workspace, self.project_name, query)
         self.df = _get_df(exps)
 
     def __iter__(self):
