@@ -29,8 +29,9 @@ def explore_lr(
     ],
     config: TorchFederatedLearnerConfig,
     config_technical: TorchFederatedLearnerTechnicalConfig,
+    workspace: str = "federated-learning-hpopt"
 ):
-    db = AdvancedGridLearningRate(project_name, Learner, config, config_technical)
+    db = AdvancedGridLearningRate(project_name, Learner, config, config_technical, workspace)
     for c_lr, s_lr in db:
         db.train(c_lr, s_lr)
 
@@ -49,9 +50,11 @@ class AdvancedGridLearningRate:
         ],
         config: TorchFederatedLearnerConfig,
         config_technical: TorchFederatedLearnerTechnicalConfig,
+        workspace: str
     ):
         self.comet_api = comet_ml.api.API()
         self.df = pd.DataFrame(columns=["c_lr", "s_lr", "acc"])
+        self.workspace = workspace
         self.project_name = project_name
         self.Learner = Learner
         self.config = config
@@ -63,7 +66,7 @@ class AdvancedGridLearningRate:
         name = f"{self.config.SERVER_OPT}: {self.config.SERVER_LEARNING_RATE} - {self.config.CLIENT_OPT_STRATEGY} - {self.config.CLIENT_OPT}: {self.config.CLIENT_LEARNING_RATE}"
         logging.info(name)
         experiment = Experiment(
-            workspace="federated-learning", project_name=self.project_name
+            workspace=self.workspace, project_name=self.project_name
         )
         experiment.set_name(name)
         learner = self.Learner(experiment, self.config, self.config_technical)
