@@ -25,13 +25,12 @@ B = 20
 is_iid = False
 project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 
-config_technical = TorchFederatedLearnerTechnicalConfig()
+config_technical = TorchFederatedLearnerTechnicalConfig(BREAK_ROUND=300)
 
-config = TorchFederatedLearnerCIFAR100Config(
-    BREAK_ROUND=300,
+config = TorchFederatedLearnerCIFAR100Config(    
     CLIENT_LEARNING_RATE=client_lr,
     CLIENT_OPT=common.get_name(client_opt),
-    CLIENT_OPT_ARGS=common.get_name(client_opt),
+    CLIENT_OPT_ARGS=common.get_args(client_opt),
     CLIENT_OPT_L2=1e-4,
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     SERVER_OPT=common.get_name(server_opt),
@@ -46,7 +45,7 @@ config = TorchFederatedLearnerCIFAR100Config(
     IMAGE_NORM="recordwisefull",
     NORM="group",
     INIT="tffed",
-    AUG="basicf"
+    AUG="basicf",
 )
 
 explore_lr(project_name, TorchFederatedLearnerCIFAR100, config, config_technical, "federated-learning-hpopt")
