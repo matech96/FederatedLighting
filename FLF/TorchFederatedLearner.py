@@ -246,7 +246,7 @@ class TorchFederatedLearner(ABC):
         comm_avg_opt_state = None
 
         for i, client in enumerate(client_sample):
-            client.set_model(copy.deepcopy(self.model.state_dict()))
+            client.set_model(self.model.state_dict())
             if (self.config.CLIENT_OPT_STRATEGY == "avg") and (
                 self.avg_opt_state is not None
             ):
@@ -272,7 +272,7 @@ class TorchFederatedLearner(ABC):
         if self.server_opt is not None:
             self.__log("setting gradients")
             self.server_opt.zero_grad()
-            server_opt_state = copy.deepcopy(self.server_opt.state_dict())
+            server_opt_state = self.server_opt.state_dict()
             self.__set_model_grads(comm_avg_model_state)
             self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
                 self.model.parameters(),
@@ -330,7 +330,7 @@ class TorchFederatedLearner(ABC):
         Returns:
             Dict[str, float] -- The meassured metrics
         """
-        test_model = copy.deepcopy(self.model)
+        test_model = self.model
         test_model.to(self.device)
         test_model.eval()
         test_loss = 0
