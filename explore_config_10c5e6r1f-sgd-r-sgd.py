@@ -48,4 +48,4 @@ config = TorchFederatedLearnerCIFAR100Config(
     AUG="basicf",
 )
 
-explore_lr(project_name, TorchFederatedLearnerCIFAR100, config, config_technical, "federated-learning-hpopt")
+explore_lr(project_name, TorchFederatedLearnerCIFAR100, config, config_technical, "federated-learning-hpopt", False)

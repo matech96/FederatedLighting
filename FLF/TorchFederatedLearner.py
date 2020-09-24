@@ -140,9 +140,7 @@ class TorchFederatedLearner(ABC):
         self.avg_opt_state = None
 
         self.train_loader_list, self.test_loader, self.random_acc = self.load_data()
-        self.n_train_batches = int(
-            len(self.train_loader_list) / self.config.N_CLIENTS
-        )  # TODO batch per client
+        self.n_train_batches = len(self.train_loader_list[0])
         logging.info(f"Number of training batches: {self.n_train_batches}")
 
         TorchClient.reset_ID_counter()
@@ -182,7 +180,7 @@ class TorchFederatedLearner(ABC):
         """Returns the model to be trained.
 
         Returns:
-            nn.Module -- The instance of the model.            
+            nn.Module -- The instance of the model.
         """
         pass
 
@@ -215,13 +213,8 @@ class TorchFederatedLearner(ABC):
                     last100_avg_acc = mean(last100acc) if curr_round > 0 else 0
                     metrics["last100_avg_acc"] = last100_avg_acc
 
-                    curr_step = (
-                        curr_round
-                        * self.config.N_EPOCH_PER_CLIENT
-                        * self.n_train_batches
-                    )
                     self.log_metric(
-                        metrics, curr_step,
+                        metrics, curr_round,
                     )
                     self.log_hist(curr_round)
 
@@ -235,7 +228,7 @@ class TorchFederatedLearner(ABC):
                         self.config_technical.SAVE_CHP_INTERVALL % (curr_round + 1) == 0
                     ):
                         th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
-            self.experiment.log_metric('elapsed_time_ms', timer.elapsed_time_ms)
+            self.experiment.log_metric("elapsed_time_ms", timer.elapsed_time_ms)
         except InterruptedExperiment:
             pass
 
@@ -394,26 +387,25 @@ class TorchFederatedLearner(ABC):
         logging.info(
             f"R: {curr_round:4} E: {curr_epoch:4} B: {curr_batch:4} (S: {step} C: {client_id}) Training loss: {loss}"
         )
-        self.experiment.log_metric(f"{client_id}_train_loss", loss, step=step)
+        self.experiment.log_metric(
+            f"{client_id}_train_loss", loss, step=step, epoch=curr_round
+        )
 
-    def log_metric(self, metrics: Dict[str, float], batch_num: int):
+    def log_metric(self, metrics: Dict[str, float], curr_round: int):
         self.experiment.log_parameter(
-            "TOTAL_EPOCH",
-            self.config.N_EPOCH_PER_CLIENT
-            * batch_num
-            / (self.config.N_EPOCH_PER_CLIENT * self.n_train_batches),
+            "TOTAL_EPOCH", curr_round,
         )
 
         if "confusion_matrix" in metrics.keys():
             self.experiment.log_confusion_matrix(
-                matrix=metrics.pop("confusion_matrix"), step=batch_num
+                matrix=metrics.pop("confusion_matrix"), step=curr_round
             )
         for name, value in metrics.items():
             nice_value = 100 * value if name.endswith("_acc") else value
-            self.experiment.log_metric(name, nice_value, step=batch_num)
+            self.experiment.log_metric(name, nice_value, step=curr_round)
             logging.info(f"{name}: {nice_value}")
 
-    def log_hist(self, batch_num: int):
+    def log_hist(self, curr_round: int):
         sample = self.config_technical.HIST_SAMPLE
         if sample == 0:
             return
@@ -421,7 +413,7 @@ class TorchFederatedLearner(ABC):
         for k, v in self.model.state_dict().items():
             if th.numel(v) > sample:
                 v = np.random.choice(v.flatten(), sample)
-            self.experiment.log_histogram_3d(v, k, step=batch_num)
+            self.experiment.log_histogram_3d(v, k, step=curr_round)
 
     def __log(self, m):
         logging.info(f"Server: {m}")
