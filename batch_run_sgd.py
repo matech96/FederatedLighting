@@ -43,7 +43,7 @@ for values in config_changes:
         AUG="basicf",
     )
     if len(param_names) == 1:
-        setattr(config, param_names, values)
+        setattr(config, param_names[0], values)
     else:
         for k, v in zip(param_names, values):
             setattr(config, k, v)
