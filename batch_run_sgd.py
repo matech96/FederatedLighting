@@ -14,7 +14,7 @@ NC = 10
 E = 1
 B = 20
 is_iid = False
-project_name = f"{NC}c{E}e{max_rounds}r{10}f-{server_opt}-{client_opt_strategy}-{client_opt}"
+project_name = f"{NC}c{E}e{max_rounds}r{10}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
 param_names = [
