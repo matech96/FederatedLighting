@@ -10,22 +10,22 @@ from FLF.hyperopt.AdvancedGridLearningRate import explore_lr
 import common
 
 
-server_lr = 1.0
-client_lr = 0.0001
-server_opt = "SGD"
-client_opt = "SGD"
-client_opt_strategy = "reinit"
+server_lr = 0.1
+client_lr = 1.0
+server_opt = "SGDM"
+client_opt = "SGDM"
+client_opt_strategy = "avg"
 
-max_rounds = 1500
+max_rounds = 30
 n_clients_per_round = 10
-NC = 500
+NC = 10
 C = n_clients_per_round / NC
 E = 1
 B = 20
 is_iid = False
 project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 
-config_technical = TorchFederatedLearnerTechnicalConfig(BREAK_ROUND=300)
+config_technical = TorchFederatedLearnerTechnicalConfig(BREAK_ROUND=3)
 
 config = TorchFederatedLearnerCIFAR100Config(    
     CLIENT_LEARNING_RATE=client_lr,
