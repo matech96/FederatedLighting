@@ -18,7 +18,7 @@ C = n_clients_per_round / NC
 E = 1
 B = 20
 is_iid = False
-project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_lr}-compare"
+project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-compare"
 # TODO a paraméterek helytelen nevére nem adott hibát
 config = TorchFederatedLearnerCIFAR100Config(
     CLIENT_LEARNING_RATE=client_lr,
