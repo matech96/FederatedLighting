@@ -42,5 +42,5 @@ config = TorchFederatedLearnerCIFAR100Config(
 )
 config_technical = TorchFederatedLearnerTechnicalConfig(BREAK_ROUND=300)
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
-experiment = Experiment(workspace="federated-learning", project_name=project_name)
+experiment = Experiment(workspace="federated-learning-hpopt", project_name=project_name)
 common.do_training(experiment, name, config, config_technical)
