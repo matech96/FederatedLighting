@@ -4,30 +4,33 @@ from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 
 import common
 
-server_lr = 1.0
-server_opt = "SGD"
-client_opt = "SGD"
-client_opt_strategy = "reinit"
-max_rounds = 30
-C = 1
+server_lr = 0.1
+client_lr = 0.0001
+server_opt = "Yogi"
+client_opt = "Yogi"
+# client_opt_strategy = "avg"
+max_rounds = 6
+n_clients_per_round = 10
 NC = 10
+C = n_clients_per_round / NC
 E = 1
 B = 20
 is_iid = False
-project_name = f"{NC}c{E}e{max_rounds}r{10}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
+project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-compare"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
 param_names = [
-    "CLIENT_LEARNING_RATE",
+    "CLIENT_OPT_STRATEGY",
 ]
-config_changes = [0.1, 0.01, 0.001, 0.0001]
+config_changes = ["reinit", "nothing"]
+
 for values in config_changes:
     config = TorchFederatedLearnerCIFAR100Config(
-        # CLIENT_LEARNING_RATE=client_lr,
+        CLIENT_LEARNING_RATE=client_lr,
         CLIENT_OPT=common.get_name(client_opt),
         CLIENT_OPT_ARGS=common.get_args(client_opt),
         CLIENT_OPT_L2=1e-4,
-        CLIENT_OPT_STRATEGY=client_opt_strategy,
+        # CLIENT_OPT_STRATEGY=client_opt_strategy,
         SERVER_OPT=common.get_name(server_opt),
         SERVER_OPT_ARGS=common.get_args(server_opt),
         SERVER_LEARNING_RATE=server_lr,
@@ -47,7 +50,11 @@ for values in config_changes:
     else:
         for k, v in zip(param_names, values):
             setattr(config, k, v)
-    config_technical = TorchFederatedLearnerTechnicalConfig(SAVE_CHP_INTERVALL=5)
+    config_technical = TorchFederatedLearnerTechnicalConfig(
+        SAVE_CHP_INTERVALL=5, BREAK_ROUND=3
+    )
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
-    experiment = Experiment(workspace="federated-learning-hpopt", project_name=project_name)
+    experiment = Experiment(
+        workspace="federated-learning-hpopt", project_name=project_name
+    )
     common.do_training(experiment, name, config, config_technical)
