@@ -101,7 +101,7 @@ class AdvancedGridLearningRate:
         max_series = self.df.iloc[self.df.acc.idxmax()]
         max_c_lr = max_series.c_lr
         max_s_lr = max_series.s_lr
-        if (self.config.SERVER_OPT == "SGD") and ("momentum" not in self.config.SERER_OPT_ARGS.keys()):
+        if (self.config.SERVER_OPT == "SGD") and ("momentum" not in self.config.SERVER_OPT_ARGS.keys()):
             mult = [1 / 10, 10]
             for c_lr_m in mult:
                 c_lr = max_c_lr * c_lr_m
