@@ -53,6 +53,5 @@ explore_lr(
     TorchFederatedLearnerCIFAR100,
     config,
     config_technical,
-    "federated-learning-hpopt",
-    True
+    "federated-learning-hpopt"
 )
