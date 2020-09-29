@@ -30,9 +30,11 @@ def explore_lr(
     config: TorchFederatedLearnerConfig,
     config_technical: TorchFederatedLearnerTechnicalConfig,
     workspace: str = "federated-learning-hpopt",
-    is_continue: bool = False
+    is_continue: bool = False,
 ):
-    db = AdvancedGridLearningRate(project_name, Learner, config, config_technical, workspace, is_continue)
+    db = AdvancedGridLearningRate(
+        project_name, Learner, config, config_technical, workspace, is_continue
+    )
     for c_lr, s_lr in db:
         db.train(c_lr, s_lr)
 
@@ -52,7 +54,7 @@ class AdvancedGridLearningRate:
         config: TorchFederatedLearnerConfig,
         config_technical: TorchFederatedLearnerTechnicalConfig,
         workspace: str,
-        is_continue: bool = False
+        is_continue: bool = False,
     ):
         self.comet_api = comet_ml.api.API()
         self.df = pd.DataFrame(columns=["c_lr", "s_lr", "acc"])
@@ -99,13 +101,20 @@ class AdvancedGridLearningRate:
         max_series = self.df.iloc[self.df.acc.idxmax()]
         max_c_lr = max_series.c_lr
         max_s_lr = max_series.s_lr
-        mult = [1 / 10, 1, 10]
-        for s_lr_m in mult:
+        if (self.config.SERVER_OPT == "SGD") and ("momentum" not in self.config.SERER_OPT_ARGS.keys()):
+            mult = [1 / 10, 10]
             for c_lr_m in mult:
                 c_lr = max_c_lr * c_lr_m
-                s_lr = max_s_lr * s_lr_m
-                if self.get(c_lr, s_lr) == -1:
-                    return c_lr, s_lr
+                if self.get(c_lr, max_s_lr) == -1:
+                    return c_lr, max_s_lr
+        else:
+            mult = [1 / 10, 1, 10]
+            for s_lr_m in mult:
+                for c_lr_m in mult:
+                    c_lr = max_c_lr * c_lr_m
+                    s_lr = max_s_lr * s_lr_m
+                    if self.get(c_lr, s_lr) == -1:
+                        return c_lr, s_lr
         raise StopIteration
 
     def train(self, c_lr, s_lr):
