@@ -4,19 +4,19 @@ from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 
 import common
 
-server_lr = 0.1
-client_lr = 0.0001
-server_opt = "Yogi"
+server_lr = 1
+client_lr = 0.001
+server_opt = "SGD"
 client_opt = "Yogi"
 # client_opt_strategy = "avg"
-max_rounds = 6
+max_rounds = 30
 n_clients_per_round = 10
 NC = 10
 C = n_clients_per_round / NC
 E = 5
 B = 20
 is_iid = False
-project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-compare"
+project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{client_opt}-compare"
 # image_norm = "tflike"
 # TODO a paraméterek helytelen nevére nem adott hibát
 param_names = [

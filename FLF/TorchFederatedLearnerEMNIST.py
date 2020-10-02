@@ -1,74 +1,114 @@
 import os
 from typing import Tuple, List, Callable
 import logging
+from comet_ml import Experiment
 
 from tqdm import tqdm
 import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision import datasets, transforms
+import tensorflow_federated as tff
 
-from FLF.TorchFederatedLearner import TorchFederatedLearner
+from FLF.data import TorchEMNISTFed
+from FLF.TorchFederatedLearner import TorchFederatedLearner, TorchFederatedLearnerConfig, TorchFederatedLearnerTechnicalConfig
 
-# TODO
+
+class TorchFederatedLearnerEMNISTConfig(TorchFederatedLearnerConfig):
+    IS_IID_DATA: bool = True  # If true, the data is split random amongs clients. If false, the client have different digits.
+    INIT: str = None  # Initialization of ResNet weights. Options: None, "keras", "tffed", "fcdebug"
+    SHUFFLE: str = True  # Data shuffeling
+
+
 class TorchFederatedLearnerEMNIST(TorchFederatedLearner):
+    def __init__(
+        self,
+        experiment: Experiment,
+        config: TorchFederatedLearnerEMNISTConfig,
+        config_technical: TorchFederatedLearnerTechnicalConfig,
+    ) -> None:
+        """Initialises the training.
+
+        Arguments:
+            experiment {Experiment} -- Comet.ml experiment object for online logging.
+            config {TorchFederatedLearnerCIFAR100Config} -- Training configuration description.
+        """
+        super().__init__(experiment, config, config_technical)
+        self.config = config  # Purly to help intellisense
+        
     def load_data(
         self,
-    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader]:
-        logging.info("MNIST data loading ...")
-        minist_train_ds, mnist_test_ds = self.__get_mnist()
-        logging.info("MNIST data loaded.")
+    ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader, float]:
+        transform = transforms.ToTensor()
 
-        logging.info("Data for client is being sampled ...")
-        n_training_samples = len(minist_train_ds)
-        logging.info("Number of training samples: {n_training_samples}")
         if self.config.IS_IID_DATA:
-            indices = np.arange(n_training_samples)
-            indices = indices.reshape(self.config.N_CLIENTS, -1)
-            indices = indices.tolist()
+            train_loader_list = self.get_iid_data(
+                transform
+            )
         else:
-            indices = self.__distribute_data_non_IID(minist_train_ds)
+            train_loader_list = self.get_non_iid_data(
+                transform
+            )
+
+        test_loader = th.utils.data.DataLoader(
+            TorchEMNISTFed("test", transform),
+            batch_size=64,
+            num_workers=self.config_technical.DL_N_WORKER,
+        )
+
+        return train_loader_list, test_loader, 0.1
+        
+    def get_iid_data(self, transform):
+        logging.info("Torch EMNIST loading ...")
+        train_ds = datasets.EMNIST(
+            "data/emnist", "digits", download=True, transform=transform,
+        )
+        logging.info("Torch EMNIST loaded")
+        logging.info("IID distribution ...")
+        n_training_samples = len(train_ds)
+        indices = np.arange(n_training_samples)
+        indices = indices.reshape(self.config.N_CLIENTS, -1)
+        indices = indices.tolist()
 
         train_loader_list = []
         for idx in indices:
             sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
             loader = th.utils.data.DataLoader(
-                dataset=minist_train_ds,
+                dataset=train_ds,
+                shuffle=self.config.SHUFFLE,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config_technical.DL_N_WORKER,
+                pin_memory=self.config_technical.PIN_MEMORY,
                 sampler=sampler,
             )
             train_loader_list.append(loader)
-        logging.info("Data for client is sampled.")
+        logging.info("IID distributed")
+        return train_loader_list
 
-        test_loader = th.utils.data.DataLoader(
-            mnist_test_ds, batch_size=64, num_workers=self.config_technical.DL_N_WORKER,
-        )
-
-        return train_loader_list, test_loader, 0.1
-
-    def __get_emnist_filenames(self):
-        base_dir = Path('data')
-        emnist_train, emnist_test = tff.simulation.datasets.emnist.load_data()
-        process_emnist_tff_set(emnist_train, base_dir / 'train')
-        process_emnist_tff_set(emnist_test, base_dir / 'test')
-
-    def __process_emnist_tff_set(emnist, base_dir):
-        try:
-            os.makedirs(base_dir)
-        except OSError:
-            return
+    def get_non_iid_data(self, transform):
+        logging.info("Non IID loading ...")
+        clients = TorchEMNISTFed.get_client_ids("train")
+        indices = np.array_split(clients, self.config.N_CLIENTS)
+        train_loader_list = []
+        for indice in indices:
+            ds = TorchEMNISTFed(indice, transform)
+            loader = th.utils.data.DataLoader(
+                dataset=ds,
+                shuffle=self.config.SHUFFLE,
+                batch_size=self.config.BATCH_SIZE,
+                num_workers=self.config_technical.DL_N_WORKER,
+                pin_memory=self.config_technical.PIN_MEMORY,
+            )
+            train_loader_list.append(loader)
+        logging.info("Non IID loaded")
+        return train_loader_list
         
-        for client_id in tqdm(emnist.client_ids):
-            tf_ds = emnist.create_tf_dataset_for_client(client_id)
-            x = [np.expand_dims(x['pixels'], axis=0) for x in tf_ds.as_numpy_iterator()]
-            x = np.stack(x)
-            y = [np.expand_dims(x['label'], axis=0) for x in tf_ds.as_numpy_iterator()]
-            y = np.stack(y)
-            np.save(base_dir / client_id, {'x': x, 'y': y})
-
     def get_model_cls(self) -> Callable[[], nn.Module]:
         return Net
+        
+    def get_loss(self, **kwargs):
+        return nn.CrossEntropyLoss(**kwargs)
 
 
 class Net(nn.Module):

@@ -138,6 +138,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             sampler = th.utils.data.sampler.SubsetRandomSampler(idx)
             loader = th.utils.data.DataLoader(
                 dataset=cifar100_train_ds,
+                shuffle=self.config.SHUFFLE,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config_technical.DL_N_WORKER,
                 pin_memory=pin_memory,
@@ -156,7 +157,7 @@ class TorchFederatedLearnerCIFAR100(TorchFederatedLearner):
             ds = TorchCIFAR100Fed(indice, transform)
             loader = th.utils.data.DataLoader(
                 dataset=ds,
-                shuffle=True,
+                shuffle=self.config.SHUFFLE,
                 batch_size=self.config.BATCH_SIZE,
                 num_workers=self.config_technical.DL_N_WORKER,
                 pin_memory=pin_memory,
