@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 
 
 class TorchEMNISTFed(Dataset):
-    data_dir = Path("data/emnist_dig_fed")
+    data_dir = Path("data/emnist_fed")
 
     def __init__(self, split: Union[str, List[str]], transform: Callable = None):
         self._download_all_data()
@@ -23,33 +23,34 @@ class TorchEMNISTFed(Dataset):
 
     def __getitem__(self, idx):
         if self.transform is not None:
-            img = self.transform(self.images[idx,])
+            img = self.transform(self.images[idx, ])
         else:
-            img = th.tensor(self.images[idx,])
+            img = th.tensor(self.images[idx, ])
 
-        return img, th.tensor(self.labels[idx,])
+        return img, th.tensor(self.labels[idx, ]).long()
 
     @classmethod
-    def get_client_ids(self, data_set):
-        self._download_all_data()
+    def get_client_ids(cls, data_set):
+        cls._download_all_data()
         ext = "_img.npy"
         return [
             f[: -len(ext)]
-            for f in os.listdir(self.data_dir / data_set)
+            for f in os.listdir(cls.data_dir / data_set)
             if f.endswith(ext)
         ]
-
-    def _download_all_data(self):
-        is_extract = not self.data_dir.exists()
+    
+    @classmethod
+    def _download_all_data(cls):
+        is_extract = not cls.data_dir.exists()
         if not is_extract:
             return
 
         logging.info(f"Data extration: {is_extract} ...")
-        filename = "fed_emnist_digitsonly.tar.bz2"
+        filename = "fed_emnist.tar.bz2"
         path = tf.keras.utils.get_file(
             filename,
             origin="https://storage.googleapis.com/tff-datasets-public/" + filename,
-            file_hash="55333deb8546765427c385710ca5e7301e16f4ed8b60c1dc5ae224b42bd5b14b",
+            file_hash="fe1ed5a502cea3a952eb105920bff8cffb32836b5173cb18a57a32c3606f3ea0",
             hash_algorithm="sha256",
             extract=True,
             archive_format="tar",
@@ -59,13 +60,13 @@ class TorchEMNISTFed(Dataset):
         dir_path = os.path.dirname(path)
 
         def download_split(data_set):
-            split_dir = self.data_dir / data_set
+            split_dir = cls.data_dir / data_set
             try:
                 os.makedirs(split_dir)
             except FileExistsError:
                 return
             h5 = h5py.File(
-                os.path.join(dir_path, f"fed_emnist_digitsonly_{data_set}.h5"), "r"
+                os.path.join(dir_path, f"fed_emnist_{data_set}.h5"), "r"
             )["examples"]
 
             for client_id in h5.keys():
