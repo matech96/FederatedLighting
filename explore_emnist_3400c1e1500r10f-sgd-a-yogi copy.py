@@ -16,9 +16,9 @@ server_opt = "SGD"
 client_opt = "Yogi"
 client_opt_strategy = "avg"
 
-max_rounds = 1500
+max_rounds = 100
 n_clients_per_round = 10
-NC = 3400
+NC = 500
 C = n_clients_per_round / NC
 E = 1
 B = 20
