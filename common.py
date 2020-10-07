@@ -4,6 +4,10 @@ from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
     TorchFederatedLearnerCIFAR100Config,
 )
+from FLF.TorchFederatedLearnerEMNIST import (
+    TorchFederatedLearnerEMNIST,
+    TorchFederatedLearnerEMNISTConfig,
+)
 from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 
 logging.basicConfig(
@@ -38,4 +42,16 @@ def do_training(
     logging.info(name)
     experiment.set_name(name)
     learner = TorchFederatedLearnerCIFAR100(experiment, config, config_technical)
+    learner.train()
+
+
+def do_training_emnist(
+    experiment,
+    name,
+    config: TorchFederatedLearnerEMNISTConfig,
+    config_technical: TorchFederatedLearnerTechnicalConfig,
+):
+    logging.info(name)
+    experiment.set_name(name)
+    learner = TorchFederatedLearnerEMNIST(experiment, config, config_technical)
     learner.train()
