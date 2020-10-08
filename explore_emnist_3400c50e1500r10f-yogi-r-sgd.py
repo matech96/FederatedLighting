@@ -11,7 +11,7 @@ import common
 
 
 server_lr = 0.01
-client_lr = 0.1
+client_lr = 0.01
 server_opt = "Yogi"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
@@ -20,7 +20,7 @@ max_rounds = 1500
 n_clients_per_round = 10
 NC = 3400
 C = n_clients_per_round / NC
-E = 10
+E = 50
 B = 20
 is_iid = False
 project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
