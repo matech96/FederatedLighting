@@ -57,7 +57,8 @@ class TorchFederatedLearnerEMNIST(TorchFederatedLearner):
             num_workers=self.config_technical.DL_N_WORKER,
         )
 
-        return train_loader_list, test_loader, 0.1
+        random_acc = 1 / len(np.unique(test_loader.dataset.labels))
+        return train_loader_list, test_loader, random_acc
 
     def get_iid_data(self, transform):
         logging.info("Torch EMNIST loading ...")
