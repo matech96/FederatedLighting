@@ -47,7 +47,7 @@ for values in config_changes:
         for k, v in zip(param_names, values):
             setattr(config, k, v)
     config_technical = TorchFederatedLearnerTechnicalConfig(
-        SAVE_CHP_INTERVALL=5, BREAK_ROUND=3
+        BREAK_ROUND=300
     )
     name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
     experiment = Experiment(
