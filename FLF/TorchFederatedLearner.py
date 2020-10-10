@@ -18,7 +18,7 @@ from pydantic import BaseModel, validator
 import torch as th
 import torch.nn as nn
 
-from syftutils.multipointer import commulative_avg_model_state_dicts
+from torchutils.multipointer import commulative_avg_model_state_dicts
 from mutil.ElapsedTime import ElapsedTime
 
 from FLF.TorchOptRepo import TorchOptRepo
