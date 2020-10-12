@@ -31,11 +31,15 @@ class TorchModelOptStateManager:
 
         self.__model_state_to_be_loaded = None
         self.__opt_state_to_be_loaded = None
+        
         self.__opt_path = self.tmp_dir / f"{exp_id}_{self.id}_opt.pt"
+        self.__c_path = self.tmp_dir / f"{exp_id}_{self.id}_c.pt"
         self.__delete_objects_tmp_files()
 
         self.model = None
         self.opt = None
+        # TODO init c
+        self.c = None
 
     def __del__(self):
         self.__delete_objects_tmp_files()
@@ -87,6 +91,12 @@ class TorchModelOptStateManager:
             self.opt.load_state_dict(new_state_dict)
             self.__log("opt state loaded")
 
+        # TODO load c
+        if self.__c_path.exists():
+            assert self.c is None
+            self.c = th.load(self.__c_path)
+            self.__log(f"c read from disk: {self.__c_path}")
+
     def __exit__(self, *exc):
         if not self.is_keep_model_on_gpu:
             self.model.cpu()
@@ -99,9 +109,18 @@ class TorchModelOptStateManager:
             self.__opt_state_to_be_loaded = None
             self.__model_state_to_be_loaded = None
 
+            # TODO delete c
+            if self.is_store_on_disk and (self.c is not None): # TODO check for none
+                th.save(list(self.c), self.__c_path)
+                self.__log(f"c saved: {self.__c_path}")
+            self.c = None
+
     def __delete_objects_tmp_files(self):
         if self.__opt_path.exists():
             self.__opt_path.unlink()
+
+        if self.__c_path.exists():
+            self.__c_path.unlink()
 
     def __log(self, m):
         logging.info(f"Client {self.id}: {m}")

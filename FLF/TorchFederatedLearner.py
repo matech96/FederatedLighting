@@ -18,7 +18,12 @@ from pydantic import BaseModel, validator
 import torch as th
 import torch.nn as nn
 
-from torchutils.multipointer import commulative_avg_model_state_dicts
+from torchutils.multipointer import (
+    commulative_avg_model_state_dicts,
+    commulative_avg_params,
+    lambda_params,
+    lambda2_params,
+)
 from mutil.ElapsedTime import ElapsedTime
 
 from FLF.TorchOptRepo import TorchOptRepo
@@ -64,6 +69,7 @@ class TorchFederatedLearnerConfig(FLFConfig):
     # avg: averages the optimizer states in every round
     SERVER_OPT: str = None  # The optimizer used on the server.
     SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
+    SCAFFOLD: bool = False  # If true it uses SCAFFOLD, as described in arXiv:1910.06378
 
     @staticmethod
     def __percentage_validator(value: float) -> None:
@@ -128,7 +134,7 @@ class TorchFederatedLearner(ABC):
         os.makedirs(self.PATH, exist_ok=True)
 
         model_cls = self.get_model_cls()
-        self.model = model_cls()
+        self.model = model_cls().to(self.device)
         if self.config.SERVER_OPT is not None:
             self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
                 self.model.parameters(),
@@ -138,6 +144,10 @@ class TorchFederatedLearner(ABC):
         else:
             self.server_opt = None
         self.avg_opt_state = None
+        # TODO initialize server_c
+        if self.config.SCAFFOLD:
+            self.c = lambda_params(self.model.parameters(), th.zeros_like)
+            logging.info("SCAFFOLD: server c initialized")
 
         self.train_loader_list, self.test_loader, self.random_acc = self.load_data()
         self.n_train_batches = len(self.train_loader_list[0])
@@ -160,6 +170,7 @@ class TorchFederatedLearner(ABC):
                 },
                 is_maintaine_opt_state=config.CLIENT_OPT_STRATEGY == "nothing",
                 exp_id=experiment.id,
+                is_scaffold=self.config.SCAFFOLD,
             )
             for loader in self.train_loader_list
         ]
@@ -244,6 +255,10 @@ class TorchFederatedLearner(ABC):
 
         comm_avg_model_state = None
         comm_avg_opt_state = None
+        # TODO initialize comm_c
+        if self.config.SCAFFOLD:
+            comm_c = None
+            logging.info("SCAFFOLD: comm_c initialized")
 
         for i, client in enumerate(client_sample):
             client.set_model(self.model.state_dict())
@@ -252,9 +267,20 @@ class TorchFederatedLearner(ABC):
             ):
                 client.set_opt_state(self.avg_opt_state)
 
-            model_state, opt_state = client.train_round(
-                self.config.N_EPOCH_PER_CLIENT, curr_round
-            )
+            if self.config.SCAFFOLD:
+                client.set_server_c(self.c)
+
+            # TODO get c
+            if self.config.SCAFFOLD:
+                model_state, opt_state, c = client.train_round(
+                    self.config.N_EPOCH_PER_CLIENT, curr_round
+                )
+                comm_c = commulative_avg_params(comm_c, c, i)
+                logging.info("SCAFFOLD: c received from client")
+            else:
+                model_state, opt_state = client.train_round(
+                    self.config.N_EPOCH_PER_CLIENT, curr_round
+                )
 
             comm_avg_model_state = commulative_avg_model_state_dicts(
                 comm_avg_model_state, model_state, i
@@ -284,6 +310,15 @@ class TorchFederatedLearner(ABC):
         else:
             self.__log("setting avg model state")
             self.model.load_state_dict(comm_avg_model_state)
+        # TODO update server_c
+        if self.config.SCAFFOLD:
+            self.c = lambda2_params(
+                self.c,
+                comm_c,
+                lambda a, b: a + (b * len(client_sample) / self.config.N_CLIENTS),
+            )
+            logging.info("SCAFFOLD: server c updated")
+
         self.avg_opt_state = comm_avg_opt_state
         comm_avg_opt_state = None
 
