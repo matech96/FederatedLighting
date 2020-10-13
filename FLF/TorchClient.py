@@ -53,6 +53,7 @@ class TorchClient:
         self.opt = None
         # TODO init self.c
         self.is_scaffold = is_scaffold
+        self.server_c = None
 
         logging.info(f"Client {self.id} was created")
 
@@ -66,6 +67,7 @@ class TorchClient:
 
     def set_server_c(self, c):
         assert self.is_scaffold
+        assert self.server_c is None
         self.server_c = c
         self.__log("SCAFFOLD: server c received")
 
@@ -138,6 +140,7 @@ class TorchClient:
                 # TODO update self.c
                 self.state_man.c = lambda2_params(self.state_man.c, c_update, lambda a, b: a + b)
                 self.__log("SCAFFOLD: client c updated")
+                self.server_c = None
                 return (
                     self.state_man.get_current_model_state(),
                     self.state_man.get_current_opt_state(),

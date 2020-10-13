@@ -110,7 +110,7 @@ class TorchModelOptStateManager:
             self.__model_state_to_be_loaded = None
 
             # TODO delete c
-            if self.is_store_on_disk and (self.c is not None): # TODO check for none
+            if self.is_store_on_disk and (self.c is not None):
                 th.save(list(self.c), self.__c_path)
                 self.__log(f"c saved: {self.__c_path}")
             self.c = None
