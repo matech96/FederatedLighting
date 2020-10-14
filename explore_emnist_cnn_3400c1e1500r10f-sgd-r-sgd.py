@@ -20,10 +20,11 @@ max_rounds = 1500
 n_clients_per_round = 10
 NC = 3400
 C = n_clients_per_round / NC
-E = 50
+E = 1
 B = 20
 is_iid = False
-project_name = f"{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
+model = "CNN"
+project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 
 config_technical = TorchFederatedLearnerTechnicalConfig(BREAK_ROUND=300)
 
@@ -42,6 +43,7 @@ config = TorchFederatedLearnerEMNISTConfig(
     N_CLIENTS=NC,
     N_EPOCH_PER_CLIENT=E,
     MAX_ROUNDS=max_rounds,
+    MODEL=model
 )
 
 explore_lr(

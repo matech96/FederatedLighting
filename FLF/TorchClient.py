@@ -123,15 +123,12 @@ class TorchClient:
 
             # TODO update candidate for self.c (12 ii)
             if self.is_scaffold:
-                x_y = lambda2_params(
-                    self.trainer.model.parameters(),
-                    self.state_man.model.parameters(),
-                    lambda a, b: a - b,
-                )
                 conf = self.trainer.config
                 K = curr_batch * curr_epoch
-                additive = lambda_params(
-                    x_y, lambda x: x / (K * conf.CLIENT_LEARNING_RATE)
+                additive = lambda2_params(
+                    self.trainer.model.parameters(),
+                    self.state_man.model.parameters(),
+                    lambda a, b: (a - b) / (K * conf.CLIENT_LEARNING_RATE),
                 )
                 neg_c = lambda_params(self.server_c, lambda x: -1 * x)
                 c_update = lambda2_params(
