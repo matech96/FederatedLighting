@@ -44,7 +44,7 @@ class TorchFederatedLearnerEMNIST(TorchFederatedLearner):
     def load_data(
         self,
     ) -> Tuple[List[th.utils.data.DataLoader], th.utils.data.DataLoader, float]:
-        transform = transforms.ToTensor()
+        transform = None
 
         if self.config.IS_IID_DATA:
             train_loader_list = self.get_iid_data(transform)

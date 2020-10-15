@@ -26,6 +26,7 @@ class TorchEMNISTFed(Dataset):
             img = self.transform(self.images[idx, ])
         else:
             img = th.tensor(self.images[idx, ])
+        print(self.images.shape, img.shape)
 
         return img, th.tensor(self.labels[idx, ]).long()
 
