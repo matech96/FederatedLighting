@@ -84,7 +84,6 @@ class TorchClient:
             for curr_epoch in range(n_epochs):
                 correct = 0
                 for curr_batch, (data, target) in enumerate(self.dataloader):
-                    print(data.shape)
                     data, target = data.to(self.device), target.to(self.device)
                     self.state_man.opt.zero_grad()
                     output = self.state_man.model(data)
