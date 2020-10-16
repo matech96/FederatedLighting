@@ -1,4 +1,5 @@
 import logging
+import datetime as dt
 
 from FLF.TorchFederatedLearnerCIFAR100 import (
     TorchFederatedLearnerCIFAR100,
@@ -10,11 +11,12 @@ from FLF.TorchFederatedLearnerEMNIST import (
 )
 from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
+# logging.basicConfig(
+#     format="%(asctime)s %(levelname)-8s %(message)s",
+#     level=logging.INFO,
+#     datefmt="%Y-%m-%d %H:%M:%S",
+# )
 
 
 def get_args(opt):

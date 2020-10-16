@@ -97,7 +97,11 @@ class TorchFederatedLearnerTechnicalConfig(FLFConfig):
     PIN_MEMORY: bool = True  # DataLoader: pin_memory
     HIST_SAMPLE: int = 0  # Number of sample per layer for weight histogram.
     SAVE_CHP_INTERVALL: int = 100  # Save the weights of the model to disk after this many rounds.
-    BREAK_ROUND: int = None  # If the prediction is still random at this point the training is stooped.
+    BREAK_ROUND: int = None  # If the prediction is still random at this point the training is stooped. This number has to contain EVAL_ROUND.
+    EVAL_ROUND: int = 1  # The number off rounds between evaluation.
+
+    def check(self):  # TODO make this nicer
+        assert self.BREAK_ROUND % self.EVAL_ROUND == 0, "BREAK_ROUND has to contain EVAL_ROUND."
 
 
 class TorchFederatedLearner(ABC):
@@ -129,6 +133,7 @@ class TorchFederatedLearner(ABC):
         self.config.set_defaults()
         self.experiment.log_parameters(self.config.flatten())
         self.config_technical = config_technical
+        self.config_technical.check()
         self.experiment.log_parameters(self.config_technical.flatten())
         self.PATH = self.tmp_dir / f"{self.experiment.id}_checkpoints"
         os.makedirs(self.PATH, exist_ok=True)
@@ -218,27 +223,32 @@ class TorchFederatedLearner(ABC):
             timer = ElapsedTime("Training")
             with timer:
                 for curr_round in range(self.config.MAX_ROUNDS):
-                    self.experiment.log_parameter("curr_round", curr_round)
+                    self.experiment.log_parameter("curr_round", curr_round)                    
                     self.__train_one_round(curr_round)
-                    metrics = self.test(self.test_loader)
-                    last100_avg_acc = mean(last100acc) if curr_round > 0 else 0
-                    metrics["last100_avg_acc"] = last100_avg_acc
+                    if curr_round % self.config_technical.EVAL_ROUND == 0:
+                        self.__log("evaluation ...")
+                        metrics = self.test(self.test_loader)
+                        self.__log("evaluated ...")
+                        self.__log("logging ...")
+                        last100_avg_acc = mean(last100acc) if curr_round > 0 else 0
+                        metrics["last100_avg_acc"] = last100_avg_acc
 
-                    self.log_metric(
-                        metrics, curr_round,
-                    )
-                    self.log_hist(curr_round)
+                        self.log_metric(
+                            metrics, curr_round,
+                        )
+                        self.log_hist(curr_round)
 
-                    test_acc = metrics["test_acc"]
-                    last100acc.append(test_acc)
-                    if self.__is_achieved_target(test_acc):
-                        break
-                    if self.__is_unable_to_learn(curr_round, last100_avg_acc):
-                        raise ToLargeLearningRateExcpetion()
+                        test_acc = metrics["test_acc"]
+                        last100acc.append(test_acc)
+                        if self.__is_achieved_target(test_acc):
+                            break
+                        if self.__is_unable_to_learn(curr_round, last100_avg_acc):
+                            raise ToLargeLearningRateExcpetion()
                     if (self.config_technical.SAVE_CHP_INTERVALL is not None) and (
                         self.config_technical.SAVE_CHP_INTERVALL % (curr_round + 1) == 0
                     ):
                         th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
+                    self.__log("logged")
             self.experiment.log_metric("elapsed_time_ms", timer.elapsed_time_ms)
         except InterruptedExperiment:
             pass
@@ -260,64 +270,65 @@ class TorchFederatedLearner(ABC):
             comm_c = None
             logging.info("SCAFFOLD: comm_c initialized")
 
-        for i, client in enumerate(client_sample):
-            client.set_model(self.model.state_dict())
-            if (self.config.CLIENT_OPT_STRATEGY == "avg") and (
-                self.avg_opt_state is not None
-            ):
-                client.set_opt_state(self.avg_opt_state)
+        with ElapsedTime("Training clients"):
+            for i, client in enumerate(client_sample):
+                client.set_model(self.model.state_dict())
+                if (self.config.CLIENT_OPT_STRATEGY == "avg") and (
+                    self.avg_opt_state is not None
+                ):
+                    client.set_opt_state(self.avg_opt_state)
 
-            if self.config.SCAFFOLD:
-                client.set_server_c(self.c)
+                if self.config.SCAFFOLD:
+                    client.set_server_c(self.c)
 
-            # TODO get c
-            if self.config.SCAFFOLD:
-                model_state, opt_state, c = client.train_round(
-                    self.config.N_EPOCH_PER_CLIENT, curr_round
-                )
-                comm_c = commulative_avg_params(comm_c, c, i)
-                logging.info("SCAFFOLD: c received from client")
-            else:
-                model_state, opt_state = client.train_round(
-                    self.config.N_EPOCH_PER_CLIENT, curr_round
-                )
-
-            comm_avg_model_state = commulative_avg_model_state_dicts(
-                comm_avg_model_state, model_state, i
-            )
-
-            if self.config.CLIENT_OPT_STRATEGY == "avg":
-                if comm_avg_opt_state is not None:
-                    comm_avg_opt_state = [
-                        commulative_avg_model_state_dicts(opt_s[0], opt_s[1], i)
-                        for opt_s in zip(comm_avg_opt_state, opt_state)
-                    ]
+                # TODO get c
+                if self.config.SCAFFOLD:
+                    model_state, opt_state, c = client.train_round(
+                        self.config.N_EPOCH_PER_CLIENT, curr_round
+                    )
+                    comm_c = commulative_avg_params(comm_c, c, i)
+                    logging.info("SCAFFOLD: c received from client")
                 else:
-                    comm_avg_opt_state = opt_state
+                    model_state, opt_state = client.train_round(
+                        self.config.N_EPOCH_PER_CLIENT, curr_round
+                    )
 
-        if self.server_opt is not None:
-            self.__log("setting gradients")
-            self.server_opt.zero_grad()
-            server_opt_state = self.server_opt.state_dict()
-            self.__set_model_grads(comm_avg_model_state)
-            self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
-                self.model.parameters(),
-                lr=self.config.SERVER_LEARNING_RATE,
-                **self.config.SERVER_OPT_ARGS,
-            )
-            self.server_opt.load_state_dict(server_opt_state)
-            self.server_opt.step()
-        else:
-            self.__log("setting avg model state")
-            self.model.load_state_dict(comm_avg_model_state)
-        # TODO update server_c
-        if self.config.SCAFFOLD:
-            self.c = lambda2_params(
-                self.c,
-                comm_c,
-                lambda a, b: a + (b * len(client_sample) / self.config.N_CLIENTS),
-            )
-            logging.info("SCAFFOLD: server c updated")
+                comm_avg_model_state = commulative_avg_model_state_dicts(
+                    comm_avg_model_state, model_state, i
+                )
+
+                if self.config.CLIENT_OPT_STRATEGY == "avg":
+                    if comm_avg_opt_state is not None:
+                        comm_avg_opt_state = [
+                            commulative_avg_model_state_dicts(opt_s[0], opt_s[1], i)
+                            for opt_s in zip(comm_avg_opt_state, opt_state)
+                        ]
+                    else:
+                        comm_avg_opt_state = opt_state
+
+        with ElapsedTime("Setting gradients"):
+            if self.server_opt is not None:
+                self.server_opt.zero_grad()
+                server_opt_state = self.server_opt.state_dict()
+                self.__set_model_grads(comm_avg_model_state)
+                self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
+                    self.model.parameters(),
+                    lr=self.config.SERVER_LEARNING_RATE,
+                    **self.config.SERVER_OPT_ARGS,
+                )
+                self.server_opt.load_state_dict(server_opt_state)
+                self.server_opt.step()
+            else:
+                self.__log("setting avg model state")
+                self.model.load_state_dict(comm_avg_model_state)
+            # TODO update server_c
+            if self.config.SCAFFOLD:
+                self.c = lambda2_params(
+                    self.c,
+                    comm_c,
+                    lambda a, b: a + (b * len(client_sample) / self.config.N_CLIENTS),
+                )
+                logging.info("SCAFFOLD: server c updated")
 
         self.avg_opt_state = comm_avg_opt_state
         comm_avg_opt_state = None
