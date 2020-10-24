@@ -99,9 +99,12 @@ class TorchFederatedLearnerTechnicalConfig(FLFConfig):
     SAVE_CHP_INTERVALL: int = 100  # Save the weights of the model to disk after this many rounds.
     BREAK_ROUND: int = None  # If the prediction is still random at this point the training is stooped. This number has to contain EVAL_ROUND.
     EVAL_ROUND: int = 1  # The number off rounds between evaluation.
+    TEST_LAST: int = 0  # Test all rounds in the last few rounds, "few" equals this number.
 
     def check(self):  # TODO make this nicer
-        assert self.BREAK_ROUND % self.EVAL_ROUND == 0, "BREAK_ROUND has to contain EVAL_ROUND."
+        assert (
+            self.BREAK_ROUND % self.EVAL_ROUND == 0
+        ), "BREAK_ROUND has to contain EVAL_ROUND."
 
 
 class TorchFederatedLearner(ABC):
@@ -218,20 +221,21 @@ class TorchFederatedLearner(ABC):
         Returns:
             None -- No return value.
         """
-        last100acc = deque(maxlen=100)
+        lastaccs = deque(maxlen=self.config_technical.TEST_LAST)
         try:
             timer = ElapsedTime("Training")
             with timer:
                 for curr_round in range(self.config.MAX_ROUNDS):
-                    self.experiment.log_parameter("curr_round", curr_round)                    
+                    self.experiment.log_parameter("curr_round", curr_round)
                     self.__train_one_round(curr_round)
-                    if curr_round % self.config_technical.EVAL_ROUND == 0:
+                    is_last_testing = (self.config.MAX_ROUNDS - curr_round) <= self.config_technical.TEST_LAST
+                    if (curr_round % self.config_technical.EVAL_ROUND == 0) or (
+                        is_last_testing
+                    ):
                         self.__log("evaluation ...")
                         metrics = self.test(self.test_loader)
                         self.__log("evaluated ...")
                         self.__log("logging ...")
-                        last100_avg_acc = mean(last100acc) if curr_round > 0 else 0
-                        metrics["last100_avg_acc"] = last100_avg_acc
 
                         self.log_metric(
                             metrics, curr_round,
@@ -239,16 +243,20 @@ class TorchFederatedLearner(ABC):
                         self.log_hist(curr_round)
 
                         test_acc = metrics["test_acc"]
-                        last100acc.append(test_acc)
+                        lastaccs.append(test_acc)
                         if self.__is_achieved_target(test_acc):
                             break
-                        if self.__is_unable_to_learn(curr_round, last100_avg_acc):
+                        if self.__is_unable_to_learn(curr_round, test_acc):
                             raise ToLargeLearningRateExcpetion()
                     if (self.config_technical.SAVE_CHP_INTERVALL is not None) and (
                         self.config_technical.SAVE_CHP_INTERVALL % (curr_round + 1) == 0
                     ):
                         th.save(self.model.state_dict(), self.PATH / f"{curr_round}.pt")
                     self.__log("logged")
+                last_avg_acc = mean(lastaccs)
+                self.log_metric(
+                    {"last_avg_acc": last_avg_acc}, curr_round,
+                )
             self.experiment.log_metric("elapsed_time_ms", timer.elapsed_time_ms)
         except InterruptedExperiment:
             pass
