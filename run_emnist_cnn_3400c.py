@@ -50,7 +50,7 @@ for E in [1, 5, 10, 20, 30]:
                 MODEL=model,
             )
             config_technical = TorchFederatedLearnerTechnicalConfig(
-                BREAK_ROUND=300, EVAL_ROUND=10, TEST_LAST=10
+                BREAK_ROUND=300, EVAL_ROUND=10, TEST_LAST=20
             )
             name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
             experiment = Experiment(
