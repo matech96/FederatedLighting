@@ -13,7 +13,7 @@ server_opt = "SGD"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 
-max_rounds = 500
+max_rounds = 100
 n_clients_per_round = 10
 NC = 3400
 C = n_clients_per_round / NC
@@ -22,20 +22,12 @@ is_iid = False
 model = "CNN"
 
 
-for E in [1, 5, 10, 15, 20, 25, 30]:
+for E in [1, 5, 10, 20, 30]:
     project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 
     for client_lr_lg in np.arange(-3.5, 0, 0.5):
         client_lr = 10 ** client_lr_lg
         for server_lr_lg in np.arange(-1.5, 2, 0.5):
-            if (E < 15) or (
-                (E == 15)
-                and (
-                    (client_lr_lg < -1) or ((client_lr_lg == -1) and server_lr_lg < 0)
-                )
-            ):
-                continue
-
             server_lr = 10 ** server_lr_lg
             config = TorchFederatedLearnerEMNISTConfig(
                 CLIENT_LEARNING_RATE=client_lr,
@@ -55,11 +47,11 @@ for E in [1, 5, 10, 15, 20, 25, 30]:
                 MODEL=model,
             )
             config_technical = TorchFederatedLearnerTechnicalConfig(
-                BREAK_ROUND=300, EVAL_ROUND=100
+                BREAK_ROUND=300, EVAL_ROUND=10, TEST_LAST=20
             )
             name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
             experiment = Experiment(
-                workspace="federated-learning-emnist", project_name=project_name
+                workspace="federated-learning-emnist-s", project_name=project_name
             )
             try:
                 common.do_training_emnist(experiment, name, config, config_technical)

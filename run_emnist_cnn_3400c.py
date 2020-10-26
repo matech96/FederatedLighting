@@ -30,7 +30,7 @@ for E in [1, 5, 10, 20, 30]:
 
     for client_lr_lg in np.arange(-3.5, 0, 0.5):
         client_lr = 10 ** client_lr_lg
-        for server_lr_lg in np.arange(-4, -0.5, 0.5):
+        for server_lr_lg in np.arange(-1, 0, 0.5):
             server_lr = 10 ** server_lr_lg
             config = TorchFederatedLearnerEMNISTConfig(
                 CLIENT_LEARNING_RATE=client_lr,
