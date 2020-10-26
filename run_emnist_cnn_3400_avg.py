@@ -10,7 +10,7 @@ import common
 # server_lr = 0.001
 # client_lr = 0.1
 server_opt = "SGD"
-client_opt = "Adam"
+client_opt = "Yogi"
 client_opt_strategy = "avg"
 
 max_rounds = 100
