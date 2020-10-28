@@ -89,13 +89,18 @@ class TorchClient:
                     output = self.state_man.model(data)
                     loss = self.loss(output, target)
                     loss.backward()
-                    # TODO change grads (10)
+                    # change grads (10)
                     if self.is_scaffold:
                         with th.no_grad():
                             additive = lambda2_params(
                                 self.state_man.c, self.server_c, lambda a, b: -1 * a + b
                             )
-                            for p0, p1 in zip(self.state_man.model.parameters(), additive):
+                            nn.utils.clip_grad_norm_(
+                                self.state_man.model.parameters(), 6.0
+                            )
+                            for p0, p1 in zip(
+                                self.state_man.model.parameters(), additive
+                            ):
                                 p0.grad = p0.grad + p1
                         self.__log("SCAFFOLD: gradient modified")
 
@@ -121,27 +126,27 @@ class TorchClient:
                     self.state_man.get_current_opt_state(), True
                 )
 
-            # TODO update candidate for self.c (12 ii)
             if self.is_scaffold:
+                # update candidate for self.c (12 ii)
                 conf = self.trainer.config
-                K = curr_batch * curr_epoch
+                K = (curr_batch + 1) * (curr_epoch + 1)
                 additive = lambda2_params(
                     self.trainer.model.parameters(),
                     self.state_man.model.parameters(),
                     lambda a, b: (a - b) / (K * conf.CLIENT_LEARNING_RATE),
                 )
                 neg_c = lambda_params(self.server_c, lambda x: -1 * x)
-                c_update = lambda2_params(
-                    neg_c, additive, lambda a, b: a + b
+                c_update = lambda2_params(neg_c, additive, lambda a, b: a + b)
+                # update self.c
+                self.state_man.c = lambda2_params(
+                    self.state_man.c, c_update, lambda a, b: a + b
                 )
-                # TODO update self.c
-                self.state_man.c = lambda2_params(self.state_man.c, c_update, lambda a, b: a + b)
                 self.__log("SCAFFOLD: client c updated")
                 self.server_c = None
                 return (
                     self.state_man.get_current_model_state(),
                     self.state_man.get_current_opt_state(),
-                    # TODO send the diff between curren and candidate self.c (13)
+                    # send the diff between curren and candidate self.c (13)
                     c_update,
                 )
             else:

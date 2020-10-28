@@ -31,7 +31,7 @@ class TorchModelOptStateManager:
 
         self.__model_state_to_be_loaded = None
         self.__opt_state_to_be_loaded = None
-        
+
         self.__opt_path = self.tmp_dir / f"{exp_id}_{self.id}_opt.pt"
         self.__c_path = self.tmp_dir / f"{exp_id}_{self.id}_c.pt"
         self.__delete_objects_tmp_files()

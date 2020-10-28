@@ -152,8 +152,8 @@ class TorchFederatedLearner(ABC):
         else:
             self.server_opt = None
         self.avg_opt_state = None
-        # TODO initialize server_c
         if self.config.SCAFFOLD:
+            # initialize server_c
             self.c = lambda_params(self.model.parameters(), th.zeros_like)
             logging.info("SCAFFOLD: server c initialized")
 
@@ -228,7 +228,9 @@ class TorchFederatedLearner(ABC):
                 for curr_round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", curr_round)
                     self.__train_one_round(curr_round)
-                    is_last_testing = (self.config.MAX_ROUNDS - curr_round) <= self.config_technical.TEST_LAST
+                    is_last_testing = (
+                        self.config.MAX_ROUNDS - curr_round
+                    ) <= self.config_technical.TEST_LAST
                     if (curr_round % self.config_technical.EVAL_ROUND == 0) or (
                         is_last_testing
                     ):
@@ -273,8 +275,8 @@ class TorchFederatedLearner(ABC):
 
         comm_avg_model_state = None
         comm_avg_opt_state = None
-        # TODO initialize comm_c
         if self.config.SCAFFOLD:
+            # initialize comm_c
             comm_c = None
             logging.info("SCAFFOLD: comm_c initialized")
 
@@ -289,8 +291,8 @@ class TorchFederatedLearner(ABC):
                 if self.config.SCAFFOLD:
                     client.set_server_c(self.c)
 
-                # TODO get c
                 if self.config.SCAFFOLD:
+                    # get c
                     model_state, opt_state, c = client.train_round(
                         self.config.N_EPOCH_PER_CLIENT, curr_round
                     )
@@ -329,8 +331,8 @@ class TorchFederatedLearner(ABC):
             else:
                 self.__log("setting avg model state")
                 self.model.load_state_dict(comm_avg_model_state)
-            # TODO update server_c
             if self.config.SCAFFOLD:
+                # update server_c
                 self.c = lambda2_params(
                     self.c,
                     comm_c,
