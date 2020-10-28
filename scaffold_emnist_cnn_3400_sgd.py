@@ -42,7 +42,7 @@ config = TorchFederatedLearnerEMNISTConfig(
     # SCAFFOLD=True,
 )
 config_technical = TorchFederatedLearnerTechnicalConfig(
-    BREAK_ROUND=300, EVAL_ROUND=10, TEST_LAST=20#, STORE_OPT_ON_DISK=False
+    BREAK_ROUND=300, EVAL_ROUND=10, TEST_LAST=20, STORE_OPT_ON_DISK=False
 )
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
 experiment = Experiment(
