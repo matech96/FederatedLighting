@@ -29,6 +29,16 @@ for E in [1, 5, 10, 20, 30]:
         client_lr = 10 ** client_lr_lg
         for server_lr_lg in np.arange(-1.5, 2, 0.5):
             server_lr = 10 ** server_lr_lg
+
+            if (E < 30) or (
+                (E == 30)
+                and (
+                    (client_lr_lg < -2)
+                    or ((client_lr_lg == -2) and (server_lr_lg < 0.5))
+                )
+            ):
+                continue
+
             config = TorchFederatedLearnerEMNISTConfig(
                 CLIENT_LEARNING_RATE=client_lr,
                 CLIENT_OPT=common.get_name(client_opt),
