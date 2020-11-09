@@ -12,7 +12,7 @@ import common
 
 # server_lr = 0.001
 # client_lr = 0.1
-server_opt = "Yogi"
+server_opt = "SGD"
 client_opt = "Yogi"
 client_opt_strategy = "avg"
 
@@ -25,7 +25,7 @@ is_iid = False
 model = "CNN"
 
 
-for E in [1, 5, 10, 20, 30]:
+for E in [1]:  # , 5, 10, 20, 30]:
     project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 
     for client_lr_lg in np.arange(-3.5, 0, 0.5):
@@ -48,13 +48,14 @@ for E in [1, 5, 10, 20, 30]:
                 N_EPOCH_PER_CLIENT=E,
                 MAX_ROUNDS=max_rounds,
                 MODEL=model,
+                SCAFFOLD=True
             )
             config_technical = TorchFederatedLearnerTechnicalConfig(
                 BREAK_ROUND=300, EVAL_ROUND=10, TEST_LAST=20, STORE_OPT_ON_DISK=False
             )
             name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
             experiment = Experiment(
-                workspace="federated-learning-emnist-s", project_name=project_name
+                workspace="federated-learning-scaffold", project_name=project_name
             )
             try:
                 common.do_training_emnist(experiment, name, config, config_technical)
