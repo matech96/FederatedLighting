@@ -76,7 +76,7 @@ def get_besr_lrs_from_exps(SOPT, STR="r", COPT="sgd"):
         slr = exp_params2list(exps, "SERVER_LEARNING_RATE", float)
         clr = exp_params2list(exps, "CLIENT_LEARNING_RATE", float)
         acc = exp_metrics2list(exps, "last_avg_acc", float)
-        df = pd.DataFrame({"slr": np.log10(slr), "clr": np.log10(clr), "acc": acc})
+        df = pd.DataFrame({"slr": slr, "clr": clr, "acc": acc})
         i = df["acc"].idxmax()
         m = df.iloc[i]
         maxes = maxes.append(

@@ -22,8 +22,8 @@ model = "CNN"
 for _ in range(10):
     for _, m in common.get_besr_lrs_from_exps(server_opt, client_opt_strategy[0], client_opt).iterrows():
         E = m["E"]
-        server_lr = 10 ** m["slr"]
-        client_lr = 10 ** m["clr"]
+        server_lr = m["slr"]
+        client_lr = m["clr"]
         project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}-compare-best-lr"
         config = TorchFederatedLearnerEMNISTConfig(
             CLIENT_LEARNING_RATE=client_lr,

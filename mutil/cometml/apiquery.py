@@ -60,3 +60,5 @@ class ExperminetInfo:
             {k: pd.Series(v["d"], v["i"]) for k, v in values_dict.items()}
         )
 
+    def get_parameter(self, parameter_name, t):
+        return t(self.exp.get_parameters_summary(parameter_name)["valueCurrent"])

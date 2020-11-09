@@ -19,7 +19,7 @@ is_iid = False
 model = "CNN"
 
 for _ in range(10):
-    for m in common.get_besr_lrs_from_exps(server_opt, "a", client_opt):
+    for _, m in common.get_besr_lrs_from_exps(server_opt, "a", client_opt).iterrows():
         for client_opt_strategy in ["reinit", "nothing"]:
             E = m["E"]
             client_lr = m["clr"]
