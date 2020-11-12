@@ -73,13 +73,10 @@ def get_experiments(comet_api, SOPT, STR="r", COPT="sgd", E=1, project="emnist-s
     r = re.compile(
         r"cnn(?P<NC>\d+)c(?P<E>\d+)e(?P<max_rounds>\d+)r(?P<n_clients_per_round>\d+)f-(?P<server_opt>\w+)-(?P<client_opt_strategy>\w+)-(?P<client_opt>\w+)"
     )
-    r2 = re.compile(
-        r"cnn(?P<NC>\d+)c(?P<E>\d+)-0e(?P<max_rounds>\d+)r(?P<n_clients_per_round>\d+)f-(?P<server_opt>\w+)-(?P<client_opt_strategy>\w+)-(?P<client_opt>\w+)"
-    )
     for proj in projs:
         m = r.search(proj)
         if m is None:
-            m = r2.search(proj)
+            continue
         if (
             (int(m.group("E")) == E)
             and (m.group("server_opt") == SOPT.lower())
