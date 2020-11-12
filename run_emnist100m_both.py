@@ -16,7 +16,7 @@ server_opt = "Yogi"
 client_opt = "Yogi"
 client_opt_strategy = "avg"
 
-max_rounds = 10
+max_rounds = 30
 n_clients_per_round = 170
 NC = 340
 C = n_clients_per_round / NC
@@ -29,7 +29,7 @@ project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt
 
 for client_lr_lg in np.arange(-3.0, -0.5, 0.5):
     client_lr = 10 ** client_lr_lg
-    for server_lr_lg in [-0.5]:  # np.arange(-3.0, -0.5, 0.5):
+    for server_lr_lg in np.arange(-3.0, -0.5, 0.5):
         server_lr = 10 ** server_lr_lg
         config = TorchFederatedLearnerEMNISTConfig(
             CLIENT_LEARNING_RATE=client_lr,
@@ -57,7 +57,7 @@ for client_lr_lg in np.arange(-3.0, -0.5, 0.5):
         )
         name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
         experiment = Experiment(
-            workspace="federated-learning-emnist-m", project_name=project_name
+            workspace="federated-learning-emnistlm", project_name=project_name
         )
         try:
             common.do_training_emnist(experiment, name, config, config_technical)
