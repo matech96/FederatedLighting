@@ -29,7 +29,7 @@ project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt
 
 for client_lr_lg in np.arange(-3.0, -0.5, 0.5):
     client_lr = 10 ** client_lr_lg
-    for server_lr_lg in np.arange(-1.0, 1.5, 0.5):
+    for server_lr_lg in [-1.5]:  # np.arange(-1.0, 1.5, 0.5):
         server_lr = 10 ** server_lr_lg
         config = TorchFederatedLearnerEMNISTConfig(
             CLIENT_LEARNING_RATE=client_lr,
