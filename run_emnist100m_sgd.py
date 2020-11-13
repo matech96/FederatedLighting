@@ -52,8 +52,8 @@ for client_lr_lg in np.arange(-1.5, 1.0, 0.5):
             BREAK_ROUND=300,
             EVAL_ROUND=1,
             TEST_LAST=1,
-            STORE_OPT_ON_DISK=False,
-            STORE_MODEL_IN_RAM=False,
+            # STORE_OPT_ON_DISK=False,
+            # STORE_MODEL_IN_RAM=False,
         )
         name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
         experiment = Experiment(
