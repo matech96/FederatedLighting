@@ -30,6 +30,3 @@ class TorchOptRepo:
         res.remove("self")
         res.remove("params")
         return res
-
-
-

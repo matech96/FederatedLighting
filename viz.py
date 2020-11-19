@@ -71,7 +71,7 @@ def get_experiments(comet_api, SOPT, STR="r", COPT="sgd", E=1, project="emnist-s
     workspace = f"federated-learning-{project}"
     projs = comet_api.get(workspace)
     r = re.compile(
-        r"cnn(?P<NC>\d+)c(?P<E>\d+)e(?P<max_rounds>\d+)r(?P<n_clients_per_round>\d+)f-(?P<server_opt>\w+)-(?P<client_opt_strategy>\w+)-(?P<client_opt>\w+)"
+        r"^cnn(?P<NC>\d+)c(?P<E>\d+)e(?P<max_rounds>\d+)r(?P<n_clients_per_round>\d+)f-(?P<server_opt>\w+)-(?P<client_opt_strategy>\w+)-(?P<client_opt>\w+)$"
     )
     for proj in projs:
         m = r.search(proj)

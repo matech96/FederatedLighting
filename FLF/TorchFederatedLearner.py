@@ -67,6 +67,8 @@ class TorchFederatedLearnerConfig(FLFConfig):
     # reinit: reinitializes the optimizer in every round
     # nothing: leavs the optimizer intect
     # avg: averages the optimizer states in every round
+    CLIENT_OPT_STRATEGY_UNITL: int = None  # The CLIENT_OPT_STRATEGY is set to "reinit" after this many rounds.
+    CLIENT_SGD_LEARNING_RATE: float = 0.01  # The learining rate used by SGD after the lient strategy was turned off.
     SERVER_OPT: str = None  # The optimizer used on the server.
     SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
     SCAFFOLD: bool = False  # If true it uses SCAFFOLD, as described in arXiv:1910.06378
@@ -153,7 +155,6 @@ class TorchFederatedLearner(ABC):
             self.server_opt = None
         self.avg_opt_state = None
         if self.config.SCAFFOLD:
-            # initialize server_c
             self.c = lambda_params(self.model.parameters(), th.zeros_like)
             logging.info("SCAFFOLD: server c initialized")
 
@@ -227,6 +228,10 @@ class TorchFederatedLearner(ABC):
             with timer:
                 for curr_round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", curr_round)
+                    # TODO if current round is larger than until
+                    #   __switch_to_sgd
+                    if self.config.CLIENT_OPT_STRATEGY_UNITL < curr_round:
+                        self.__switch_to_sgd(self.config.CLIENT_SGD_LEARNING_RATE)
                     self.__train_one_round(curr_round)
                     is_last_testing = (
                         self.config.MAX_ROUNDS - curr_round
@@ -268,6 +273,15 @@ class TorchFederatedLearner(ABC):
             type(self).__name__, "state_dict.pt",
         )
 
+    def __switch_to_sgd(self):
+        # TODO call switch on all clients
+        for client in self.clients:
+            client.switch_to_sgd()
+        # set strat to "reinit"
+        self.config.CLIENT_OPT_STRATEGY = "reinit"
+        # set client_opt to sgd
+        self.config.CLIENT_OPT = "SGD"
+
     def __train_one_round(self, curr_round: int):
         self.model.train()
 
@@ -276,7 +290,6 @@ class TorchFederatedLearner(ABC):
         comm_avg_model_state = None
         comm_avg_opt_state = None
         if self.config.SCAFFOLD:
-            # initialize comm_c
             comm_c = None
             logging.info("SCAFFOLD: comm_c initialized")
 
@@ -292,7 +305,6 @@ class TorchFederatedLearner(ABC):
                     client.set_server_c(self.c)
 
                 if self.config.SCAFFOLD:
-                    # get c
                     model_state, opt_state, c = client.train_round(
                         self.config.N_EPOCH_PER_CLIENT, curr_round
                     )
@@ -332,7 +344,6 @@ class TorchFederatedLearner(ABC):
                 self.__log("setting avg model state")
                 self.model.load_state_dict(comm_avg_model_state)
             if self.config.SCAFFOLD:
-                # update server_c
                 self.c = lambda2_params(
                     self.c,
                     comm_c,
