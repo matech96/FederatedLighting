@@ -67,7 +67,8 @@ class TorchFederatedLearnerConfig(FLFConfig):
     # reinit: reinitializes the optimizer in every round
     # nothing: leavs the optimizer intect
     # avg: averages the optimizer states in every round
-    CLIENT_OPT_STRATEGY_UNITL: int = None  # TODO description
+    CLIENT_OPT_STRATEGY_UNITL: int = None  # The CLIENT_OPT_STRATEGY is set to "reinit" after this many rounds.
+    CLIENT_SGD_LEARNING_RATE: float = 0.01  # The learining rate used by SGD after the lient strategy was turned off.
     SERVER_OPT: str = None  # The optimizer used on the server.
     SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
     SCAFFOLD: bool = False  # If true it uses SCAFFOLD, as described in arXiv:1910.06378
@@ -227,9 +228,11 @@ class TorchFederatedLearner(ABC):
             with timer:
                 for curr_round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", curr_round)
-                    self.__train_one_round(curr_round)
                     # TODO if current round is larger than until
-                        # __switch_to_sgd
+                    #   __switch_to_sgd
+                    if self.config.CLIENT_OPT_STRATEGY_UNITL < curr_round:
+                        self.__switch_to_sgd(self.config.CLIENT_SGD_LEARNING_RATE)
+                    self.__train_one_round(curr_round)
                     is_last_testing = (
                         self.config.MAX_ROUNDS - curr_round
                     ) <= self.config_technical.TEST_LAST
@@ -271,10 +274,13 @@ class TorchFederatedLearner(ABC):
         )
 
     def __switch_to_sgd(self):
-        pass
         # TODO call switch on all clients
+        for client in self.clients:
+            client.switch_to_sgd()
         # set strat to "reinit"
+        self.config.CLIENT_OPT_STRATEGY = "reinit"
         # set client_opt to sgd
+        self.config.CLIENT_OPT = "SGD"
 
     def __train_one_round(self, curr_round: int):
         self.model.train()

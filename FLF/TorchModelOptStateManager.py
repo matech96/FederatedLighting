@@ -6,6 +6,8 @@ import torch as th
 import copy
 import os
 
+from FLF.TorchOptRepo import TorchOptRepo
+
 os.makedirs("tmp", exist_ok=True)
 
 
@@ -43,12 +45,20 @@ class TorchModelOptStateManager:
     def __del__(self):
         self.__delete_objects_tmp_files()
 
-    def switch_to_sgd(self):
-        pass
+    def switch_to_sgd(self, lr):
         # TODO __del__
+        self.__delete_objects_tmp_files()
         # opt_cls = sgd
+        self.opt_cls = TorchOptRepo.name2cls("SGD")
         # delete self.opt
+        self.opt = None
         # delete __opt_state_to_be_loaded
+        self.__opt_state_to_be_loaded = None
+        # lr
+        self.opt_cls_param = {
+            "lr": lr,
+            "weight_decay": self.opt_cls_param["weight_decay"],
+        }
 
     def get_current_model_state(self):
         return copy.deepcopy(self.model.state_dict())
