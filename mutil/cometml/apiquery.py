@@ -48,6 +48,9 @@ class ExperminetInfo:
         if metric_names is None:
             metric_names = self.metric_names
 
+        if not isinstance(metric_names, list):
+            metric_names = [metric_names]
+
         values_dict = defaultdict(lambda: {"d": [], "i": []})
         for metric_name in metric_names:
             metrics = self.exp.get_metrics(metric_name)

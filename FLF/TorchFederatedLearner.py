@@ -153,7 +153,6 @@ class TorchFederatedLearner(ABC):
             self.server_opt = None
         self.avg_opt_state = None
         if self.config.SCAFFOLD:
-            # initialize server_c
             self.c = lambda_params(self.model.parameters(), th.zeros_like)
             logging.info("SCAFFOLD: server c initialized")
 
@@ -276,7 +275,6 @@ class TorchFederatedLearner(ABC):
         comm_avg_model_state = None
         comm_avg_opt_state = None
         if self.config.SCAFFOLD:
-            # initialize comm_c
             comm_c = None
             logging.info("SCAFFOLD: comm_c initialized")
 
@@ -292,7 +290,6 @@ class TorchFederatedLearner(ABC):
                     client.set_server_c(self.c)
 
                 if self.config.SCAFFOLD:
-                    # get c
                     model_state, opt_state, c = client.train_round(
                         self.config.N_EPOCH_PER_CLIENT, curr_round
                     )
@@ -332,7 +329,6 @@ class TorchFederatedLearner(ABC):
                 self.__log("setting avg model state")
                 self.model.load_state_dict(comm_avg_model_state)
             if self.config.SCAFFOLD:
-                # update server_c
                 self.c = lambda2_params(
                     self.c,
                     comm_c,
