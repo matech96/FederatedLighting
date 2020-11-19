@@ -51,11 +51,14 @@ class TorchClient:
         self.is_maintaine_opt_state = is_maintaine_opt_state
 
         self.opt = None
-        # TODO init self.c
         self.is_scaffold = is_scaffold
         self.server_c = None
 
         logging.info(f"Client {self.id} was created")
+
+    def switch_to_sgd(self):
+        pass
+        # TODO state_man.switch
 
     def set_model(
         self, model_state_dict
@@ -75,7 +78,6 @@ class TorchClient:
         self, n_epochs, curr_round
     ):  # TODO DOC: curr_round for logging purpuses.
         with self.state_man:
-            # TODO initialize self.c from model state dict
             if self.is_scaffold and (self.state_man.c is None):
                 self.state_man.c = lambda_params(
                     self.state_man.model.parameters(), th.zeros_like
@@ -89,7 +91,6 @@ class TorchClient:
                     output = self.state_man.model(data)
                     loss = self.loss(output, target)
                     loss.backward()
-                    # change grads (10)
                     if self.is_scaffold:
                         with th.no_grad():
                             additive = lambda2_params(
@@ -127,7 +128,6 @@ class TorchClient:
                 )
 
             if self.is_scaffold:
-                # update candidate for self.c (12 ii)
                 conf = self.trainer.config
                 K = (curr_batch + 1) * (curr_epoch + 1)
                 additive = lambda2_params(
@@ -137,7 +137,6 @@ class TorchClient:
                 )
                 neg_c = lambda_params(self.server_c, lambda x: -1 * x)
                 c_update = lambda2_params(neg_c, additive, lambda a, b: a + b)
-                # update self.c
                 self.state_man.c = lambda2_params(
                     self.state_man.c, c_update, lambda a, b: a + b
                 )
@@ -146,7 +145,6 @@ class TorchClient:
                 return (
                     self.state_man.get_current_model_state(),
                     self.state_man.get_current_opt_state(),
-                    # send the diff between curren and candidate self.c (13)
                     c_update,
                 )
             else:

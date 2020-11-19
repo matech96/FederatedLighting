@@ -38,11 +38,17 @@ class TorchModelOptStateManager:
 
         self.model = None
         self.opt = None
-        # TODO init c
         self.c = None
 
     def __del__(self):
         self.__delete_objects_tmp_files()
+
+    def switch_to_sgd(self):
+        pass
+        # TODO __del__
+        # opt_cls = sgd
+        # delete self.opt
+        # delete __opt_state_to_be_loaded
 
     def get_current_model_state(self):
         return copy.deepcopy(self.model.state_dict())
@@ -91,7 +97,6 @@ class TorchModelOptStateManager:
             self.opt.load_state_dict(new_state_dict)
             self.__log("opt state loaded")
 
-        # TODO load c
         if self.__c_path.exists():
             assert self.c is None
             self.c = th.load(self.__c_path)
@@ -109,7 +114,6 @@ class TorchModelOptStateManager:
             self.__opt_state_to_be_loaded = None
             self.__model_state_to_be_loaded = None
 
-            # TODO delete c
             if self.is_store_on_disk and (self.c is not None):
                 th.save(list(self.c), self.__c_path)
                 self.__log(f"c saved: {self.__c_path}")

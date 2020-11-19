@@ -67,6 +67,7 @@ class TorchFederatedLearnerConfig(FLFConfig):
     # reinit: reinitializes the optimizer in every round
     # nothing: leavs the optimizer intect
     # avg: averages the optimizer states in every round
+    CLIENT_OPT_STRATEGY_UNITL: int = None  # TODO description
     SERVER_OPT: str = None  # The optimizer used on the server.
     SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
     SCAFFOLD: bool = False  # If true it uses SCAFFOLD, as described in arXiv:1910.06378
@@ -227,6 +228,8 @@ class TorchFederatedLearner(ABC):
                 for curr_round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", curr_round)
                     self.__train_one_round(curr_round)
+                    # TODO if current round is larger than until
+                        # __switch_to_sgd
                     is_last_testing = (
                         self.config.MAX_ROUNDS - curr_round
                     ) <= self.config_technical.TEST_LAST
@@ -266,6 +269,12 @@ class TorchFederatedLearner(ABC):
         self.experiment.log_model(
             type(self).__name__, "state_dict.pt",
         )
+
+    def __switch_to_sgd(self):
+        pass
+        # TODO call switch on all clients
+        # set strat to "reinit"
+        # set client_opt to sgd
 
     def __train_one_round(self, curr_round: int):
         self.model.train()
