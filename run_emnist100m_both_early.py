@@ -59,7 +59,7 @@ config_technical = TorchFederatedLearnerTechnicalConfig(
 )
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
 experiment = Experiment(
-    workspace="federated-learning-emnistml", project_name=project_name
+    workspace="federated-learning-emnistlm", project_name=project_name
 )
 try:
     common.do_training_emnist(experiment, name, config, config_technical)

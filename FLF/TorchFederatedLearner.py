@@ -273,10 +273,10 @@ class TorchFederatedLearner(ABC):
             type(self).__name__, "state_dict.pt",
         )
 
-    def __switch_to_sgd(self):
+    def __switch_to_sgd(self, lr):
         # TODO call switch on all clients
         for client in self.clients:
-            client.switch_to_sgd()
+            client.switch_to_sgd(lr)
         # set strat to "reinit"
         self.config.CLIENT_OPT_STRATEGY = "reinit"
         # set client_opt to sgd
