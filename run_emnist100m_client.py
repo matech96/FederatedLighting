@@ -14,7 +14,7 @@ import common
 # client_lr = 0.1
 server_opt = "SGD"
 client_opt = "Yogi"
-client_opt_strategy = "reinit"
+client_opt_strategy = "avg"
 
 max_rounds = 30
 n_clients_per_round = 170
