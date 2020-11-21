@@ -86,8 +86,8 @@ class TorchEMNISTFed(Dataset):
         return images, labels
 
     def _get_data(self, split):
-        if isinstance(split, str) and split == "test":
-            data_set = "test"
+        if isinstance(split, str):
+            data_set = split
             client_ids = self.get_client_ids(data_set)
         else:
             data_set = "train"
