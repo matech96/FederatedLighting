@@ -39,6 +39,7 @@ config = TorchFederatedLearnerEMNISTConfig(
     CLIENT_OPT_STRATEGY=client_opt_strategy,
     CLIENT_OPT_STRATEGY_UNITL=4,
     CLIENT_SGD_LEARNING_RATE=0.1,  # 10 ** (-1.5),
+    CLIENT_SGD_SERVER_REINIT=True,
     SERVER_OPT=common.get_name(server_opt),
     SERVER_OPT_ARGS=common.get_args(server_opt),
     SERVER_LEARNING_RATE=server_lr,

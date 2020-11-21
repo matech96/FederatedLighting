@@ -69,6 +69,7 @@ class TorchFederatedLearnerConfig(FLFConfig):
     # avg: averages the optimizer states in every round
     CLIENT_OPT_STRATEGY_UNITL: int = None  # The CLIENT_OPT_STRATEGY is set to "reinit" after this many rounds.
     CLIENT_SGD_LEARNING_RATE: float = 0.01  # The learining rate used by SGD after the lient strategy was turned off.
+    CLIENT_SGD_SERVER_REINIT: bool = False  # If true reinitializes the server optimizer, when client optimizer is changed to sgd.
     SERVER_OPT: str = None  # The optimizer used on the server.
     SERVER_OPT_ARGS: Dict = {}  # Extra arguments for the server optimizer
     SCAFFOLD: bool = False  # If true it uses SCAFFOLD, as described in arXiv:1910.06378
@@ -145,14 +146,7 @@ class TorchFederatedLearner(ABC):
 
         model_cls = self.get_model_cls()
         self.model = model_cls().to(self.device)
-        if self.config.SERVER_OPT is not None:
-            self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
-                self.model.parameters(),
-                lr=self.config.SERVER_LEARNING_RATE,
-                **self.config.SERVER_OPT_ARGS,
-            )
-        else:
-            self.server_opt = None
+        self.__init_opt()
         self.avg_opt_state = None
         if self.config.SCAFFOLD:
             self.c = lambda_params(self.model.parameters(), th.zeros_like)
@@ -183,6 +177,16 @@ class TorchFederatedLearner(ABC):
             )
             for loader in self.train_loader_list
         ]
+
+    def __init_opt(self):
+        if self.config.SERVER_OPT is not None:
+            self.server_opt = TorchOptRepo.name2cls(self.config.SERVER_OPT)(
+                self.model.parameters(),
+                lr=self.config.SERVER_LEARNING_RATE,
+                **self.config.SERVER_OPT_ARGS,
+            )
+        else:
+            self.server_opt = None
 
     @abstractmethod
     def load_data(
@@ -281,6 +285,8 @@ class TorchFederatedLearner(ABC):
         self.config.CLIENT_OPT_STRATEGY = "reinit"
         # set client_opt to sgd
         self.config.CLIENT_OPT = "SGD"
+        if self.config.CLIENT_SGD_SERVER_REINIT:
+            self.__init_opt()
 
     def __train_one_round(self, curr_round: int):
         self.model.train()
