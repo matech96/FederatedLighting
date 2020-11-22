@@ -12,6 +12,70 @@ from torch.utils.data import Dataset
 
 class TorchEMNISTFed(Dataset):
     data_dir = Path("data/emnist_fed")
+    __class_idx = [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+    ]
 
     def __init__(self, split: Union[str, List[str]], transform: Callable = None):
         self._download_all_data()
@@ -23,11 +87,15 @@ class TorchEMNISTFed(Dataset):
 
     def __getitem__(self, idx):
         if self.transform is not None:
-            img = self.transform(self.images[idx, ])
+            img = self.transform(self.images[idx,])
         else:
-            img = th.tensor(self.images[idx, ])
+            img = th.tensor(self.images[idx,])
 
-        return img, th.tensor(self.labels[idx, ]).long()
+        return img, th.tensor(self.labels[idx,]).long()
+
+    @classmethod
+    def label2char(cls, label):
+        return cls.__class_idx[label]
 
     @classmethod
     def get_client_ids(cls, data_set):
@@ -38,7 +106,7 @@ class TorchEMNISTFed(Dataset):
             for f in os.listdir(cls.data_dir / data_set)
             if f.endswith(ext)
         ]
-    
+
     @classmethod
     def _download_all_data(cls):
         is_extract = not cls.data_dir.exists()
@@ -65,9 +133,9 @@ class TorchEMNISTFed(Dataset):
                 os.makedirs(split_dir)
             except FileExistsError:
                 return
-            h5 = h5py.File(
-                os.path.join(dir_path, f"fed_emnist_{data_set}.h5"), "r"
-            )["examples"]
+            h5 = h5py.File(os.path.join(dir_path, f"fed_emnist_{data_set}.h5"), "r")[
+                "examples"
+            ]
 
             for client_id in h5.keys():
                 images = np.expand_dims(h5[client_id]["pixels"], axis=1)
