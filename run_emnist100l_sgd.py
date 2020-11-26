@@ -12,27 +12,24 @@ import common
 
 # server_lr = 0.001
 # client_lr = 0.1
-server_opt = "Yogi"
+server_opt = "SGD"
 client_opt = "SGD"
 client_opt_strategy = "reinit"
 
 max_rounds = 10
-n_clients_per_round = 170
-NC = 340
+n_clients_per_round = 10
+NC = 10
 C = n_clients_per_round / NC
 B = 20
 is_iid = False
 model = "CNN"
 E = 1
 
-project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}-scf"
+project_name = f"{model}{NC}c{E}e{max_rounds}r{n_clients_per_round}f-{server_opt}-{client_opt_strategy[0]}-{client_opt}"
 
-# client_lr_lg = -1
-# server_lr_lg = -1
-
-for client_lr_lg in np.arange(-2.0, 0.5, 0.5):
+for client_lr_lg in np.arange(-1.5, 1.0, 0.5):
     client_lr = 10 ** client_lr_lg
-    for server_lr_lg in np.arange(-2.0, 0.5, 0.5):
+    for server_lr_lg in np.arange(-1, 1.5, 0.5):
         server_lr = 10 ** server_lr_lg
         config = TorchFederatedLearnerEMNISTConfig(
             CLIENT_LEARNING_RATE=client_lr,
@@ -50,7 +47,6 @@ for client_lr_lg in np.arange(-2.0, 0.5, 0.5):
             N_EPOCH_PER_CLIENT=E,
             MAX_ROUNDS=max_rounds,
             MODEL=model,
-            SCAFFOLD=True,
         )
         config_technical = TorchFederatedLearnerTechnicalConfig(
             BREAK_ROUND=300,
@@ -61,7 +57,7 @@ for client_lr_lg in np.arange(-2.0, 0.5, 0.5):
         )
         name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
         experiment = Experiment(
-            workspace="federated-learning-emnist-m", project_name=project_name
+            workspace="federated-learning-emnist-l", project_name=project_name
         )
         try:
             common.do_training_emnist(experiment, name, config, config_technical)
