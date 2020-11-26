@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import re
 import holoviews as hv
+from bokeh.io import export_svgs
 from comet_ml.exceptions import NotFound
 
 from mutil.cometml.apiquery import exp_metrics2list, exp_params2list
@@ -85,3 +86,9 @@ def get_experiments(comet_api, SOPT, STR="r", COPT="sgd", E=1, project="emnist-s
         ):
             q = f"{workspace}/{proj}"
             return comet_api.get(q)
+
+
+def save_bokeh_svg(x, fname="p.svg"):
+    p = hv.render(x, backend='bokeh')
+    p.output_backend = "svg"
+    export_svgs(p, filename=fname)
