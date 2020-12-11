@@ -68,7 +68,7 @@ def generate_plot(comet_api, SOPT, STR="R", COPT="SGD", project="emnist-s"):
     return hv.HoloMap(plots, kdims="E").opts(title=get_label(SOPT, STR, COPT, False))
 
 
-def get_experiments(comet_api, SOPT, STR="r", COPT="sgd", E=1, project="emnist-s"):
+def get_experiments(comet_api, SOPT, STR="r", COPT="sgd", E=1, project="emnist-s", max_rounds=None):
     workspace = f"federated-learning-{project}"
     projs = comet_api.get(workspace)
     r = re.compile(
@@ -84,8 +84,9 @@ def get_experiments(comet_api, SOPT, STR="r", COPT="sgd", E=1, project="emnist-s
             and (m.group("client_opt") == COPT.lower())
             and (m.group("client_opt_strategy") == STR.lower())
         ):
-            q = f"{workspace}/{proj}"
-            return comet_api.get(q)
+            if (max_rounds is None) or (max_rounds == int(m.group("max_rounds"))):
+                q = f"{workspace}/{proj}"
+                return comet_api.get(q)
 
 
 def save_bokeh_svg(x, fname="p.svg"):
