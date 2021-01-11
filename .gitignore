@@ -1,3 +1,13 @@
 *-checkpoint.ipynb
 __pycache__/*
 data/*
+*.pyc
+*.npy
+notebooks/2c_opt/*
+*.pt
+*.png
+.vscode/*
+tmp/*
+*.svg
+*.eps
+*.csv
