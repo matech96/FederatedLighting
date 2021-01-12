@@ -133,7 +133,7 @@ class TorchFederatedLearner(ABC):
             th.backends.cudnn.deterministic = True
             th.backends.cudnn.benchmark = False
 
-        self.device = "cuda"  # th.device("cuda" if th.cuda.is_available() else "cpu")
+        self.device = th.device("cuda" if th.cuda.is_available() else "cpu")
         self.experiment = experiment
         self.config = config
         self.config.set_defaults()
@@ -232,8 +232,6 @@ class TorchFederatedLearner(ABC):
             with timer:
                 for curr_round in range(self.config.MAX_ROUNDS):
                     self.experiment.log_parameter("curr_round", curr_round)
-                    # TODO if current round is larger than until
-                    #   __switch_to_sgd
                     if (self.config.CLIENT_OPT_STRATEGY_UNITL is not None) and (self.config.CLIENT_OPT_STRATEGY_UNITL < curr_round):
                         self.__switch_to_sgd(self.config.CLIENT_SGD_LEARNING_RATE)
                     self.__train_one_round(curr_round)
@@ -254,6 +252,7 @@ class TorchFederatedLearner(ABC):
                         self.log_hist(curr_round)
 
                         test_acc = metrics["test_acc"]
+                        print(f"The test set accuracy is {test_acc}.")
                         lastaccs.append(test_acc)
                         if self.__is_achieved_target(test_acc):
                             break
@@ -278,7 +277,6 @@ class TorchFederatedLearner(ABC):
         )
 
     def __switch_to_sgd(self, lr):
-        # TODO call switch on all clients
         for client in self.clients:
             client.switch_to_sgd(lr)
         # set strat to "reinit"
@@ -299,7 +297,7 @@ class TorchFederatedLearner(ABC):
             comm_c = None
             logging.info("SCAFFOLD: comm_c initialized")
 
-        with ElapsedTime("Training clients"):
+        with ElapsedTime("Training clients", verbose=False):
             for i, client in enumerate(client_sample):
                 client.set_model(self.model.state_dict())
                 if (self.config.CLIENT_OPT_STRATEGY == "avg") and (
@@ -334,7 +332,7 @@ class TorchFederatedLearner(ABC):
                     else:
                         comm_avg_opt_state = opt_state
 
-        with ElapsedTime("Setting gradients"):
+        with ElapsedTime("Setting gradients", verbose=False):
             if self.server_opt is not None:
                 self.server_opt.zero_grad()
                 server_opt_state = self.server_opt.state_dict()
@@ -358,7 +356,6 @@ class TorchFederatedLearner(ABC):
                 logging.info("SCAFFOLD: server c updated")
 
         self.avg_opt_state = comm_avg_opt_state
-        comm_avg_opt_state = None
 
     def __select_clients(self):
         client_sample = random.sample(

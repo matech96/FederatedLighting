@@ -23,7 +23,9 @@ class TorchModelOptStateManager:
         is_store_on_disk: bool,
         id: int,
         exp_id: str,
+        device
     ):
+        self.device = device
         self.model_cls = model_cls
         self.opt_cls = opt_cls
         self.opt_cls_param = opt_cls_param
@@ -86,8 +88,8 @@ class TorchModelOptStateManager:
             self.model.load_state_dict(self.__model_state_to_be_loaded)
             self.__log("model state loaded")
         self.model.train()
-        self.model.cuda()
-        self.__log("model is on GPU")
+        self.model.to(self.device)
+        self.__log(f"model is on {self.device}")
 
         if self.opt is None:
             self.opt = self.opt_cls(self.model.parameters(), **self.opt_cls_param)

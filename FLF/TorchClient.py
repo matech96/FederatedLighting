@@ -47,6 +47,7 @@ class TorchClient:
             is_store_opt_on_disk,
             self.id,
             exp_id,
+            self.device
         )
         self.is_maintaine_opt_state = is_maintaine_opt_state
 
