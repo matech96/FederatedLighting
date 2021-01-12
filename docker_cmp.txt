@@ -1,1 +1,0 @@
-docker run -p 8080:8080 --runtime nvidia --env NVIDIA_VISIBLE_DEVICES="all" --env WORKSPACE_SSL_ENABLED="true" --env AUTHENTICATE_VIA_JUPYTER="uuloBA1Tb8QdMsxhaCWE0QnEauICtCv0" --env INCLUDE_TUTORIALS=false -v /home/matech/projects/ml_workspace:/workspace  mltooling/ml-workspace-gpu:latest

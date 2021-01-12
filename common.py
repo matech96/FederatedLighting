@@ -14,7 +14,6 @@ from FLF.TorchFederatedLearnerEMNIST import (
     TorchFederatedLearnerEMNISTConfig,
 )
 from FLF.TorchFederatedLearner import TorchFederatedLearnerTechnicalConfig
-from mutil.cometml.apiquery import exp_metrics2list, exp_params2list
 
 # logging.basicConfig(
 #     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -61,25 +60,3 @@ def do_training_emnist(
     experiment.set_name(name)
     learner = TorchFederatedLearnerEMNIST(experiment, config, config_technical)
     learner.train()
-
-
-def get_besr_lrs_from_exps(SOPT, STR="r", COPT="sgd"):
-    comet_api = comet_ml.api.API()
-    maxes = pd.DataFrame(columns=["E", "slr", "clr"])
-    for E in [1, 5, 10, 20, 30]:
-        try:
-            exps = comet_api.get(
-                f"federated-learning-emnist-s/cnn3400c{E}e100r10f-{SOPT}-{STR}-{COPT}"
-            )
-        except NotFound:
-            break
-        slr = exp_params2list(exps, "SERVER_LEARNING_RATE", float)
-        clr = exp_params2list(exps, "CLIENT_LEARNING_RATE", float)
-        acc = exp_metrics2list(exps, "last_avg_acc", float)
-        df = pd.DataFrame({"slr": slr, "clr": clr, "acc": acc})
-        i = df["acc"].idxmax()
-        m = df.iloc[i]
-        maxes = maxes.append(
-            {"E": E, "slr": m["slr"], "clr": m["clr"]}, ignore_index=True
-        )
-    return maxes
