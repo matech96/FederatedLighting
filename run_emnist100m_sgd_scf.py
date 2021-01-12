@@ -1,4 +1,4 @@
-from comet_ml import Experiment
+# Trains SCAFFOLD on the EMNIST dataset
 
 from FLF.TorchFederatedLearner import (
     TorchFederatedLearnerTechnicalConfig,
