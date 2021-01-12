@@ -6,6 +6,7 @@ from FLF.TorchFederatedLearner import (
 from FLF.TorchFederatedLearnerEMNIST import TorchFederatedLearnerEMNISTConfig
 
 import common
+from mutil.Empty import Empty
 
 
 server_lr = 1
@@ -52,7 +53,5 @@ config_technical = TorchFederatedLearnerTechnicalConfig(
     STORE_MODEL_IN_RAM=False,
 )
 name = f"{config.SERVER_OPT}: {config.SERVER_LEARNING_RATE} - {config.CLIENT_OPT_STRATEGY} - {config.CLIENT_OPT}: {config.CLIENT_LEARNING_RATE}"
-experiment = Experiment(
-    workspace="fl-test", project_name=project_name
-)
+experiment = Empty()
 common.do_training_emnist(experiment, name, config, config_technical)
